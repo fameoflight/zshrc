@@ -395,3 +395,4 @@ fi
 
 set -o vi
 set cursorcolumn
+export PATH="/usr/local/opt/imagemagick@6/bin:$PATH"
