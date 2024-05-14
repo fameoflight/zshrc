@@ -12,21 +12,15 @@ mac: brew install-externals install-core github-setup
 brew: brew-setup brew-packages
 
 brew-setup:
-	@echo "Installing Homebrew"
-	@ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-	-@brew tap caskroom/versions
+	-@brew --version > /dev/null 2> /dev/null || echo "Brew is not installed. Installing it now..."
+	-@brew --version > /dev/null 2> /dev/null || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 	-@brew tap homebrew/services
-	-@brew tap homebrew/dupes
-	-@brew tap caskroom/fonts
 	-@brew update
-	-@brew upgrade brew-cask
 	-@brew cleanup
-	-@brew cask cleanup
 
 brew-packages:
 	-@brew install zsh
 	sudo dscl . -create /Users/$USER UserShell /usr/local/bin/zsh
-
 	@echo "Installing Go lang"
 	-@brew install go
 	@ echo "Installing Elixir"
@@ -37,6 +31,8 @@ brew-packages:
 	-@brew install ssh-copy-id
 	@echo "Installing Wget"
 	-@brew install wget
+	@echo "Installing Rust"
+	-@brew install rust
 	-@brew install rmtrash
 	-@brew install zsh
 	-@brew install watch
@@ -44,34 +40,31 @@ brew-packages:
 	-@brew install pidof
 	-@brew install fswatch
 	-@brew install watchman
-	-@brew install parallel
-	-@brew install https://raw.githubusercontent.com/kadwanev/bigboybrew/master/Library/Formula/sshpass.rb
 
-	-@brew cask install github-desktop
-	-@brew cask install hub
+	-@brew install github
+	-@brew install hub
 	-@brew install git-lfs
-
-	-@brew cask install dropbox
-	-@brew cask install flux
-	-@brew cask install flash
-	-@brew cask install skype
-	-@brew cask install calibre
-	-@brew cask install google-hangouts
-	-@brew cask install spotify
-	-@brew cask install beardedspice
-	-@brew cask install evernote
-	-@brew cask install simplefloatingclock
-	-@brew cask install virtualbox
-	-@brew cask install mou
-	-@brew cask install rescuetime
-	-@brew cask install flycut
-	-@brew cask install airmail-beta
-	-@brew cask install iterm2-nightly
-	-@brew cask install sizeup
-	-@brew cask install todoist
-	-@brew cask install smoothmouse
-	-@brew cask install ngrok
+	-@brew install dropboxx
+	-@brew install simplefloatingclock
+	-@brew install mou
+	-@brew install flycut
+	-@brew install iterm2
+	-@brew install sizeup
+	-@brew install todoist
+	-@brew install smoothmouse
+	-@brew install ngrok
 	-@brew install librsvg
+
+	-@brew install autojump
+
+	@echo "Installing Node"
+	-@brew install node
+
+	@echo "Installing NPM"
+	-@brew install npm
+
+	@echo "Installing Yarn"
+	-@brew install yarn
 
 	wget -O /usr/local/etc/openssl/certs/cacert.pem http://curl.haxx.se/ca/cacert.pem
 	
