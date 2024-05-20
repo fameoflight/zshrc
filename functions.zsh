@@ -172,12 +172,7 @@ gr() {
     echo $vcsroot && cd $vcsroot
 }
 
-# delete-to-previous-slash
-# http://www.zsh.org/mla/users/2005/msg01314.html
-backward-delete-to-slash () {
-  local WORDCHARS=${WORDCHARS//\//}
-  zle .backward-delete-word
+function download-files() {
+    cd ~/Download
+    wget -r -l 2 -nd -nH -A $*
 }
-zle -N backward-delete-to-slash
-# bind to control Y
-bindkey "^Y" backward-delete-to-slash

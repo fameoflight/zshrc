@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Quotefancy: Wallpapers With Inspirational Quotes</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--[if gte IE 9]>
+        <style type="text/css">
+            .gradient {
+                filter: none;
+            }
+        </style>
+        <![endif]-->
+<!-- 
+                NOT MOBILE
+                -->
+<link rel="icon" type="image/png" href="/frontend/img/icons/favicon-blue.png">
+<link rel="stylesheet" type="text/css" href="/frontend/css/modules/A.main.css+header.home.css+footer.css,Mcc.ek-CRss7uA.css.pagespeed.cf.0UmkTdBz23.css"/>
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Poiret+One" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=Lato:400,600,700" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=Raleway:100,200,300,600,700,800" rel="stylesheet" type="text/css">
+<script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)})(window,document,'script','//www.google-analytics.com/analytics.js','ga');ga('create','UA-59251602-1','auto');ga('send','pageview');</script>
+</head>
+<body class="greypage">
+<div class="branding">
+<a class="logo" href="http://quotefancy.com" style="vertical-align: top;">
+<span class="logo-image"></span> <span class="logo-text">quotefancy</span>
+</a>
+<span class="header-buttons">
+<a href="https://twitter.com/Quotefancy" class="header-button"><i class="fa fa-twitter"></i></a><a href="https://www.facebook.com/Quotefancy" class="header-button"><i class="fa fa-facebook"></i></a><a href="http://www.reddit.com/r/Quotefancy/" class="header-button"><i class="fa fa-reddit"></i></a><a href="https://www.pinterest.com/Quotefancy/" class="header-button"><i class="fa fa-pinterest"></i></a>
+</span>
+</div>
+<div class="curtain homecover">
+<div class="stage">
+<div class="cover">
+<div id="cover-bg"></div>
+<div class="outer">
+<div class="middle">
+<div class="collection-header inner">
+<div class="header-content">
+<h1>Get Inspired. Get Motivated.</h1>
+<div style="clear: both"></div>
+<span class="cover-separator"></span>
+<table>
+<tr>
+<td width="366" class="pitch">
+<p class="pitch-first">We're on a mission of turning inspiring quotes into beautiful wallpapers. Start your week with a motivational kick. Don't miss out on our next weekly batch.</p>
+<p>Subscribe to Quotefancy Weekly digest.
+</p>
+<div id="email_sent" class="email-sent"><h6 class="thank-you">Thank you!</h6> <i class="fa fa-envelope"></i> Please check your email.</div>
+<input id="email" type="email" class="invite-email" placeholder="Enter your email here..." onfocus="this.placeholder = ''" onblur="this.placeholder = 'Enter your email here...'">
+<a id="request_invitation" class="dl-button" onclick="requestInvitation();">Subscribe</a>
+<div id="available_for" class="available-for no-spam">No spam, ever. Unsubscribe any time.
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="homepage-pitch-hide" style="font-family: Raleway; font-weight: 200;"><i class="fa fa-chevron-circle-up"></i> hide</div>
+</div>
+<div class="homepage-pitch-show"><i class="fa fa-chevron-circle-down"></i></div>
+<div class="post-grid post-min">
+<div class="gridblock">
+<a href="http://quotefancy.com/inspirational-entrepreneurship-quotes"><img data-original="/media/wallpaper/thumb/720.jpg" alt="Inspirational Entrepreneurship Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/inspirational-entrepreneurship-quotes">Inspirational Entrepreneurship Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/entrepreneurship">ENTREPRENEURSHIP</a>
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/inspirational">INSPIRATIONAL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">68 WALLPAPERS</span>
+<span class="gridblock-votes">26131 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/motivational-quotes"><img data-original="/media/wallpaper/thumb/18846.jpg" alt="Motivational Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/motivational-quotes">Motivational Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspirational">INSPIRATIONAL</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/motivational">MOTIVATIONAL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">99 WALLPAPERS</span>
+<span class="gridblock-votes">18495 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/albert-einstein-quotes"><img data-original="/media/wallpaper/thumb/1788.jpg" alt="Albert Einstein Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/albert-einstein-quotes">Albert Einstein Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/science">SCIENCE</a>
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">47 WALLPAPERS</span>
+<span class="gridblock-votes">15109 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/bruce-lee-quotes"><img data-original="/media/wallpaper/thumb/1697.jpg" alt="Bruce Lee Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/bruce-lee-quotes">Bruce Lee Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">7965 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/success-quotes"><img data-original="/media/wallpaper/thumb/12807.jpg" alt="Success Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/success-quotes">Success Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">52 WALLPAPERS</span>
+<span class="gridblock-votes">6852 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/mark-twain-quotes"><img data-original="/media/wallpaper/thumb/4785.jpg" alt="Mark Twain Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/mark-twain-quotes">Mark Twain Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/writing">WRITING</a>
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">49 WALLPAPERS</span>
+<span class="gridblock-votes">6539 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/steve-jobs-quotes"><img data-original="/media/wallpaper/thumb/2110.jpg" alt="Steve Jobs Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/steve-jobs-quotes">Steve Jobs Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/entrepreneurship">ENTREPRENEURSHIP</a>
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/apple">APPLE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">29 WALLPAPERS</span>
+<span class="gridblock-votes">6393 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/quotes-about-life"><img data-original="/media/wallpaper/thumb/743.jpg" alt="Life Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/quotes-about-life">Life Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">6392 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/lao-tzu-quotes"><img data-original="/media/wallpaper/thumb/4168.jpg" alt="Lao Tzu Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/lao-tzu-quotes">Lao Tzu Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/peace">PEACE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">31 WALLPAPERS</span>
+<span class="gridblock-votes">5369 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/startup-quotes"><img data-original="/media/wallpaper/thumb/21525.jpg" alt="Startup Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/startup-quotes">Startup Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/entrepreneurship">ENTREPRENEURSHIP</a>
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/inspirational">INSPIRATIONAL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">89 WALLPAPERS</span>
+<span class="gridblock-votes">5311 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/eckhart-tolle-quotes"><img data-original="/media/wallpaper/thumb/3271.jpg" alt="Eckhart Tolle Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/eckhart-tolle-quotes">Eckhart Tolle Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/sress">SRESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">5061 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/aristotle-quotes"><img data-original="/media/wallpaper/thumb/2397.jpg" alt="Aristotle Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/aristotle-quotes">Aristotle Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/education">EDUCATION</a>
+<a href="/topic/politics">POLITICS</a>
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">21 WALLPAPERS</span>
+<span class="gridblock-votes">4346 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/paulo-coelho-quotes"><img data-original="/media/wallpaper/thumb/3477.jpg" alt="Paulo Coelho Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/paulo-coelho-quotes">Paulo Coelho Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">4063 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/confucius-quotes"><img data-original="/media/wallpaper/thumb/3610.jpg" alt="Confucius Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/confucius-quotes">Confucius Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/education">EDUCATION</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">20 WALLPAPERS</span>
+<span class="gridblock-votes">4033 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/friedrich-nietzsche-quotes"><img data-original="/media/wallpaper/thumb/10184.jpg" alt="Friedrich Nietzsche Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/friedrich-nietzsche-quotes">Friedrich Nietzsche Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/music">MUSIC</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">43 WALLPAPERS</span>
+<span class="gridblock-votes">3529 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/dalai-lama-quotes"><img data-original="/media/wallpaper/thumb/3838.jpg" alt="Dalai Lama XIV Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/dalai-lama-quotes">Dalai Lama XIV Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+<a href="/topic/compassion">COMPASSION</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">3420 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/mahatma-gandhi-quotes"><img data-original="/media/wallpaper/thumb/1308.jpg" alt="Mahatma Gandhi Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/mahatma-gandhi-quotes">Mahatma Gandhi Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">29 WALLPAPERS</span>
+<span class="gridblock-votes">3029 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/warren-buffett-quotes"><img data-original="/media/wallpaper/thumb/555.jpg" alt="Warren Buffett Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/warren-buffett-quotes">Warren Buffett Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/investing">INVESTING</a>
+<a href="/topic/money">MONEY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">27 WALLPAPERS</span>
+<span class="gridblock-votes">2962 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/zig-ziglar-quotes"><img data-original="/media/wallpaper/thumb/7620.jpg" alt="Zig Ziglar Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/zig-ziglar-quotes">Zig Ziglar Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/confidence">CONFIDENCE</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">31 WALLPAPERS</span>
+<span class="gridblock-votes">2880 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/nelson-mandela-quotes"><img data-original="/media/wallpaper/thumb/1055.jpg" alt="Nelson Mandela Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/nelson-mandela-quotes">Nelson Mandela Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/education">EDUCATION</a>
+<a href="/topic/presidents">PRESIDENTS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">30 WALLPAPERS</span>
+<span class="gridblock-votes">2678 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/perseverance-quotes"><img data-original="/media/wallpaper/thumb/837.jpg" alt="Perseverance Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/perseverance-quotes">Perseverance Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/goals">GOALS</a>
+<a href="/topic/patience">PATIENCE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">36 WALLPAPERS</span>
+<span class="gridblock-votes">2617 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/oscar-wilde-quotes"><img data-original="/media/wallpaper/thumb/760.jpg" alt="Oscar Wilde Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/oscar-wilde-quotes">Oscar Wilde Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/friendship">FRIENDSHIP</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">33 WALLPAPERS</span>
+<span class="gridblock-votes">2580 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/maya-angelou-quotes"><img data-original="/media/wallpaper/thumb/3084.jpg" alt="Maya Angelou Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/maya-angelou-quotes">Maya Angelou Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">25 WALLPAPERS</span>
+<span class="gridblock-votes">2557 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/napoleon-hill-quotes"><img data-original="/media/wallpaper/thumb/7779.jpg" alt="Napoleon Hill Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/napoleon-hill-quotes">Napoleon Hill Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">25 WALLPAPERS</span>
+<span class="gridblock-votes">2372 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/john-lennon-quotes"><img data-original="/media/wallpaper/thumb/3180.jpg" alt="John Lennon Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/john-lennon-quotes">John Lennon Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/peace">PEACE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">2079 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/love-quotes"><img data-original="/media/wallpaper/thumb/5959.jpg" alt="Love Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/love-quotes">Love Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">25 WALLPAPERS</span>
+<span class="gridblock-votes">2007 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/leadership-quotes"><img data-original="/media/wallpaper/thumb/15540.jpg" alt="Leadership Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/leadership-quotes">Leadership Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/leadership">LEADERSHIP</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">25 WALLPAPERS</span>
+<span class="gridblock-votes">1972 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/jim-rohn-quotes"><img data-original="/media/wallpaper/thumb/15975.jpg" alt="Jim Rohn Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/jim-rohn-quotes">Jim Rohn Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/reading">READING</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/goals">GOALS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">67 WALLPAPERS</span>
+<span class="gridblock-votes">1969 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/positive-quotes"><img data-original="/media/wallpaper/thumb/19987.jpg" alt="Positive Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/positive-quotes">Positive Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/positivity">POSITIVITY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">29 WALLPAPERS</span>
+<span class="gridblock-votes">1920 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/abraham-lincoln-quotes"><img data-original="/media/wallpaper/thumb/798.jpg" alt="Abraham Lincoln Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/abraham-lincoln-quotes">Abraham Lincoln Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/presidents">PRESIDENTS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">24 WALLPAPERS</span>
+<span class="gridblock-votes">1901 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/elon-musk-quotes"><img data-original="/media/wallpaper/thumb/2295.jpg" alt="Elon Musk Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/elon-musk-quotes">Elon Musk Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/space">SPACE</a>
+<a href="/topic/entrepreneurship">ENTREPRENEURSHIP</a>
+<a href="/topic/business">BUSINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">46 WALLPAPERS</span>
+<span class="gridblock-votes">1855 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/henry-ford-quotes"><img data-original="/media/wallpaper/thumb/5566.jpg" alt="Henry Ford Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/henry-ford-quotes">Henry Ford Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">29 WALLPAPERS</span>
+<span class="gridblock-votes">1801 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/william-shakespeare-quotes"><img data-original="/media/wallpaper/thumb/6198.jpg" alt="William Shakespeare Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/william-shakespeare-quotes">William Shakespeare Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/destiny">DESTINY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">13 WALLPAPERS</span>
+<span class="gridblock-votes">1666 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/thomas-edison-quotes"><img data-original="/media/wallpaper/thumb/5491.jpg" alt="Thomas A. Edison Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/thomas-edison-quotes">Thomas A. Edison Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/science">SCIENCE</a>
+<a href="/topic/work">WORK</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">1529 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/martin-luther-king-jr-quotes"><img data-original="/media/wallpaper/thumb/850.jpg" alt="Martin Luther King Jr. Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/martin-luther-king-jr-quotes">Martin Luther King Jr. Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">22 WALLPAPERS</span>
+<span class="gridblock-votes">1472 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/robin-s-sharma-quotes"><img data-original="/media/wallpaper/thumb/12164.jpg" alt="Robin S. Sharma Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/robin-s-sharma-quotes">Robin S. Sharma Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/spirituality">SPIRITUALITY</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">43 WALLPAPERS</span>
+<span class="gridblock-votes">1411 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/osho-quotes"><img data-original="/media/wallpaper/thumb/4722.jpg" alt="Osho Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/osho-quotes">Osho Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">11 WALLPAPERS</span>
+<span class="gridblock-votes">1384 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/ralph-waldo-emerson-quotes"><img data-original="/media/wallpaper/thumb/5752.jpg" alt="Ralph Waldo Emerson Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/ralph-waldo-emerson-quotes">Ralph Waldo Emerson Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/friendship">FRIENDSHIP</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">1368 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/bob-marley-quotes"><img data-original="/media/wallpaper/thumb/2424.jpg" alt="Bob Marley Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/bob-marley-quotes">Bob Marley Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/love">LOVE</a>
+<a href="/topic/music">MUSIC</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">19 WALLPAPERS</span>
+<span class="gridblock-votes">1356 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/swami-vivekananda-quotes"><img data-original="/media/wallpaper/thumb/6314.jpg" alt="Swami Vivekananda Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/swami-vivekananda-quotes">Swami Vivekananda Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/spirituality">SPIRITUALITY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">52 WALLPAPERS</span>
+<span class="gridblock-votes">1266 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/bill-gates-quotes"><img data-original="/media/wallpaper/thumb/1850.jpg" alt="Bill Gates Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/bill-gates-quotes">Bill Gates Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/microsoft">MICROSOFT</a>
+<a href="/topic/software">SOFTWARE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">12 WALLPAPERS</span>
+<span class="gridblock-votes">1161 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/benjamin-franklin-quotes"><img data-original="/media/wallpaper/thumb/3006.jpg" alt="Benjamin Franklin Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/benjamin-franklin-quotes">Benjamin Franklin Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/money">MONEY</a>
+<a href="/topic/time">TIME</a>
+<a href="/topic/justice">JUSTICE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">20 WALLPAPERS</span>
+<span class="gridblock-votes">1140 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/stephen-hawking-quotes"><img data-original="/media/wallpaper/thumb/4695.jpg" alt="Stephen Hawking Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/stephen-hawking-quotes">Stephen Hawking Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/universe">UNIVERSE</a>
+<a href="/topic/time">TIME</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">12 WALLPAPERS</span>
+<span class="gridblock-votes">1096 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/quotes-about-strength"><img data-original="/media/wallpaper/thumb/20123.jpg" alt="Quotes About Strength"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/quotes-about-strength">Quotes About Strength</a></div>
+<div class="gridblock-tags">
+<a href="/topic/courage">COURAGE</a>
+<a href="/topic/strength">STRENGTH</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">23 WALLPAPERS</span>
+<span class="gridblock-votes">1084 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/leonardo-da-vinci-quotes"><img data-original="/media/wallpaper/thumb/10261.jpg" alt="Leonardo da Vinci Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/leonardo-da-vinci-quotes">Leonardo da Vinci Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/education">EDUCATION</a>
+<a href="/topic/art">ART</a>
+<a href="/topic/simplicity">SIMPLICITY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">32 WALLPAPERS</span>
+<span class="gridblock-votes">1037 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/relationship-quotes"><img data-original="/media/wallpaper/thumb/2372.jpg" alt="Relationship Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/relationship-quotes">Relationship Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/love">LOVE</a>
+<a href="/topic/relationship">RELATIONSHIP</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">987 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/socrates-quotes"><img data-original="/media/wallpaper/thumb/4440.jpg" alt="Socrates Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/socrates-quotes">Socrates Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/love">LOVE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+<a href="/topic/death">DEATH</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">959 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/marilyn-monroe-quotes"><img data-original="/media/wallpaper/thumb/1525.jpg" alt="Marilyn Monroe Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/marilyn-monroe-quotes">Marilyn Monroe Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">20 WALLPAPERS</span>
+<span class="gridblock-votes">888 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/muhammad-ali-quotes"><img data-original="/media/wallpaper/thumb/4878.jpg" alt="Muhammad Ali Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/muhammad-ali-quotes">Muhammad Ali Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/greatness">GREATNESS</a>
+<a href="/topic/champions">CHAMPIONS</a>
+<a href="/topic/boxing">BOXING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">833 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/music-quotes"><img data-original="/media/wallpaper/thumb/5769.jpg" alt="Music Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/music-quotes">Music Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/music">MUSIC</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">40 WALLPAPERS</span>
+<span class="gridblock-votes">785 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/rumi-quotes"><img data-original="/media/wallpaper/thumb/4224.jpg" alt="Rumi Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/rumi-quotes">Rumi Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">14 WALLPAPERS</span>
+<span class="gridblock-votes">766 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/persistence-quotes"><img data-original="/media/wallpaper/thumb/3331.jpg" alt="Persistence Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/persistence-quotes">Persistence Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/patience">PATIENCE</a>
+<a href="/topic/persistence">PERSISTENCE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">761 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/winston-churchill-quotes"><img data-original="/media/wallpaper/thumb/3388.jpg" alt="Winston Churchill Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/winston-churchill-quotes">Winston Churchill Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/history">HISTORY</a>
+<a href="/topic/WWII">WWII</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">22 WALLPAPERS</span>
+<span class="gridblock-votes">740 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/carl-sagan-quotes"><img data-original="/media/wallpaper/thumb/2551.jpg" alt="Carl Sagan Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/carl-sagan-quotes">Carl Sagan Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/universe">UNIVERSE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">20 WALLPAPERS</span>
+<span class="gridblock-votes">727 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/funny-quotes"><img data-original="/media/wallpaper/thumb/2095.jpg" alt="Funny Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/funny-quotes">Funny Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/funny">FUNNY</a>
+<a href="/topic/business">BUSINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">26 WALLPAPERS</span>
+<span class="gridblock-votes">716 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/charlie-munger-quotes"><img data-original="/media/wallpaper/thumb/15655.jpg" alt="Charlie Munger Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/charlie-munger-quotes">Charlie Munger Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/business">BUSINESS</a>
+<a href="/topic/investing">INVESTING</a>
+<a href="/topic/money">MONEY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">39 WALLPAPERS</span>
+<span class="gridblock-votes">702 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/michael-jordan-quotes"><img data-original="/media/wallpaper/thumb/6599.jpg" alt="Michael Jordan Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/michael-jordan-quotes">Michael Jordan Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/talent">TALENT</a>
+<a href="/topic/basketball">BASKETBALL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">14 WALLPAPERS</span>
+<span class="gridblock-votes">686 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/nikola-tesla-quotes"><img data-original="/media/wallpaper/thumb/4761.jpg" alt="Nikola Tesla Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/nikola-tesla-quotes">Nikola Tesla Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/science">SCIENCE</a>
+<a href="/topic/universe">UNIVERSE</a>
+<a href="/topic/ideas">IDEAS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">11 WALLPAPERS</span>
+<span class="gridblock-votes">620 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/marcus-aurelius-quotes"><img data-original="/media/wallpaper/thumb/8817.jpg" alt="Marcus Aurelius Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/marcus-aurelius-quotes">Marcus Aurelius Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">23 WALLPAPERS</span>
+<span class="gridblock-votes">614 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/douglas-adams-quotes"><img data-original="/media/wallpaper/thumb/10810.jpg" alt="Douglas Adams Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/douglas-adams-quotes">Douglas Adams Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/universe">UNIVERSE</a>
+<a href="/topic/time">TIME</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">25 WALLPAPERS</span>
+<span class="gridblock-votes">546 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/wayne-w-dyer-quotes"><img data-original="/media/wallpaper/thumb/14218.jpg" alt="Wayne W. Dyer Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/wayne-w-dyer-quotes">Wayne W. Dyer Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/motivational">MOTIVATIONAL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">62 WALLPAPERS</span>
+<span class="gridblock-votes">532 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/rabindranath-tagore-quotes"><img data-original="/media/wallpaper/thumb/11355.jpg" alt="Rabindranath Tagore Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/rabindranath-tagore-quotes">Rabindranath Tagore Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/spirituality">SPIRITUALITY</a>
+<a href="/topic/poetry">POETRY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">22 WALLPAPERS</span>
+<span class="gridblock-votes">512 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/quotes-about-books-and-reading"><img data-original="/media/wallpaper/thumb/15478.jpg" alt="Quotes About Books And Reading"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/quotes-about-books-and-reading">Quotes About Books And Reading</a></div>
+<div class="gridblock-tags">
+<a href="/topic/books">BOOKS</a>
+<a href="/topic/reading">READING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">22 WALLPAPERS</span>
+<span class="gridblock-votes">511 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/stephen-king-quotes"><img data-original="/media/wallpaper/thumb/7653.jpg" alt="Stephen King Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/stephen-king-quotes">Stephen King Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/books">BOOKS</a>
+<a href="/topic/writing">WRITING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">465 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/terry-pratchett-quotes"><img data-original="/media/wallpaper/thumb/3983.jpg" alt="Terry Pratchett Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/terry-pratchett-quotes">Terry Pratchett Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">461 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/sun-tzu-quotes"><img data-original="/media/wallpaper/thumb/4843.jpg" alt="Sun Tzu Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/sun-tzu-quotes">Sun Tzu Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/war">WAR</a>
+<a href="/topic/leadership">LEADERSHIP</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">9 WALLPAPERS</span>
+<span class="gridblock-votes">459 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/theodore-roosevelt-quotes"><img data-original="/media/wallpaper/thumb/7505.jpg" alt="Theodore Roosevelt Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/theodore-roosevelt-quotes">Theodore Roosevelt Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/history">HISTORY</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">23 WALLPAPERS</span>
+<span class="gridblock-votes">451 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/coco-chanel-quotes"><img data-original="/media/wallpaper/thumb/4484.jpg" alt="Coco Chanel Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/coco-chanel-quotes">Coco Chanel Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/love">LOVE</a>
+<a href="/topic/fashion">FASHION</a>
+<a href="/topic/elegance">ELEGANCE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">22 WALLPAPERS</span>
+<span class="gridblock-votes">434 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/arnold-schwarzenegger-quotes"><img data-original="/media/wallpaper/thumb/10598.jpg" alt="Arnold Schwarzenegger Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/arnold-schwarzenegger-quotes">Arnold Schwarzenegger Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/goals">GOALS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">19 WALLPAPERS</span>
+<span class="gridblock-votes">431 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/ernest-hemingway-quotes"><img data-original="/media/wallpaper/thumb/4400.jpg" alt="Ernest Hemingway Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/ernest-hemingway-quotes">Ernest Hemingway Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/writing">WRITING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">428 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/neil-degrasse-tyson-quotes"><img data-original="/media/wallpaper/thumb/7026.jpg" alt="Neil deGrasse Tyson Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/neil-degrasse-tyson-quotes">Neil deGrasse Tyson Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/science">SCIENCE</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/universe">UNIVERSE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">10 WALLPAPERS</span>
+<span class="gridblock-votes">412 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/will-smith-quotes"><img data-original="/media/wallpaper/thumb/6425.jpg" alt="Will Smith Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/will-smith-quotes">Will Smith Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/inspiring">INSPIRING</a>
+<a href="/topic/talent">TALENT</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">8 WALLPAPERS</span>
+<span class="gridblock-votes">399 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/brian-tracy-quotes"><img data-original="/media/wallpaper/thumb/14982.jpg" alt="Brian Tracy Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/brian-tracy-quotes">Brian Tracy Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/motivational">MOTIVATIONAL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">28 WALLPAPERS</span>
+<span class="gridblock-votes">399 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/oprah-winfrey-quotes"><img data-original="/media/wallpaper/thumb/7007.jpg" alt="Oprah Winfrey Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/oprah-winfrey-quotes">Oprah Winfrey Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/success">SUCCESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">32 WALLPAPERS</span>
+<span class="gridblock-votes">377 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/c-g-jung-quotes"><img data-original="/media/wallpaper/thumb/13775.jpg" alt="C.G. Jung Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/c-g-jung-quotes">C.G. Jung Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/spirituality">SPIRITUALITY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">26 WALLPAPERS</span>
+<span class="gridblock-votes">367 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/franz-kafka-quotes"><img data-original="/media/wallpaper/thumb/986.jpg" alt="Franz Kafka Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/franz-kafka-quotes">Franz Kafka Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/books">BOOKS</a>
+<a href="/topic/writing">WRITING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">9 WALLPAPERS</span>
+<span class="gridblock-votes">363 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/napoleon-quotes"><img data-original="/media/wallpaper/thumb/5074.jpg" alt="Napoleon Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/napoleon-quotes">Napoleon Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/politics">POLITICS</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/war">WAR</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">356 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/henry-david-thoreau-quotes"><img data-original="/media/wallpaper/thumb/11008.jpg" alt="Henry David Thoreau Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/henry-david-thoreau-quotes">Henry David Thoreau Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/friendship">FRIENDSHIP</a>
+<a href="/topic/nature">NATURE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">45 WALLPAPERS</span>
+<span class="gridblock-votes">356 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/mother-teresa-quotes"><img data-original="/media/wallpaper/thumb/4097.jpg" alt="Mother Teresa Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/mother-teresa-quotes">Mother Teresa Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/peace">PEACE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">12 WALLPAPERS</span>
+<span class="gridblock-votes">355 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/george-carlin-quotes"><img data-original="/media/wallpaper/thumb/8747.jpg" alt="George Carlin Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/george-carlin-quotes">George Carlin Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/funny">FUNNY</a>
+<a href="/topic/life">LIFE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">23 WALLPAPERS</span>
+<span class="gridblock-votes">340 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/seneca-quotes"><img data-original="/media/wallpaper/thumb/16849.jpg" alt="Seneca Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/seneca-quotes">Seneca Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/philosophy">PHILOSOPHY</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">51 WALLPAPERS</span>
+<span class="gridblock-votes">334 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/vince-lombardi-quotes"><img data-original="/media/wallpaper/thumb/7175.jpg" alt="Vince Lombardi Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/vince-lombardi-quotes">Vince Lombardi Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/confidence">CONFIDENCE</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/football">FOOTBALL</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">26 WALLPAPERS</span>
+<span class="gridblock-votes">320 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/haruki-murakami-quotes"><img data-original="/media/wallpaper/thumb/4141.jpg" alt="Haruki Murakami Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/haruki-murakami-quotes">Haruki Murakami Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/running">RUNNING</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/writing">WRITING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">8 WALLPAPERS</span>
+<span class="gridblock-votes">307 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/george-orwell-quotes"><img data-original="/media/wallpaper/thumb/8293.jpg" alt="George Orwell Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/george-orwell-quotes">George Orwell Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/writing">WRITING</a>
+<a href="/topic/freedom">FREEDOM</a>
+<a href="/topic/government">GOVERNMENT</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">19 WALLPAPERS</span>
+<span class="gridblock-votes">304 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/john-muir-quotes"><img data-original="/media/wallpaper/thumb/8708.jpg" alt="John Muir Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/john-muir-quotes">John Muir Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/nature">NATURE</a>
+<a href="/topic/mountains">MOUNTAINS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">23 WALLPAPERS</span>
+<span class="gridblock-votes">293 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/taylor-swift-quotes"><img data-original="/media/wallpaper/thumb/2796.jpg" alt="Taylor Swift Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/taylor-swift-quotes">Taylor Swift Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/music">MUSIC</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">20 WALLPAPERS</span>
+<span class="gridblock-votes">283 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/ayn-rand-quotes"><img data-original="/media/wallpaper/thumb/9359.jpg" alt="Ayn Rand Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/ayn-rand-quotes">Ayn Rand Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/capitalism">CAPITALISM</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">18 WALLPAPERS</span>
+<span class="gridblock-votes">282 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/john-wooden-quotes"><img data-original="/media/wallpaper/thumb/12553.jpg" alt="John Wooden Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/john-wooden-quotes">John Wooden Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/success">SUCCESS</a>
+<a href="/topic/discipline">DISCIPLINE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">35 WALLPAPERS</span>
+<span class="gridblock-votes">262 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/isaac-newton-quotes"><img data-original="/media/wallpaper/thumb/7694.jpg" alt="Isaac Newton Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/isaac-newton-quotes">Isaac Newton Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/people">PEOPLE</a>
+<a href="/topic/physics">PHYSICS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">11 WALLPAPERS</span>
+<span class="gridblock-votes">251 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/pablo-picasso-quotes"><img data-original="/media/wallpaper/thumb/777.jpg" alt="Pablo Picasso Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/pablo-picasso-quotes">Pablo Picasso Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/art">ART</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/painting">PAINTING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">19 WALLPAPERS</span>
+<span class="gridblock-votes">242 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/plato-quotes"><img data-original="/media/wallpaper/thumb/4162.jpg" alt="Plato Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/plato-quotes">Plato Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/politics">POLITICS</a>
+<a href="/topic/life">LIFE</a>
+<a href="/topic/music">MUSIC</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">10 WALLPAPERS</span>
+<span class="gridblock-votes">238 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/joseph-campbell-quotes"><img data-original="/media/wallpaper/thumb/9259.jpg" alt="Joseph Campbell Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/joseph-campbell-quotes">Joseph Campbell Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">16 WALLPAPERS</span>
+<span class="gridblock-votes">237 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/khalil-gibran-quotes"><img data-original="/media/wallpaper/thumb/6477.jpg" alt="Khalil Gibran Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/khalil-gibran-quotes">Khalil Gibran Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">236 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/charles-bukowski-quotes"><img data-original="/media/wallpaper/thumb/2636.jpg" alt="Charles Bukowski Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/charles-bukowski-quotes">Charles Bukowski Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">8 WALLPAPERS</span>
+<span class="gridblock-votes">234 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/leo-tolstoy-quotes"><img data-original="/media/wallpaper/thumb/8739.jpg" alt="Leo Tolstoy Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/leo-tolstoy-quotes">Leo Tolstoy Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/love">LOVE</a>
+<a href="/topic/happiness">HAPPINESS</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">15 WALLPAPERS</span>
+<span class="gridblock-votes">222 POINTS</span>
+</div>
+</div>
+<div class="gridblock">
+<a href="http://quotefancy.com/jack-kerouac-quotes"><img data-original="/media/wallpaper/thumb/12293.jpg" alt="Jack Kerouac Quotes"></a>
+<div class="gridblock-title"><a href="http://quotefancy.com/jack-kerouac-quotes">Jack Kerouac Quotes</a></div>
+<div class="gridblock-tags">
+<a href="/topic/life">LIFE</a>
+<a href="/topic/writing">WRITING</a>
+</div>
+<div class="gridblock-footer">
+<span class="gridblock-contributions">16 WALLPAPERS</span>
+<span class="gridblock-votes">217 POINTS</span>
+</div>
+</div>
+</div>
+<div style="clear: both;"></div>
+<div class="loadmore" onClick="showMoreCollections();">Load More</div>
+<div style="clear: both;"></div>
+<div class="footer">
+<p class="socials">
+<a href="https://twitter.com/Quotefancy"><i class="fa fa-twitter"></i></a>
+<a href="https://www.facebook.com/Quotefancy"><i class="fa fa-facebook"></i></a>
+<a href="http://www.reddit.com/r/Quotefancy/"><i class="fa fa-reddit"></i></a>
+<a href="https://www.pinterest.com/Quotefancy/"><i class="fa fa-pinterest"></i></a>
+</p>
+<p class="email"><a href="mailto:hello@quotefancy.com">hello@quotefancy.com</a></p>
+<p class="copyright">
+<a href="/about/terms" rel="nofollow">Terms of use</a>
+<span class="foot-sep"></span>
+<a href="/about/privacy" rel="nofollow">Privacy policy</a>
+</p>
+<p class="copyright">© 2015 Quotefancy. All rights reserved. </p>
+</div>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="/frontend/js/modules,_jquery,_jquery.lazyload.min.js+home.js+modules,_registration,_request.invitation.js.pagespeed.jc.8-g4yM20Hc.js"></script><script>eval(mod_pagespeed_Q9zn2Ufc42);</script>
+<script>eval(mod_pagespeed_epZofAaref);</script>
+<script>eval(mod_pagespeed_92GgO03Qs4);</script>
+<script>var homePageSettings={LOAD_MORE_COUNT:96};</script>
+<script>//<![CDATA[
+$(document).ready(function(){preloadMoreCollections();$(".gridblock img").lazyload({threshold:1000,placeholder:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7",});});function preloadMoreCollections(){var collectionsLoaded=$('.gridblock').length;$.ajax({url:"/ajax/Home/GetCollections",type:'POST',cache:false,dataType:'json',data:{'offset':collectionsLoaded},success:function(response){var grid_html=response.message.collections_html;if(!response.message.collections_html){$('.loadmore').hide();}else{$(grid_html).insertAfter('.gridblock:last');}}});}
+function showMoreCollections(){$('.loadmore').fadeTo(100,0.5,function(){$('.loadmore').fadeTo(100,1);});for(i=0;i<homePageSettings.LOAD_MORE_COUNT;i++){$(".gridblock:hidden:first").show();$(".gridblock:visible:last img").lazyload({effect:"fadeIn",threshold:1000,placeholder:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"});}
+preloadMoreCollections();}
+//]]></script>
+<script>$(document).ready(function(){$('<img/>').attr('src','/frontend/img/homecovers/island-lake.jpg').load(function(){$(this).remove();$('#cover-bg').css('background-image','url(/frontend/img/homecovers/island-lake.jpg)');$('#cover-bg').css('opacity',0.1);});});</script>
+</body>
+</html>

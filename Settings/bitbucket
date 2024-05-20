@@ -1,0 +1,7 @@
+[auth]
+username = fameoflight
+password = india123
+
+[options]
+scm = git
+protocol = ssh

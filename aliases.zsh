@@ -4,22 +4,21 @@
 # alias definitions which can be edited/modified with 'aedit'
 #
 
-export EDITOR="vim"
-# But still use emacs-style zsh bindings
-# http://superuser.com/questions/403355/how-do-i-get-searching-through-my-command-history-working-with-tmux-and-zshell
-bindkey -e
 
+alias svg-util=rsvg-convert
+
+export EDITOR="vim"
 alias vi="vim"
-alias ctags='/usr/local/bin/ctags'
+alias viedit=" $EDITOR $HOME/.vim/vimrc"
+
+#alias man="unset PAGER; man"
+alias grep='grep --color=auto'
+alias home="cd ~"
 
 ##### standard aliases (start with a space to be ignored in history)
 # default ls is untouched, except coloring
-alias ls=' ls --color=auto'
-alias myls=' ls -C -F -h --color=always'
-alias l=" myls -l"
-alias ll=' myls -l'
-alias la=' myls -lA'
-
+alias ls=' ls -C -F -h --color=always'
+alias ll='ls -l'
 
 alias cd=' cd'
 alias ..=' cd ..; ls'
@@ -28,88 +27,266 @@ alias ....=' cd ..; cd ..; cd ..; ls'
 alias cd..='..'
 alias cd...='...'
 alias cd....='....'
+alias bfg='java -jar ~/zshrc/bfg-1.13.2.jar'
 
-# rails process
-alias master='ps -ef | grep master'
-alias sidekiq='ps -ef | grep sidekiq'
+# alias to create a next-link in your home to tag the current workingdir
+alias linkthis='rm -f ~/next; ln -s $PWD ~/next'
 
-#git
-alias grm='git rm'
-alias gadd='git add'
-alias gdiff='git diff'
-alias gpull='git pull'
-alias gpush='git push origin master'
-alias gstatus='git status'
-alias gcommit='git commit -m'
-alias gpushdev='git push origin develop'
-alias gpulldev='git pull origin develop'
-alias gcheckout='git checkout'
+##### global aliases
+# zsh buch s.82 (z.B. find / ... NE)
+alias -g NE='2>|/dev/null'
+alias -g NO='&>|/dev/null'
 
-#directory
-alias workspace='cd /Users/luolin/workspace;ll'
+# http://rayninfo.co.uk/tips/zshtips.html
+alias -g G='| grep -'
+alias -g P='2>&1 | $PAGER'
+alias -g L='| less'
+alias -g LA='2>&1 | less'
+alias -g M='| most'
+alias -g C='| wc -l'
 
-alias cloudhorn='cd /Users/luolin/workspace/cloudhorn;ll'
-alias mobileapi='cd /Users/luolin/workspace/cloudhorn/shenbian_mobile_api_ruby;ll'
-alias vimmobileapi='cd /Users/luolin/workspace/cloudhorn/shenbian_mobile_api_ruby;vim .'
-alias sublmobileapi='cd /Users/luolin/workspace/cloudhorn/shenbian_mobile_api_ruby;subl .'
+# http://www.commandlinefu.com/commands/view/7284/zsh-suffix-to-inform-you-about-long-command-ending
+# zsh suffix to inform you about long command ending make, Just add "R" (without quotes) suffix to it and you can do other things:
+# zsh will inform you when you can see the results.
+#alias -g R=' &; jobs | tail -1 | read A0 A1 A2 cmd; echo "running $cmd"; fg "$cmd"; zenity --info --text "$cmd done"; unset A0 A1 A2 cmd'
 
-alias backend='cd /Users/luolin/workspace/cloudhorn/shenbian_backend;ll'
-alias vimbackend='cd /Users/luolin/workspace/cloudhorn/shenbian_backend;vim .'
+##### suffix aliases (mostly mapped to open which runs the gnome/kde default app)
 
-alias hesheng='cd /Users/luolin/workspace/hesheng;ll'
+alias -s Dockerfile="docker build - < "
 
-alias read='cd /Users/luolin/workspace/hesheng/hs_read;ll'
-alias sublread='cd /Users/luolin/workspace/hesheng/hs_read;subl .'
-alias science='cd /Users/luolin/workspace/hesheng/science_read;ll'
-alias vimscience='cd /Users/luolin/workspace/hesheng/science_read;vim .'
-alias health_record='cd /Users/luolin/workspace/hesheng/health_records;ll'
-alias sublrecord='cd /Users/luolin/workspace/hesheng/health_records;subl .'
-alias galaxy='cd /Users/luolin/workspace/hesheng/galaxy;ll'
-alias subgalaxy='cd /Users/luolin/workspace/hesheng/galaxy;subl .'
+alias -s tex="rubber --inplace --maxerr -1 --short --force --warn all --pdf"
 
-#ssh
-alias sshBlog=". ~/servers/blog"
+alias -s 1="man -l"
+alias -s 2="man -l"
+alias -s 3="man -l"
+alias -s 4="man -l"
+alias -s 5="man -l"
+alias -s 6="man -l"
+alias -s 7="man -l"
+alias -s epub="open"
+alias -s pdf="open"
+alias -s PDF="open"
+alias -s xoj="xournal"
 
-alias sshHeshengMQ=". ~/servers/rabbitmq"
-alias sshHeshengGit=". ~/servers/git"
-alias sshHeshengTest=". ~/servers/test"
-alias sshHeshengRead=". ~/servers/read"
-alias sshHeshengScience=". ~/servers/science"
-alias sshHeshengWebsite=". ~/servers/website"
-alias sshHeshengWaibao=". ~/servers/waibao"
-alias sshHeshengXinyao=". ~/servers/xinyao"
-#和生视界图像存储内部机器
-alias sshHeshengImages=". ~/servers/hesheng_images"
+alias -s md="open"
+alias -s markdown="open"
+alias -s htm="$BROWSER"
+alias -s html="$BROWSER"
+alias -s jar="java -jar"
+alias -s deb="sudo dpkg -i"
+alias -s gpg="gpg"
 
-#和生机房业务机器
-alias sshXinyao=". ~/servers/xinyao"
-alias sshFenji=". ~/servers/fenji"
+alias -s iso="vlc"
+alias -s avi=" open"
+alias -s AVI=" open"
+alias -s mov=" open"
+alias -s mpg=" open"
+alias -s m4v=" open"
+alias -s mp4=" open"
+alias -s rmvb=" open"
+alias -s MP4=" open"
+alias -s ogg=" open"
+alias -s ogv=" open"
+alias -s flv=" open"
+alias -s mkv=" open"
+alias -s wav=" open"
+alias -s mp3=" open"
+alias -s webm=" open"
 
-#眼科医院机器
-alias sshHospitalWebsite=". ~/servers/hospital_website"
-alias sshZydMeeting=". ~/servers/zyd_meeting"
+alias -s tif="open"
+alias -s tiff="open"
+alias -s png="open"
+alias -s jpg="open"
+alias -s jpeg="open"
+alias -s JPG="open"
+alias -s gif="open"
+alias -s svg="open"
+alias -s psd="open"
 
-#云喇叭机器
-alias sshShenbianBackend=". ~/servers/shenbian_backend"
-alias sshShenbianDev=". ~/servers/shenbian_dev"
-alias sshShenbianTest=". ~/servers/shenbian_test"
-alias sshShenbianMessageCenter=". ~/servers/shenbian_message_center"
-alias sshShenbianState2=". ~/servers/shenbian_state2"
-alias sshShenbianMobileApiF16D=". ~/servers/shenbian_mobile_api"
-alias sshShenbianMobileapi1=". ~/servers/shenbian_mobileapi1"
-alias sshShenbianMobileapi2=". ~/servers/shenbian_mobileapi2"
-alias sshShenbianMobileapiYinji=". ~/servers/shenbian_mobileapi_yinji"
-alias sshShenbianCRedis=". ~/servers/shenbian_shenbian_credis"
+alias -s com="open"
+alias -s de="open"
+alias -s org="open"
 
-alias deployApi1='mobileapi;bundle exec rake deploy:"to_remote[mobileapi1]" env=prd'
-alias deployApi2='mobileapi;bundle exec rake deploy:"to_remote[mobileapi2]" env=prd'
-alias deployF16D='mobileapi;bundle exec rake deploy:"to_remote[f16d]" env=prd'
-alias deployApi1Api2F16D='mobileapi;bundle exec rake deploy:"to_remote[mobileapi1 mobileapi2 f16d]" env=prd'
+alias -s rdf="rapper --count"
+alias -s owl="rapper --count"
+alias -s ttl="rapper -i turtle --count"
+alias -s tt="rapper -i turtle --count"
+alias -s n3="rapper -i turtle --count"
+alias -s nt="rapper -i ntriples --count"
+alias -s ntriples="rapper -i ntriples --count"
+alias -s ntriple="rapper -i ntriples --count"
 
-alias sshJike=". ~/servers/jike"
+alias -s ods="open"
+alias -s xls="open"
+alias -s xlsx="open"
+alias -s csv="open"
 
-#短信飞毛腿
-alias sshSmsRabbitMQ=". ~/servers/sms_rabbitmq"
-#关机
-alias reboot='sudo shutdown -r now'
-alias shutdown='sudo shutdown -h now'
+alias -s pot="open"
+alias -s odt="open"
+alias -s doc="open"
+alias -s docx="open"
+alias -s rtf="open"
+alias -s dot="dot -Tpng -O"
+
+alias -s ppt="open"
+alias -s pptx="open"
+alias -s odp="open"
+
+alias -s plist="plutil"
+alias -s log="open"
+
+alias -s sla="open"
+
+alias -s exe="open"
+
+alias -s tjp="tj3"
+alias -s asc="gpg"
+alias -s pem="openssl x509 -noout -text -in "
+
+alias zshrc="cd ~/zshrc"
+
+alias deploy-sf="ssh deploy@45.55.6.197"
+
+alias workspace="cd ~/workspace"
+alias trading="workspace && cd trading"
+
+alias dockerm="docker-machine"
+
+alias rscp='rsync -aP'
+alias rsmv='rsync -aP --remove-source-files'
+
+path() {
+  find . -iname "*$1*"
+}
+
+fix-pep8() {
+  echo "Resetting HEAD"
+  git reset HEAD
+  ruby -le "print '-'*30"
+  echo "Running autopep8"
+  git diff --name-only --diff-filter=AM | grep .py | xargs autopep8 --select=E1,W1 --in-place
+  ruby -le "print '-'*30"
+  echo "Adding all files"
+  git add -A
+}
+
+delete-line() {
+  gsed -i "$1 d" $2
+}
+
+remove-ssh-key() {
+  delete-line $1 ~/.ssh/known_hosts
+}
+
+flush-dns-cache() {
+  sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder;
+}
+
+reload-zsh() {
+  source ~/.zshrc
+}
+
+latest-dir(){
+LATEST_DIR="$(ls -1t | head -1)"
+echo "going into $LATEST_DIR"
+cd $LATEST_DIR
+}
+
+latest-topcoder-dir() {
+  cd /Users/hemantv/Dropbox/Programming/Topcoder/Workspace
+  latest-dir
+}
+
+topcoder-start(){
+  watchman -- trigger /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-html '*.html' -- open
+  watchman -- trigger /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-py '*.py' -- subl
+}
+
+topcoder-cleanup() {
+  watchman trigger-del /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-html
+  watchman trigger-del /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-py
+}
+
+# only show hidden files
+hidden() { \ls -a "$@" | grep '^\.'; }
+# function cd() { builtin cd "$*" }
+
+# function pwd() { builtin pwd && ls -l; }
+
+function start-calibre-server() {
+  calibre-server --with-library="~/Dropbox/Calibre Library"
+}
+
+function restart-dynamo-db() {
+    brew services stop dynamodb-local
+    rmtrash /usr/local/var/data/dynamodb-local/*
+    brew services start dynamodb-local
+}
+
+function mount-ssh() {
+  echo "Mounting $1:/home/hemantv on ~/mnt/$1"
+  mkdir -p ~/mnt/$1
+  sshfs -o transform_symlinks $1:/home/hemantv ~/mnt/$1
+  cp -R ~/zshrc/postmates/* ~/mnt/$1
+  cd ~/mnt/$1
+}
+
+function parallel-commands() {
+  for cmd in "$@"; do {
+    echo "Process \"$cmd\" started";
+    $cmd & pid=$!
+    PID_LIST+=" $pid";
+  } done
+
+  trap "kill $PID_LIST" SIGINT
+
+  echo "Parallel processes have started";
+
+  wait $PID_LIST
+
+  echo
+  echo "All processes have completed";
+}
+
+
+# FIND PROCESS
+function find-process(){
+  ps aux | grep -i $1 | grep -v grep
+}
+
+function kill-grep(){
+    cnt=$( find-process $1 | wc -l)
+
+    echo -e "\nSearching for '$1' -- Found" $cnt "Running Processes .. "
+    find-process $1
+
+    echo -e '\nTerminating' $cnt 'processes .. '
+    ps aux  |  grep -i $1 |  grep -v grep   | awk '{print $2}' | xargs kill -9
+    echo -e "Done!\n"
+
+    echo "Running search again:"
+    find-process "$1"
+    echo -e "\n"
+}
+
+function kill-port() {
+  cnt=$(lsof -i :$1 | wc -l)
+
+  echo -e "\nSearching for process on port '$1' -- Found" $cnt "Running Processes .. "
+  
+  lsof -ti:$1 | xargs -n1 kill -9
+}
+
+function start-notebook() {
+  jupyter notebook --notebook-dir="~/Dropbox/My Backup/Notebooks"
+}
+
+function clean-pyc() {
+  find . -name "*.pyc" -exec rm -f {} \;
+}
+
+function only-filenames() {
+  find $1 -not -path '*/\.*' -type f -exec basename {} \;
+}
+
+

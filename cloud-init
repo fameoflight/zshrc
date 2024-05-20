@@ -1,0 +1,30 @@
+#cloud-config
+# Update apt database on first boot
+# (ie run apt-get update)
+#
+# Default: true
+# Aliases: apt_update
+package_update: true
+
+# Upgrade the instance on first boot
+# (ie run apt-get upgrade)
+#
+# Default: false
+# Aliases: apt_upgrade
+package_upgrade: true
+
+# Reboot after package install/update if necessary
+# Default: false
+# Aliases: apt_reboot_if_required
+package_reboot_if_required: true
+
+packages:
+ - tree
+ - vim
+ - git
+ - zsh
+ - make
+ - postgresql
+ - libcurl4-openssl-dev
+ - zlib1g-dev
+

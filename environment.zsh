@@ -12,9 +12,15 @@ export ZSH_CACHE="$XDG_CACHE_HOME/zsh"
 mkdir -p $ZSH_CACHE
 
 # executable search path
+export PATH=$HOME/bin:$PATH
 export PATH=/usr/local/sbin:$PATH
 export PATH=$HOME/.local/bin:$PATH
 export PATH=$HOME/.local/sbin:$PATH
+export PATH=/usr/local/bin:$PATH
 
-# https://github.com/mxcl/homebrew/issues/11182
-export PYTHONPATH=/usr/local/lib/python2.7/site-packages:$PYTHONPATH
+############################### BEGIN METAWORK CONFIG ###############################
+export METAWORK_HOME="/Users/hemantv/.metawork"
+if [ -f "$METAWORK_HOME/shell/setup.sh" ]; then
+    . "$METAWORK_HOME/shell/setup.sh"
+fi
+############################### END METAWORK CONFIG ###############################
