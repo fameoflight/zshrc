@@ -110,7 +110,20 @@ linux-settings:
 github-setup:
 	# better editor for rebase
 	@npm install -g rebase-editor
+	@duti -s com.microsoft.VSCode .txt all
 	@duti -s com.microsoft.VSCode .rb all
+	@duti -s com.microsoft.VSCode .erb all
+	@duti -s com.microsoft.VSCode .ts all
+	@duti -s com.microsoft.VSCode .js all
+	@duti -s com.microsoft.VSCode .tsx all
+	@duti -s com.microsoft.VSCode .jsx all
+	@duti -s com.microsoft.VSCode .js all
+	@duti -s com.microsoft.VSCode .json all
+	@duti -s com.microsoft.VSCode .css all
+	@duti -s com.microsoft.VSCode .scss all
+	@duti -s com.microsoft.VSCode .sass all
+	@duti -s com.microsoft.VSCode .less all
+	@duti -s com.microsoft.VSCode .html all
 
 	@echo "Setting up Git Name Hemant Verma"
 	@git config --global user.name "Hemant Verma"
