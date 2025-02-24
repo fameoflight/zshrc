@@ -289,4 +289,11 @@ function only-filenames() {
   find $1 -not -path '*/\.*' -type f -exec basename {} \;
 }
 
+alias python="python3"
 
+
+function salient-inbound() {
+  cd ~/salient/taylor
+  source .venv/bin/activate
+  python telephony_inbound.py dev
+}
