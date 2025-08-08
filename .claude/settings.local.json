@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git submodule:*)",
+      "Bash(make:*)",
+      "Bash(git config:*)",
+      "Bash(chmod:*)",
+      "Bash(source:*)",
+      "Bash(list-scripts)",
+      "Bash(rm:*)",
+      "Bash(macos-optimize:*)",
+      "Bash(tree:*)",
+      "Bash(bash:*)",
+      "Bash(git count-objects:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,18 @@
+*-cache
+private.zsh
+history*
+.DS_Store
+zshrc.bak
+
+packages/*
+*.safariextz
+backup_dir/*
+Settings/Sublime3/User/Package Control.cache/*
+Settings/Sublime3/User/Package Control.last-run
+
+Settings/Sublime3/User/Package Control.merged-ca-bundle
+
+Settings/Sublime3/User/Package Control.system-ca-bundle
+grayscale/bin/*
+
+.vscode/ipch/*
