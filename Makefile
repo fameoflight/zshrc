@@ -397,7 +397,9 @@ github-setup:
 .PHONY: update clean
 update:
 	@echo "🔄 Updating repository and submodules..."
-	@git pull
+	@echo "Setting up tracking branch if needed..."
+	@git branch --set-upstream-to=origin/master master 2>/dev/null || echo "Branch tracking already set up"
+	@git pull origin master
 	@git submodule update --remote --merge
 	@if command -v brew >/dev/null 2>&1; then brew update && brew upgrade; fi
 
