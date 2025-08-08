@@ -1,6 +1,6 @@
 #!/bin/bash
-# Claude Settings Setup Script  
-# Restores Claude Code settings from the repository to ~/.claude
+# Claude Settings Symlink Setup Script  
+# Creates symlinks from ~/.claude to the repository Settings/Claude directory
 
 set -euo pipefail
 
@@ -8,7 +8,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZSH_CONFIG="$(dirname "$SCRIPT_DIR")"
 SETTINGS_DIR="$ZSH_CONFIG/Settings"
-CLAUDE_BACKUP_DIR="$SETTINGS_DIR/Claude"
+CLAUDE_SOURCE_DIR="$SETTINGS_DIR/Claude"
 CLAUDE_USER_DIR="$HOME/.claude"
 
 # Colors for output
@@ -37,22 +37,25 @@ log_error() {
 
 # Show help
 show_help() {
-    echo "🤖 Claude Settings Setup Script"
+    echo "🔗 Claude Settings Symlink Setup Script"
     echo ""
     echo "Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
     echo "  --help, -h     Show this help message"
-    echo "  --dry-run      Show what would be restored without doing it"
-    echo "  --force        Overwrite existing settings without prompting"
+    echo "  --dry-run      Show what would be linked without doing it"
+    echo "  --force        Remove existing files/links without prompting"
     echo ""
-    echo "What gets restored:"
+    echo "What gets symlinked:"
     echo "  • Global CLAUDE.md configuration"
     echo "  • Claude Code settings.json"
-    echo "  • Project configurations (if available)"
+    echo "  • Project configurations directory (if available)"
     echo ""
-    echo "Source location: $CLAUDE_BACKUP_DIR"
+    echo "Source location: $CLAUDE_SOURCE_DIR"
     echo "Target location: $CLAUDE_USER_DIR"
+    echo ""
+    echo "Note: This creates symlinks, so changes are immediately synchronized"
+    echo "      between the repository and Claude Code."
 }
 
 # Dry run and force modes
@@ -83,13 +86,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Function to prompt for confirmation
-confirm_overwrite() {
-    local file="$1"
+confirm_replace() {
+    local target="$1"
     if [ "$FORCE" = true ]; then
         return 0
     fi
     
-    echo -n "File $file already exists. Overwrite? [y/N]: "
+    echo -n "Target $target already exists. Replace with symlink? [y/N]: "
     read -r response
     case "$response" in
         [yY]|[yY][eE][sS])
@@ -101,18 +104,49 @@ confirm_overwrite() {
     esac
 }
 
+# Function to safely create symlink
+create_symlink() {
+    local source="$1"
+    local target="$2"
+    local name="$3"
+    
+    # Check if target already exists
+    if [ -e "$target" ] || [ -L "$target" ]; then
+        if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+            log_info "$name symlink already exists and is correct"
+            return 0
+        fi
+        
+        if ! confirm_replace "$(basename "$target")"; then
+            log_info "Skipping $name (user chose not to replace)"
+            return 0
+        fi
+        
+        log_info "Removing existing $name..."
+        if [ "$DRY_RUN" = false ]; then
+            rm -rf "$target"
+        fi
+    fi
+    
+    log_info "Creating $name symlink..."
+    if [ "$DRY_RUN" = false ]; then
+        ln -sf "$source" "$target"
+    fi
+    log_success "$name symlinked"
+}
+
 # Main setup function
-setup_claude_settings() {
-    log_info "Starting Claude settings setup..."
+setup_claude_symlinks() {
+    log_info "Starting Claude settings symlink setup..."
     
     if [ "$DRY_RUN" = true ]; then
         log_warning "DRY RUN MODE - No files will be modified"
     fi
     
-    # Check if backup directory exists
-    if [ ! -d "$CLAUDE_BACKUP_DIR" ]; then
-        log_error "No Claude backup found at $CLAUDE_BACKUP_DIR"
-        log_info "Run 'claude-backup' first to create a backup, or check if the Settings/Claude directory exists"
+    # Check if source directory exists
+    if [ ! -d "$CLAUDE_SOURCE_DIR" ]; then
+        log_error "No Claude settings found at $CLAUDE_SOURCE_DIR"
+        log_info "Make sure the Settings/Claude directory exists in the repository"
         exit 1
     fi
     
@@ -122,83 +156,44 @@ setup_claude_settings() {
     fi
     log_info "Target directory: $CLAUDE_USER_DIR"
     
-    # Essential files to restore
-    declare -a ESSENTIAL_FILES=(
+    # Files to symlink
+    declare -a SYMLINK_FILES=(
         "CLAUDE.md"
         "settings.json"
     )
     
-    # Restore essential files
-    for file in "${ESSENTIAL_FILES[@]}"; do
-        source_path="$CLAUDE_BACKUP_DIR/$file"
+    # Create symlinks for essential files
+    for file in "${SYMLINK_FILES[@]}"; do
+        source_path="$CLAUDE_SOURCE_DIR/$file"
         dest_path="$CLAUDE_USER_DIR/$file"
         
         if [ -f "$source_path" ]; then
-            # Check if destination exists and prompt if needed
-            if [ -f "$dest_path" ] && [ "$DRY_RUN" = false ]; then
-                if ! confirm_overwrite "$file"; then
-                    log_info "Skipping $file (user chose not to overwrite)"
-                    continue
-                fi
-            fi
-            
-            log_info "Restoring $file..."
-            if [ "$DRY_RUN" = false ]; then
-                cp "$source_path" "$dest_path"
-            fi
-            log_success "$file restored"
+            create_symlink "$source_path" "$dest_path" "$file"
         else
-            log_warning "$file not found in backup, skipping"
+            log_warning "$file not found in source, skipping"
         fi
     done
     
-    # Restore project configurations if available
-    if [ -d "$CLAUDE_BACKUP_DIR/projects" ]; then
-        log_info "Restoring project configurations..."
-        if [ "$DRY_RUN" = false ]; then
-            # Check if projects directory exists
-            if [ -d "$CLAUDE_USER_DIR/projects" ] && [ "$FORCE" = false ]; then
-                echo -n "Projects directory already exists. Merge configurations? [y/N]: "
-                read -r response
-                case "$response" in
-                    [yY]|[yY][eE][sS])
-                        # Proceed with merge
-                        ;;
-                    *)
-                        log_info "Skipping project configurations"
-                        return
-                        ;;
-                esac
-            fi
-            
-            # Copy project configurations
-            cp -r "$CLAUDE_BACKUP_DIR/projects" "$CLAUDE_USER_DIR/" 2>/dev/null || {
-                log_warning "Could not restore all project configurations"
-            }
-        fi
-        log_success "Project configurations restored"
+    # Symlink projects directory if available
+    if [ -d "$CLAUDE_SOURCE_DIR/projects" ]; then
+        create_symlink "$CLAUDE_SOURCE_DIR/projects" "$CLAUDE_USER_DIR/projects" "projects directory"
     else
-        log_info "No project configurations found in backup"
+        log_info "No projects directory found in source"
     fi
     
-    # Set proper permissions
-    if [ "$DRY_RUN" = false ]; then
-        chmod -R u+rw "$CLAUDE_USER_DIR"
-        find "$CLAUDE_USER_DIR" -type d -exec chmod u+x {} \;
-    fi
+    log_success "Claude settings symlinks setup completed!"
     
-    log_success "Claude settings setup completed!"
-    
-    # Show what was restored
+    # Show what was linked
     if [ "$DRY_RUN" = false ] && [ -d "$CLAUDE_USER_DIR" ]; then
-        log_info "Settings restored to: $CLAUDE_USER_DIR"
+        log_info "Symlinks created in: $CLAUDE_USER_DIR"
         echo ""
         echo "📁 Current Claude directory contents:"
-        tree "$CLAUDE_USER_DIR" -L 2 2>/dev/null || ls -la "$CLAUDE_USER_DIR"
+        ls -la "$CLAUDE_USER_DIR" | grep -E "(CLAUDE\.md|settings\.json|projects)" || echo "  No relevant symlinks found"
         echo ""
-        log_info "You may need to restart Claude Code for all settings to take effect"
+        log_info "Changes to files in $CLAUDE_SOURCE_DIR will be immediately"
+        log_info "reflected in Claude Code (no restart required for most changes)"
     fi
 }
 
 # Run the setup
-setup_claude_settings
+setup_claude_symlinks

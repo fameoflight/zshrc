@@ -45,13 +45,12 @@ help:
 	@echo "  ruby            - Install Ruby via RVM"
 	@echo "  xcode-setup     - Setup Xcode themes and bindings"
 	@echo "  vscode-setup    - Setup VS Code settings and extensions"
-	@echo "  claude-setup    - Setup Claude Code settings from backup"
+	@echo "  claude-setup    - Setup Claude Code settings via symlinks"
 	@echo "  github-setup    - Configure Git settings"
 	@echo ""
 	@echo "Backup targets:"
 	@echo "  xcode-backup    - Backup current Xcode settings"
 	@echo "  vscode-backup   - Backup current VS Code settings"
-	@echo "  claude-backup   - Backup current Claude Code settings"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  update          - Update repository and submodules"
@@ -233,10 +232,6 @@ xcode-backup:
 .PHONY: vscode-backup
 vscode-backup:
 	@bash "${ZSH}/scripts/vscode-backup.sh"
-
-.PHONY: claude-backup
-claude-backup:
-	@bash "${ZSH}/scripts/claude-backup.sh"
 
 .PHONY: claude-setup
 claude-setup:

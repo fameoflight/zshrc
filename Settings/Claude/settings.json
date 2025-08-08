@@ -11,7 +11,8 @@
       "Bash(bash:*)",
       "Bash(chmod:*)",
       "Bash(git:*)",
-      "Bash(make:*)"
+      "Bash(make:*)",
+      "WebFetch(domain:*)"
     ]
   }
 }

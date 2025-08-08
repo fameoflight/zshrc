@@ -109,8 +109,7 @@ list-scripts() {
   echo "  merge-pdf        - Merge multiple PDF files"
   echo "  macos-optimize   - Optimize macOS system settings for developers"
   echo "  dropbox-backup   - Move directory to Dropbox with symlink backup"
-  echo "  claude-backup    - Backup Claude Code settings to repository"
-  echo "  claude-setup     - Setup Claude Code settings from repository backup"
+  echo "  claude-setup     - Setup Claude Code settings via symlinks"
   echo "  list-scripts     - Show this help"
 }
 
@@ -131,24 +130,7 @@ dropbox-backup() {
   bash "$script_path" "$@"
 }
 
-# Claude Code settings backup utility
-claude-backup() {
-  local script_path="$ZSH_CONFIG/scripts/claude-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    echo "❌ Claude backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    echo "ℹ️  Making claude-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# Claude Code settings setup utility
+# Claude Code settings symlink setup utility
 claude-setup() {
   local script_path="$ZSH_CONFIG/scripts/claude-setup.sh"
   
