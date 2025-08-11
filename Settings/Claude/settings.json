@@ -12,7 +12,12 @@
       "Bash(chmod:*)",
       "Bash(git:*)",
       "Bash(make:*)",
-      "WebFetch(domain:*)"
+      "WebFetch(domain:*)",
+      "Bash(brew upgrade:*)",
+      "Bash(brew install:*)",
+      "Bash(brew link:*)",
+      "Bash(brew unlink:*)",
+      "Bash(curl:*)"
     ]
   }
 }

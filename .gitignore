@@ -16,3 +16,4 @@ Settings/Sublime3/User/Package Control.system-ca-bundle
 grayscale/bin/*
 
 .vscode/ipch/*
+/Settings/Claude/projects

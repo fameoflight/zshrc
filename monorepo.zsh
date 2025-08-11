@@ -56,6 +56,7 @@ function code-api() {
     if [[ -f "$dir/Gemfile" ]] && [[ -f "$dir/config/application.rb" ]]; then
       echo "Found Rails project: $dir"
       zed "$dir"
+      cd "$dir"
       return 0
     fi
     dir=$(dirname "$dir")
@@ -70,6 +71,7 @@ function code-web() {
   if [[ -n "$web_dir" ]] && [[ -f "$web_dir/package.json" ]]; then
     echo "Found web project: $web_dir"
     code "$web_dir"
+    cd "$web_dir"
     return 0
   fi
 
@@ -108,6 +110,7 @@ function code-flutter() {
     if [[ -f "$dir/pubspec.yaml" ]]; then
       echo "Found Flutter project: $dir"
       studio "$dir"
+      cd "$dir"
       return 0
     fi
     dir=$(dirname "$dir")
