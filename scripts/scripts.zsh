@@ -12,6 +12,11 @@ stack-monitors() {
   ruby "$ZSH_CONFIG/scripts/stacked-monitor.rb" "$@"
 }
 
+# LM Studio chat interface with conversation management
+lm-chat() {
+  ruby "$ZSH_CONFIG/scripts/lm-chat.rb" "$@"
+}
+
 # Calibre e-book manager updater
 calibre-update() {
   local script_path="$ZSH_CONFIG/scripts/calibre-update.sh"

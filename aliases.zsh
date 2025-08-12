@@ -302,4 +302,66 @@ function only-filenames() {
   find $1 -not -path '*/\.*' -type f -exec basename {} \;
 }
 
+# System monitoring shortcuts
+cpu() {
+  top -l 1 -s 0 | grep "CPU usage" | awk '{print "🚀 CPU: " $3 " user, " $5 " system, " $7 " idle"}'
+}
+
+sysmon() {
+  echo -e "${COLOR_BOLD}${COLOR_MAGENTA}🖥️  System Performance Monitor${COLOR_NC}"
+  echo -e "${COLOR_BOLD}═══════════════════════════════════════════${COLOR_NC}"
+  echo
+
+  # CPU Information
+  echo -e "${COLOR_BOLD}${COLOR_BLUE}🚀 CPU Usage:${COLOR_NC}"
+  echo -e "${COLOR_CYAN}$(top -l 1 -s 0 | grep "CPU usage" | awk '{print "  Current: " $3 " user, " $5 " system, " $7 " idle"}')${COLOR_NC}"
+  echo -e "${COLOR_CYAN}$(sysctl -n machdep.cpu.brand_string | sed 's/^/  Processor: /')${COLOR_NC}"
+  echo -e "${COLOR_CYAN}$(sysctl -n hw.ncpu | sed 's/^/  Cores: /')${COLOR_NC}"
+  echo
+
+  # Memory Information
+  echo -e "${COLOR_BOLD}${COLOR_GREEN}💾 Memory Usage:${COLOR_NC}"
+  local vm_stat_output=$(vm_stat)
+  local page_size=$(vm_stat | head -1 | sed 's/.*page size of \([0-9]*\).*/\1/')
+  local pages_free=$(echo "$vm_stat_output" | grep "Pages free" | awk '{print $3}' | sed 's/\.//')
+  local pages_active=$(echo "$vm_stat_output" | grep "Pages active" | awk '{print $3}' | sed 's/\.//')
+  local pages_inactive=$(echo "$vm_stat_output" | grep "Pages inactive" | awk '{print $3}' | sed 's/\.//')
+  local pages_wired=$(echo "$vm_stat_output" | grep "Pages wired down" | awk '{print $4}' | sed 's/\.//')
+  
+  if [[ -n "$page_size" && -n "$pages_free" ]]; then
+    local free_mb=$((pages_free * page_size / 1024 / 1024))
+    local active_mb=$((pages_active * page_size / 1024 / 1024))
+    local inactive_mb=$((pages_inactive * page_size / 1024 / 1024))
+    local wired_mb=$((pages_wired * page_size / 1024 / 1024))
+    local total_mb=$((free_mb + active_mb + inactive_mb + wired_mb))
+    local used_mb=$((total_mb - free_mb))
+    
+    echo -e "${COLOR_CYAN}  Total: ${total_mb}MB | Used: ${used_mb}MB | Free: ${free_mb}MB${COLOR_NC}"
+    echo -e "${COLOR_CYAN}  Active: ${active_mb}MB | Wired: ${wired_mb}MB | Inactive: ${inactive_mb}MB${COLOR_NC}"
+  fi
+  echo
+
+  # GPU Information
+  echo -e "${COLOR_BOLD}${COLOR_YELLOW}🎮 GPU Information:${COLOR_NC}"
+  if command -v powermetrics >/dev/null 2>&1; then
+    echo -e "${COLOR_CYAN}$(system_profiler SPDisplaysDataType | grep "Chipset Model:" | head -1 | sed 's/^      /  /')${COLOR_NC}"
+    echo -e "${COLOR_CYAN}  Usage: Use 'sudo powermetrics --samplers gpu_power -n 1 -i 1000' for detailed GPU metrics${COLOR_NC}"
+  else
+    echo -e "${COLOR_CYAN}$(system_profiler SPDisplaysDataType | grep "Chipset Model:" | head -1 | sed 's/^      /  /')${COLOR_NC}"
+    echo -e "${COLOR_YELLOW}  Note: Install powermetrics for detailed GPU usage monitoring${COLOR_NC}"
+  fi
+  echo
+
+  # Top CPU processes
+  echo -e "${COLOR_BOLD}${COLOR_RED}🔥 Top 5 CPU Processes:${COLOR_NC}"
+  ps -eo pcpu,comm | sort -nr | head -6 | tail -5 | while IFS= read -r line; do
+    echo -e "${COLOR_CYAN}  $line${COLOR_NC}"
+  done
+  echo
+
+  # Load averages
+  echo -e "${COLOR_BOLD}${COLOR_BLUE}📊 Load Averages:${COLOR_NC}"
+  echo -e "${COLOR_CYAN}$(uptime | sed 's/.*load averages: /  1min: /' | sed 's/ / | 5min: /' | sed 's/ / | 15min: /')${COLOR_NC}"
+}
+
 

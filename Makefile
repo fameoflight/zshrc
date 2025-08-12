@@ -214,6 +214,7 @@ editors:
 	@echo "📝 Installing editors and IDEs..."
 	-@brew install --cask --quiet visual-studio-code 2>/dev/null || echo "⚠️  VS Code install failed (may already be installed)"
 	-@brew install --cask --quiet zed 2>/dev/null || echo "⚠️  Zed install failed (may already be installed)"
+	-@brew install --cask --quiet lm-studio 2>/dev/null || echo "⚠️  LM Studio install failed (may already be installed)"
 	-@brew install --quiet vim 2>/dev/null || true        # Classic editor
 	-@brew install --quiet neovim 2>/dev/null || true     # Modern Vim
 

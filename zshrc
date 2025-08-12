@@ -22,6 +22,7 @@ sources+="$ZSH_CONFIG/git.zsh"
 sources+="$ZSH_CONFIG/erlang.zsh"
 sources+="$ZSH_CONFIG/rails.zsh"
 sources+="$ZSH_CONFIG/claude.zsh"
+sources+="$ZSH_CONFIG/ai.zsh"
 sources+="$ZSH_CONFIG/monorepo.zsh"
 sources+="$ZSH_CONFIG/scripts/scripts.zsh"
 
