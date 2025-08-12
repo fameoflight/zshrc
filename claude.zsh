@@ -1,41 +1,38 @@
 function claude() {
+  local RED='\033[0;31m'
+  local GREEN='\033[0;32m'
+  local YELLOW='\033[1;33m'
+  local BLUE='\033[0;34m'
+  local NC='\033[0m'
 
-  # check if /opt/homebrew/bin/claude exists 
-  # warn that this need to renamed to claude-code
+  # Check for claude in both /usr/local/bin and /opt/homebrew/bin
+  local claude_path=""
+  if [[ -f /usr/local/bin/claude ]]; then
+    claude_path="/usr/local/bin/claude"
+  elif [[ -f /opt/homebrew/bin/claude ]]; then
+    claude_path="/opt/homebrew/bin/claude"
+  fi
 
-  # if [[ -f /opt/homebrew/bin/claude ]]; then
-  #   echo "Error: /opt/homebrew/bin/claude exists, consider renaming it to claude-code."
-
-  #   return 1
-  # fi
-
-  # check if claude-code exists
-  if [[ -f /opt/homebrew/bin/claude-code ]]; then
-
-    # make sure this is code repository using git rev-parse --show-toplevel
-    # claude can only be executed in subdirectory of a git repository
+  if [[ -n "$claude_path" ]]; then
+    # Make sure this is a git repository
     if ! git rev-parse --show-toplevel > /dev/null 2>&1; then
-      echo "Error: claude can only be executed in a git repository."
+      echo -e "${RED}❌ Error: claude can only be executed in a git repository.${NC}"
       return 1
     fi
 
-    # go to the root of the git repository
+    # Go to the root of the git repository
     cd `git rev-parse --show-toplevel` || return 1
 
-    # make sure Claude.md or CLAUDE.md exists
+    # Check for CLAUDE.md
     if [[ ! -f CLAUDE.md ]]; then
-      echo "Warning: Claude.md or CLAUDE.md does not exist in the root of the git repository."
+      echo -e "${YELLOW}⚠️  Warning: CLAUDE.md does not exist in the root of the git repository.${NC}"
     fi
 
-    # make sure 
-    echo "Running claude-code in: `pwd`"
-    /opt/homebrew/bin/claude-code "$@"
+    echo -e "${BLUE}🚀 Running claude in: ${GREEN}`pwd`${NC}"
+    "$claude_path" "$@"
   else
-    echo "Error: /opt/homebrew/bin/claude-code does not exist."
-
-    echo "Please install claude-code from https://www.anthropic.com/claude-code"
-
-    echo "Or rename /opt/homebrew/bin/claude to claude-code if it exists."
+    echo -e "${RED}❌ Error: claude not found in /usr/local/bin or /opt/homebrew/bin${NC}"
+    echo -e "${BLUE}ℹ️  Please install claude from https://claude.ai/code${NC}"
     return 1
   fi
 }

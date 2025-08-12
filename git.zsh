@@ -6,9 +6,10 @@ git-check-branch() {
   local expected_branch="${1:-master}"
 
   if [[ "$current_branch" != "$expected_branch" ]]; then
-    echo "Error: You are on '$current_branch' branch, expected '$expected_branch'"
+    echo -e "${COLOR_RED}❌ Error: You are on '${COLOR_BOLD}${COLOR_YELLOW}$current_branch${COLOR_NC}${COLOR_RED}' branch, expected '${COLOR_BOLD}${COLOR_GREEN}$expected_branch${COLOR_NC}${COLOR_RED}'${COLOR_NC}"
     return 1
   fi
+  log_success "On expected branch: $expected_branch"
 }
 
 git-setup-branch() {
@@ -25,15 +26,17 @@ git-push() {
 git-push-remote() {
   git-setup-branch
   local branch=$(git rev-parse --abbrev-ref HEAD)
-  echo "Pushing $branch to origin..."
+  log_git_push "$branch to origin"
   git push --set-upstream origin "$branch" "$@"
+  log_success "Push completed!"
 }
 
 git-pull-remote() {
   git-setup-branch
   local branch=$(git rev-parse --abbrev-ref HEAD)
-  echo "Pulling $branch from origin..."
+  log_git_pull "$branch from origin"
   git pull origin "$branch" "$@"
+  log_success "Pull completed!"
 }
 
 # File operations
@@ -210,11 +213,12 @@ require_clean_work_tree() {
 
 git-clean-repo() {
   if [[ -d .git ]]; then
+    log_clean "repository (keeping .git)"
     find . -path ./.git -prune -o -type f -exec rm -f {} \; 2>/dev/null
     find . -path ./.git -prune -o -type d -empty -exec rmdir {} \; 2>/dev/null
-    echo "Repository cleaned (keeping .git)"
+    log_success "Repository cleaned (keeping .git)"
   else
-    echo "Error: Not in a git repository"
+    log_error "Not in a git repository"
     return 1
   fi
 }

@@ -5,6 +5,19 @@
 # VARIABLES
 # =============================================================================
 
+# Color definitions for enhanced output
+# These can also be inherited from logging.zsh if available
+RED := \033[0;31m
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+BLUE := \033[0;34m
+MAGENTA := \033[0;35m
+CYAN := \033[0;36m
+WHITE := \033[1;37m
+BOLD := \033[1m
+DIM := \033[2m
+NC := \033[0m# No Color
+
 # XDG Base Directory Specification
 XDG_CONFIG_HOME := ${HOME}/.config
 XDG_CACHE_HOME := ${HOME}/.cache
@@ -30,31 +43,53 @@ UNAME := $(shell uname)
 all: detect-platform
 
 help:
-	@echo "ZSH Configuration Setup"
+	@echo -e "$(BOLD)$(CYAN)🐚 ZSH Configuration Setup$(NC)"
 	@echo ""
-	@echo "Main targets:"
-	@echo "  all              - Auto-detect platform and run setup"
-	@echo "  mac             - Complete macOS setup"
-	@echo "  linux           - Complete Linux setup"
-	@echo "  install         - Install shell configurations only"
+	@echo -e "$(BOLD)$(BLUE)🎯 Main targets:$(NC)"
+	@echo -e "  $(GREEN)all$(NC)              - 🔍 Auto-detect platform and run setup"
+	@echo -e "  $(GREEN)mac$(NC)             - 🍎 Complete macOS setup"
+	@echo -e "  $(GREEN)linux$(NC)           - 🐧 Complete Linux setup"
+	@echo -e "  $(GREEN)install$(NC)         - 📦 Install shell configurations only"
 	@echo ""
-	@echo "Component targets:"
-	@echo "  brew            - Install/update Homebrew"
-	@echo "  dev-tools       - Install development tools"
-	@echo "  python          - Install Python and Poetry"
-	@echo "  ruby            - Install Ruby via RVM"
-	@echo "  xcode-setup     - Setup Xcode themes and bindings"
-	@echo "  vscode-setup    - Setup VS Code settings and extensions"
-	@echo "  claude-setup    - Setup Claude Code settings via symlinks"
-	@echo "  github-setup    - Configure Git settings"
+	@echo -e "$(BOLD)$(YELLOW)🍺 Homebrew targets:$(NC)"
+	@echo -e "  $(GREEN)brew$(NC)            - 🚀 Complete Homebrew setup (install + update + essentials)"
+	@echo -e "  $(GREEN)brew-install$(NC)    - 📥 Install Homebrew if missing"
+	@echo -e "  $(GREEN)brew-update$(NC)     - 🔄 Update Homebrew and all packages"
+	@echo -e "  $(GREEN)brew-essentials$(NC) - 📦 Install essential packages (zsh-completions, mas)"
 	@echo ""
-	@echo "Backup targets:"
-	@echo "  xcode-backup    - Backup current Xcode settings"
-	@echo "  vscode-backup   - Backup current VS Code settings"
+	@echo "🛠️  Development tools (modular):"
+	@echo "  dev-tools       - 🎯 Install all development tools"
+	@echo "  core-utils      - ⚡ Essential CLI utilities (tree, wget, ripgrep, etc.)"
+	@echo "  dev-utils       - 🔧 Development utilities (duti, fswatch, etc.)"
+	@echo "  modern-cli      - ✨ Modern CLI tools (zoxide, starship, fzf, claude-code)"
+	@echo "  editors         - 📝 Text editors and IDEs (VS Code, Zed, vim, neovim)"
 	@echo ""
-	@echo "Maintenance:"
-	@echo "  update          - Update repository and submodules"
-	@echo "  clean           - Clean up temporary files"
+	@echo "🐍 Language environments:"
+	@echo "  python          - 🐍 Install Python and Poetry"
+	@echo "  ruby            - 💎 Install Ruby via RVM"
+	@echo ""
+	@echo "⚙️  Application setup:"
+	@echo "  xcode-setup     - 🎨 Setup Xcode themes and bindings"
+	@echo "  xcode-update    - 📱 Install/update Xcode and Command Line Tools"
+	@echo "  vscode-setup    - 💻 Setup VS Code settings and extensions"
+	@echo "  claude-setup    - 🤖 Setup Claude Code settings via symlinks"
+	@echo "  github-setup    - 🐙 Configure Git settings"
+	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
+	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
+	@echo ""
+	@echo "💾 Backup targets:"
+	@echo "  xcode-backup    - 📋 Backup current Xcode settings"
+	@echo "  vscode-backup   - 📋 Backup current VS Code settings"
+	@echo ""
+	@echo "🩺 Troubleshooting:"
+	@echo "  fix-brew        - 🔧 Fix Homebrew issues (with permissions)"
+	@echo "  fix-brew-only   - ⭐ Fix Homebrew issues (without permissions) - recommended"
+	@echo "  brew-doctor     - 🩺 Run Homebrew diagnostics"
+	@echo "  brew-relink     - 🔗 Fix broken package symlinks"
+	@echo ""
+	@echo "🧹 Maintenance:"
+	@echo "  update          - 🔄 Update repository and submodules"
+	@echo "  clean           - 🧹 Clean up temporary files"
 
 detect-platform:
 ifeq ($(UNAME), Darwin)
@@ -72,7 +107,7 @@ endif
 # PLATFORM-SPECIFIC TARGETS
 # =============================================================================
 
-.PHONY: mac linux common
+.PHONY: mac linux common mac-settings macos-optimize
 mac: check-requirements common brew dev-tools python ruby github-tools mac-apps mac-settings
 
 linux: common linux-packages linux-settings
@@ -93,63 +128,94 @@ check-requirements:
 # PACKAGE MANAGERS
 # =============================================================================
 
-.PHONY: brew
-brew:
-	@echo "🍺 Setting up Homebrew..."
+# =============================================================================
+# HOMEBREW - Package manager setup and maintenance
+# =============================================================================
+
+.PHONY: brew brew-install brew-update brew-essentials
+brew: brew-install brew-update brew-essentials
+	@echo -e "$(BOLD)$(GREEN)✅ Homebrew setup complete$(NC)"
+
+# Install Homebrew if not present
+brew-install:
+	@echo -e "$(BLUE)🍺 Checking Homebrew installation...$(NC)"
 	@if ! command -v brew >/dev/null 2>&1; then \
-		echo "Installing Homebrew..."; \
+		echo -e "$(YELLOW)📥 Installing Homebrew...$(NC)"; \
 		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
 	else \
-		echo "Homebrew already installed"; \
+		echo -e "$(GREEN)✅ Homebrew already installed$(NC)"; \
 	fi
-	@echo "Updating Homebrew..."
-	-@brew update
-	-@brew upgrade
-	-@brew cleanup
-	-@brew install zsh-completions
-	-@brew install mas
+
+# Update Homebrew and all packages
+brew-update:
+	@echo -e "$(CYAN)🔄 Updating Homebrew and packages...$(NC)"
+	-@brew update    # Update Homebrew itself
+	-@brew upgrade   # Upgrade all installed packages
+	-@brew cleanup   # Clean up old versions
+
+# Install essential Homebrew packages for this setup
+brew-essentials:
+	@echo "📦 Installing essential packages..."
+	-@brew install zsh-completions  # ZSH tab completions
+	-@brew install mas              # Mac App Store CLI
 
 .PHONY: linux-packages
 linux-packages:
-	@echo "📦 Installing Linux packages..."
+	@echo "🐧 Installing Linux packages..."
+	@echo "🔄 Updating package lists..."
 	@sudo apt-get update
+	@echo "📦 Installing essential packages..."
 	@sudo apt-get install -y zsh git wget curl tree
 
 # =============================================================================
 # DEVELOPMENT TOOLS
 # =============================================================================
 
-.PHONY: dev-tools
-dev-tools: brew
-	@echo "🛠️  Installing development tools..."
-	# Core utilities
-	-@brew install tree
-	-@brew install wget
-	-@brew install watch
-	-@brew install ripgrep
-	-@brew install fd
-	-@brew install bat
-	-@brew install exa
-	-@brew install htop
-	-@brew install jq
-	-@brew install yq
-	
-	# Development utilities
-	-@brew install duti
-	-@brew install fswatch
-	-@brew install ssh-copy-id
-	-@brew install rmtrash
-	
-	# Modern CLI tools
-	-@brew install zoxide
-	-@brew install starship
-	-@brew install fzf
-	
-	# Editors and IDEs
-	-@brew install --cask visual-studio-code
-	-@brew install --cask zed
-	-@brew install vim
-	-@brew install neovim
+# =============================================================================
+# DEVELOPMENT TOOLS - Broken into smaller, focused targets
+# =============================================================================
+
+.PHONY: dev-tools core-utils dev-utils modern-cli editors
+dev-tools: brew core-utils dev-utils modern-cli editors
+	@echo -e "$(BOLD)$(GREEN)✅ Development tools installation complete$(NC)"
+
+# Install essential command-line utilities
+core-utils:
+	@echo -e "$(MAGENTA)📦 Installing core utilities...$(NC)"
+	-@brew install --quiet tree 2>/dev/null || true      # Directory tree viewer
+	-@brew install --quiet wget 2>/dev/null || true      # File downloader
+	-@brew install --quiet watch 2>/dev/null || true     # Command watcher
+	-@brew install --quiet ripgrep 2>/dev/null || true   # Fast text search
+	-@brew install --quiet fd 2>/dev/null || true        # Fast file finder
+	-@brew install --quiet bat 2>/dev/null || true       # Better cat with syntax highlighting
+	-@brew install --quiet eza 2>/dev/null || true       # Modern ls replacement
+	-@brew install --quiet htop 2>/dev/null || true      # Better top
+	-@brew install --quiet jq 2>/dev/null || true        # JSON processor
+	-@brew install --quiet yq 2>/dev/null || true        # YAML processor
+
+# Install development utilities
+dev-utils:
+	@echo "🔧 Installing development utilities..."
+	-@brew install --quiet duti 2>/dev/null || true          # Default app manager
+	-@brew install --quiet fswatch 2>/dev/null || true       # File watcher
+	-@brew install --quiet ssh-copy-id 2>/dev/null || true   # SSH key helper
+	-@brew install --quiet rmtrash 2>/dev/null || true       # Safe rm replacement
+
+# Install modern CLI tools and enhancements
+modern-cli:
+	@echo "✨ Installing modern CLI tools..."
+	-@brew install --quiet zoxide 2>/dev/null || true     # Smart cd replacement
+	-@brew install --quiet starship 2>/dev/null || true   # Cross-shell prompt
+	-@brew install --quiet fzf 2>/dev/null || true        # Fuzzy finder
+	-@brew install --quiet claude-code 2>/dev/null || true # Claude Code CLI
+
+# Install text editors and IDEs
+editors:
+	@echo "📝 Installing editors and IDEs..."
+	-@brew install --cask --quiet visual-studio-code 2>/dev/null || echo "⚠️  VS Code install failed (may already be installed)"
+	-@brew install --cask --quiet zed 2>/dev/null || echo "⚠️  Zed install failed (may already be installed)"
+	-@brew install --quiet vim 2>/dev/null || true        # Classic editor
+	-@brew install --quiet neovim 2>/dev/null || true     # Modern Vim
 
 .PHONY: python
 python: brew
@@ -273,20 +339,20 @@ vscode-setup:
 mac-apps: github-tools xcode-setup
 	@echo "🖥️  Installing macOS applications..."
 	# Productivity
-	-@brew install --cask iterm2
-	-@brew install --cask rectangle
-	-@brew install --cask raycast
-	-@brew install --cask finder-toolbar
+	-@brew install --cask --quiet iterm2 2>/dev/null || echo "⚠️  iTerm2 install failed (may already be installed)"
+	-@brew install --cask --quiet rectangle 2>/dev/null || echo "⚠️  Rectangle install failed (may already be installed)"
+	-@brew install --cask --quiet raycast 2>/dev/null || echo "⚠️  Raycast install failed (may already be installed)"
+	-@brew install --cask --quiet finder-toolbar 2>/dev/null || echo "⚠️  Finder Toolbar install failed (may already be installed)"
 	
 	# Development
-	-@brew install --cask docker
-	-@brew install --cask postman
-	-@brew install --cask tableplus
+	-@brew install --cask --quiet docker 2>/dev/null || echo "⚠️  Docker install failed (may already be installed)"
+	-@brew install --cask --quiet postman 2>/dev/null || echo "⚠️  Postman install failed (may already be installed)"
+	-@brew install --cask --quiet tableplus 2>/dev/null || echo "⚠️  TablePlus install failed (may already be installed)"
 	
 	# Utilities
-	-@brew install --cask the-unarchiver
-	-@brew install --cask keka
-	-@brew install --cask cleanmaster- cleaner
+	-@brew install --cask --quiet the-unarchiver 2>/dev/null || echo "⚠️  The Unarchiver install failed (may already be installed)"
+	-@brew install --cask --quiet keka 2>/dev/null || echo "⚠️  Keka install failed (may already be installed)"
+	-@brew install --cask --quiet cleanmaster- cleaner 2>/dev/null || echo "⚠️  CleanMaster install failed (may already be installed)"
 	
 	# Optional (commented out - uncomment as needed)
 	# -@brew install --cask slack
@@ -298,9 +364,20 @@ mac-apps: github-tools xcode-setup
 # =============================================================================
 
 .PHONY: mac-settings
-mac-settings:
-	@echo "⚙️  Configuring macOS settings..."
-	@if [ -f "osx.sh" ]; then bash osx.sh; fi
+mac-settings: macos-optimize
+
+# Optimize macOS system settings for developers
+.PHONY: macos-optimize
+macos-optimize:
+	@echo -e "$(MAGENTA)⚡ Optimizing macOS system settings...$(NC)"
+	@if [ -f "scripts/macos-optimize.sh" ]; then \
+		echo -e "$(CYAN)🚀 Running macOS optimization script...$(NC)"; \
+		bash scripts/macos-optimize.sh; \
+		echo -e "$(BOLD)$(GREEN)✅ macOS optimization complete$(NC)"; \
+	else \
+		echo -e "$(RED)❌ macOS optimization script not found at scripts/macos-optimize.sh$(NC)"; \
+		return 1; \
+	fi
 
 .PHONY: linux-settings
 linux-settings:
@@ -317,32 +394,38 @@ install: install-externals install-zsh install-bash
 
 install-zsh:
 	@echo "🐚 Installing ZSH configuration..."
+	@echo "🔗 Linking main zshrc file..."
 	@rm -rf "${HOME}/.zshrc"
 	@ln -sf ${HOME}/zshrc/zshrc ${HOME}/.zshrc
-	@echo "Creating directories..."
+	@echo "📁 Creating directories..."
 	@mkdir -p ${XDG_CONFIG_HOME}
 	@mkdir -p ${ZSH_CACHE}
 	@mkdir -p ${ZSH_LOCAL}/bin
 	@mkdir -p ${ZSH_LOCAL}/share
 	@mkdir -p functions.d
-	@echo "Creating zsh config symlink..."
+	@echo "🔗 Creating zsh config symlink..."
 	@if [ ! -L ${ZSH_CONFIG} ]; then ln -sf ${PWD} ${ZSH_CONFIG}; fi
-	@echo "Creating autojump symlink..."
+	@echo "🦘 Creating autojump symlink..."
 	@if [ -f "${PWD}/autojump/autojump" ] && [ ! -L ${ZSH_LOCAL}/bin/autojump ]; then \
 		ln -sf ${PWD}/autojump/autojump ${ZSH_LOCAL}/bin/autojump; \
 	fi
+	@echo "📝 Creating private config file..."
 	@touch private.zsh
 
 install-bash:
 	@echo "🐚 Installing Bash configuration..."
+	@echo "💾 Backing up existing bashrc..."
 	@if [ -f "${HOME}/.bashrc" ]; then mv ${HOME}/.bashrc ${PWD}/bashrc.bak; fi
+	@echo "🔗 Linking bashrc..."
 	@rm -rf "${HOME}/.bashrc"
 	@ln -sf ${PWD}/bashrc ${HOME}/.bashrc
+	@echo "🔗 Linking profile..."
 	@rm -rf "${HOME}/.profile"
 	@ln -sf ${PWD}/profile ${HOME}/.profile
 
 install-externals:
 	@echo "📦 Installing external dependencies..."
+	@echo "🔄 Updating git submodules..."
 	@git submodule update --init --recursive
 
 # =============================================================================
@@ -351,16 +434,20 @@ install-externals:
 
 .PHONY: github-setup
 github-setup:
-	@echo "🔧 Configuring Git..."
+	@echo "🐙 Configuring Git..."
+	@echo "👤 Setting user information..."
 	@git config --global --replace-all user.name "Hemant Verma"
 	@git config --global --replace-all user.email "fameoflight@gmail.com"
+	@echo "📝 Setting editors..."
 	@git config --global --replace-all core.editor "code --wait"
 	@git config --global --replace-all sequence.editor "code --wait"
+	@echo "🚀 Setting push behavior..."
 	@git config --global --replace-all push.default current
 	@git config --global --replace-all push.recurseSubmodules on-demand
+	@echo "🚫 Setting ignore file..."
 	@git config --global --replace-all core.excludesfile "${SETTINGS}/.git_ignore"
 	
-	@echo "Setting up Git aliases..."
+	@echo "⚡ Setting up Git aliases..."
 	@git config --global --replace-all alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 	@git config --global --replace-all alias.cp "cherry-pick"
 	@git config --global --replace-all alias.ri "rebase --interactive"
@@ -377,8 +464,9 @@ github-setup:
 	@git config --global --replace-all alias.sshow "!f() { git stash show stash^{/$$*} -p; }; f"
 	@git config --global --replace-all alias.sapply "!f() { git stash apply stash^{/$$*}; }; f"
 	
-	@echo "Configuring default editor associations..."
+	@echo "🔧 Configuring default editor associations..."
 	@if command -v duti >/dev/null 2>&1; then \
+		echo "📝 Setting VS Code as default for code files..."; \
 		duti -s com.microsoft.VSCode .rb all; \
 		duti -s com.microsoft.VSCode .js all; \
 		duti -s com.microsoft.VSCode .json all; \
@@ -392,51 +480,103 @@ github-setup:
 .PHONY: update clean
 update:
 	@echo "🔄 Updating repository and submodules..."
-	@echo "Setting up tracking branch if needed..."
-	@git branch --set-upstream-to=origin/master master 2>/dev/null || echo "Branch tracking already set up"
+	@echo "🔗 Setting up tracking branch if needed..."
+	@git branch --set-upstream-to=origin/master master 2>/dev/null || echo "✅ Branch tracking already set up"
+	@echo "⬇️  Pulling latest changes..."
 	@git pull origin master
+	@echo "📦 Updating submodules..."
 	@git submodule update --remote --merge
+	@echo "🍺 Updating Homebrew packages..."
 	@if command -v brew >/dev/null 2>&1; then brew update && brew upgrade; fi
 
 clean:
 	@echo "🧹 Cleaning up..."
+	@echo "🗑️  Removing backup files..."
 	@find . -name "*.bak" -delete
+	@echo "🗑️  Removing .DS_Store files..."
 	@find . -name ".DS_Store" -delete
+	@echo "🍺 Cleaning Homebrew cache..."
 	@if command -v brew >/dev/null 2>&1; then brew cleanup; fi
 
 # =============================================================================
 # TROUBLESHOOTING
 # =============================================================================
 
-.PHONY: fix-brew fix-permissions doctor
-fix-brew: fix-permissions
-	@echo "🩺 Fixing Homebrew..."
+# =============================================================================
+# HOMEBREW TROUBLESHOOTING - Fix common Homebrew issues
+# =============================================================================
+
+.PHONY: fix-brew fix-brew-only brew-doctor brew-relink xcode-update
+fix-brew: fix-permissions brew-doctor brew-update brew-relink xcode-update
+	@echo -e "$(BOLD)$(GREEN)✅ Homebrew troubleshooting complete$(NC)"
+
+# Fix Homebrew without changing system permissions (recommended)
+fix-brew-only: brew-doctor brew-update brew-relink xcode-update
+	@echo -e "$(BOLD)$(GREEN)✅ Homebrew troubleshooting complete (no permission changes)$(NC)"
+
+# Run Homebrew's built-in diagnostic tool
+brew-doctor:
+	@echo -e "$(BLUE)🩺 Running Homebrew diagnostics...$(NC)"
 	@if command -v brew >/dev/null 2>&1; then \
 		brew doctor; \
-		brew update; \
-		brew cleanup; \
+	else \
+		echo -e "$(RED)❌ Homebrew not found, reinstalling...$(NC)"; \
+		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
 	fi
+
+# Fix broken package symlinks
+brew-relink:
+	@echo -e "$(CYAN)🔗 Relinking Homebrew packages...$(NC)"
+	@if command -v brew >/dev/null 2>&1; then \
+		brew link --overwrite $$(brew list --formula) 2>/dev/null || echo -e "$(YELLOW)⚠️  Some packages may already be linked$(NC)"; \
+	else \
+		echo -e "$(RED)❌ Homebrew not available for relinking$(NC)"; \
+	fi
+
+# Install or update Xcode and Command Line Tools
+xcode-update:
+	@echo "🛠️  Managing Xcode installation..."
+	@if command -v mas >/dev/null 2>&1; then \
+		if ! mas list | grep -q "497799835"; then \
+			echo "📥 Installing Xcode via App Store..."; \
+			mas install 497799835 2>/dev/null || echo "⚠️  Xcode install failed - try manually from App Store"; \
+		else \
+			echo "🔄 Updating Xcode via App Store..."; \
+			mas upgrade 497799835 2>/dev/null || echo "⚠️  Xcode update failed - try manually from App Store"; \
+		fi; \
+	else \
+		echo "⚠️  mas not available - install with 'brew install mas'"; \
+	fi
+	@echo "🔧 Updating Xcode Command Line Tools..."
+	@softwareupdate --install --agree-to-license "Command Line Tools" 2>/dev/null || echo "ℹ️  Command Line Tools up to date or not available"
 
 fix-permissions:
 	@echo "🔒 Fixing permissions..."
-	@if [ -d "/usr/local" ]; then \
-		sudo chown -R $(whoami):admin /usr/local; \
-		sudo chmod -R g+w /usr/local; \
+	@if [ -d "/usr/local" ] && [ -w "/usr/local" ]; then \
+		echo "Fixing /usr/local permissions..."; \
+		sudo chown -R $(whoami):admin /usr/local 2>/dev/null || echo "⚠️  Could not fix /usr/local permissions (may not be needed)"; \
+		sudo chmod -R g+w /usr/local 2>/dev/null || true; \
+	else \
+		echo "ℹ️  /usr/local not writable or doesn't exist (normal on Apple Silicon)"; \
 	fi
 	@if [ -d "/opt/homebrew" ]; then \
-		sudo chown -R $(whoami):admin /opt/homebrew; \
-		sudo chmod -R g+w /opt/homebrew; \
+		echo "Fixing /opt/homebrew permissions..."; \
+		sudo chown -R $(whoami):admin /opt/homebrew 2>/dev/null || echo "⚠️  Could not fix /opt/homebrew permissions"; \
+		sudo chmod -R g+w /opt/homebrew 2>/dev/null || true; \
+	else \
+		echo "ℹ️  /opt/homebrew not found"; \
 	fi
 
 doctor:
 	@echo "🩺 Running system diagnostics..."
-	@echo "Platform: $(UNAME)"
-	@echo "Shell: $$SHELL"
-	@echo "ZSH Config: $(ZSH_CONFIG)"
-	@if command -v brew >/dev/null 2>&1; then echo "Homebrew: ✅"; else echo "Homebrew: ❌"; fi
-	@if command -v git >/dev/null 2>&1; then echo "Git: ✅"; else echo "Git: ❌"; fi
-	@if command -v python3 >/dev/null 2>&1; then echo "Python: ✅"; else echo "Python: ❌"; fi
-	@if command -v node >/dev/null 2>&1; then echo "Node.js: ✅"; else echo "Node.js: ❌"; fi
+	@echo "🖥️  Platform: $(UNAME)"
+	@echo "🐚 Shell: $$SHELL"
+	@echo "⚙️  ZSH Config: $(ZSH_CONFIG)"
+	@echo "🔍 Checking tools:"
+	@if command -v brew >/dev/null 2>&1; then echo "  🍺 Homebrew: ✅"; else echo "  🍺 Homebrew: ❌"; fi
+	@if command -v git >/dev/null 2>&1; then echo "  🐙 Git: ✅"; else echo "  🐙 Git: ❌"; fi
+	@if command -v python3 >/dev/null 2>&1; then echo "  🐍 Python: ✅"; else echo "  🐍 Python: ❌"; fi
+	@if command -v node >/dev/null 2>&1; then echo "  🟢 Node.js: ✅"; else echo "  🟢 Node.js: ❌"; fi
 
 # =============================================================================
 # UTILITIES

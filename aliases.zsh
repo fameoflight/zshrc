@@ -188,7 +188,7 @@ reload-zsh() {
 
 latest-dir(){
 LATEST_DIR="$(ls -1t | head -1)"
-echo "going into $LATEST_DIR"
+echo -e "${COLOR_GREEN}📂 Going into latest directory: ${COLOR_BOLD}${COLOR_BLUE}$LATEST_DIR${COLOR_NC}"
 cd $LATEST_DIR
 }
 
@@ -257,24 +257,34 @@ function find-process(){
 function kill-grep(){
     cnt=$( find-process $1 | wc -l)
 
-    echo -e "\nSearching for '$1' -- Found" $cnt "Running Processes .. "
+    echo ""
+    echo -e "${COLOR_BLUE}🔍 Searching for '$1' -- Found ${COLOR_BOLD}${COLOR_YELLOW}$cnt${COLOR_NC}${COLOR_BLUE} Running Processes${COLOR_NC}"
     find-process $1
 
-    echo -e '\nTerminating' $cnt 'processes .. '
+    echo ""
+    log_process_kill "$cnt processes matching '$1'"
     ps aux  |  grep -i $1 |  grep -v grep   | awk '{print $2}' | xargs kill -9
-    echo -e "Done!\n"
+    log_success "Process termination complete!"
+    echo ""
 
-    echo "Running search again:"
+    log_info "Running search again:"
     find-process "$1"
-    echo -e "\n"
+    echo ""
 }
 
 function kill-port() {
   cnt=$(lsof -i :$1 | wc -l)
 
-  echo -e "\nSearching for process on port '$1' -- Found" $cnt "Running Processes .. "
+  echo ""
+  echo -e "${COLOR_BLUE}🔍 Searching for process on port '${COLOR_BOLD}${COLOR_YELLOW}$1${COLOR_NC}${COLOR_BLUE}' -- Found ${COLOR_BOLD}${COLOR_YELLOW}$cnt${COLOR_NC}${COLOR_BLUE} Running Processes${COLOR_NC}"
   
-  lsof -ti:$1 | xargs -n1 kill -9
+  if [[ $cnt -gt 0 ]]; then
+    log_process_kill "processes on port $1"
+    lsof -ti:$1 | xargs -n1 kill -9
+    log_success "Port $1 cleared!"
+  else
+    log_success "No processes found on port $1"
+  fi
 }
 
 function start-notebook() {
@@ -282,7 +292,10 @@ function start-notebook() {
 }
 
 function clean-pyc() {
+  log_clean "Python bytecode files (.pyc)"
+  local count=$(find . -name "*.pyc" | wc -l)
   find . -name "*.pyc" -exec rm -f {} \;
+  log_success "Removed $count .pyc files"
 }
 
 function only-filenames() {

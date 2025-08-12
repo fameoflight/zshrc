@@ -11,6 +11,9 @@ export ZSH_CONFIG="$XDG_CONFIG_HOME/zsh"
 export ZSH_CACHE="$XDG_CACHE_HOME/zsh"
 mkdir -p $ZSH_CACHE
 
+# Homebrew configuration
+export HOMEBREW_NO_ENV_HINTS=1
+
 # executable search path
 export PATH=$HOME/bin:$PATH
 export PATH=/usr/local/sbin:$PATH

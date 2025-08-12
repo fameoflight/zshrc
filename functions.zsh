@@ -12,15 +12,20 @@ bindkey '^Xs' run-with-sudo
 # System utilities
 # Top memory processes (macOS compatible)
 memtop() {
-  ps -eo rss,comm | sort -nr | head -10
+  echo -e "${COLOR_BOLD}${COLOR_BLUE}💾 Top 10 Memory-Consuming Processes:${COLOR_NC}"
+  echo "─────────────────────────────────────────"
+  ps -eo rss,comm | sort -nr | head -10 | while IFS= read -r line; do
+    echo -e "${COLOR_CYAN}$line${COLOR_NC}"
+  done
 }
 
 # tmux utility - open new window in current directory
 tmux-neww-in-cwd() {
   if [[ -n "$TMUX" ]]; then
+    log_success "Opening new tmux window in: $(pwd)"
     tmux new-window -c "$(pwd)"
   else
-    echo "Not in a tmux session"
+    log_error "Not in a tmux session"
   fi
 }
 
@@ -28,33 +33,39 @@ tmux-neww-in-cwd() {
 # Safe tar extraction - prevents tarbombs
 etb() {
   if [[ -z "$1" ]]; then
-    echo "Usage: etb <tarfile>"
+    echo -e "${COLOR_BOLD}${COLOR_YELLOW}📦 Usage: etb <tarfile>${COLOR_NC}"
     return 1
   fi
   
+  log_archive_extract "$1"
   local files=$(tar tf "$1")
   local first_dir=$(echo "$files" | head -1 | cut -d'/' -f1)
   
   if [[ $(echo "$files" | grep -v "^$first_dir" | wc -l) -eq 0 ]]; then
+    log_success "Safe extraction (single directory)"
     tar xf "$1"
   else
     local dirname="${1%%.tar*}"
+    log_warning "Creating container directory: $dirname"
     mkdir -p "$dirname" && tar xf "$1" -C "$dirname"
   fi
+  log_complete "Extraction"
 }
 
 # Show newest files (macOS compatible)
 newest() {
+  echo -e "${COLOR_BOLD}${COLOR_BLUE}📅 20 Most Recently Modified Files:${COLOR_NC}"
+  log_separator
   find . -type f -not -path '*/\.*' -not -path '*/cache/*' -not -path '*/.git/*' -not -path '*/.hg/*' -print0 |
   xargs -0 stat -f "%m %N" | sort -nr | head -20 | while read timestamp file; do
-    echo "$(date -r $timestamp '+%Y-%m-%d %H:%M:%S') $file"
+    echo -e "${COLOR_CYAN}$(date -r $timestamp '+%Y-%m-%d %H:%M:%S')${COLOR_NC} ${COLOR_GREEN}$file${COLOR_NC}"
   done
 }
 
 # Backup file with timestamp
 buf() {
   if [[ -z "$1" ]]; then
-    echo "Usage: buf <filename>"
+    echo -e "${COLOR_BOLD}${COLOR_YELLOW}💾 Usage: buf <filename>${COLOR_NC}"
     return 1
   fi
   
@@ -70,17 +81,20 @@ buf() {
     local newname="${basename}.${datepart}.${extension}"
   fi
   
+  log_info "Creating backup..."
   cp -R "$oldname" "$newname"
-  echo "Backed up to: $newname"
+  log_file_backed_up "$newname"
 }
 
 # Create bz2 archive
 dobz2() {
   if [[ -z "$1" ]]; then
-    echo "Usage: dobz2 <file/directory>"
+    echo -e "${COLOR_BOLD}${COLOR_YELLOW}📦 Usage: dobz2 <file/directory>${COLOR_NC}"
     return 1
   fi
+  log_archive_create "$1.tar.bz2"
   tar cjf "$1.tar.bz2" "$1"
+  log_success "Archive created successfully!"
 }
 
 # ZSH utilities

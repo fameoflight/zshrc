@@ -11,27 +11,24 @@ SETTINGS_DIR="$ZSH_CONFIG/Settings"
 VSCODE_BACKUP_DIR="$SETTINGS_DIR/VSCode"
 VSCODE_USER_DIR="$HOME/Library/Application Support/Code/User"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+# Colors and logging functions are inherited from the shell environment
+# (loaded from logging.zsh in zshrc)
 
-# Helper functions
+# Helper functions for bash compatibility
 log_info() {
-    echo -e "ℹ️  $1"
+    echo -e "${COLOR_BLUE:-\033[0;34m}ℹ️  $1${COLOR_NC:-\033[0m}"
 }
 
 log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
+    echo -e "${COLOR_GREEN:-\033[0;32m}✅ $1${COLOR_NC:-\033[0m}"
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
+    echo -e "${COLOR_YELLOW:-\033[1;33m}⚠️  $1${COLOR_NC:-\033[0m}"
 }
 
 log_error() {
-    echo -e "${RED}❌ $1${NC}"
+    echo -e "${COLOR_RED:-\033[0;31m}❌ $1${COLOR_NC:-\033[0m}"
 }
 
 # Show help

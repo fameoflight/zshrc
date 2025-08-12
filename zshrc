@@ -7,6 +7,9 @@
 # first include of the environment
 source $HOME/.config/zsh/environment.zsh
 
+# Load logging functions first so they're available everywhere
+source $HOME/.config/zsh/logging.zsh
+
 typeset -ga sources
 sources+="$ZSH_CONFIG/environment.zsh"
 sources+="$ZSH_CONFIG/options.zsh"

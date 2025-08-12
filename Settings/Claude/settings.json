@@ -17,7 +17,8 @@
       "Bash(brew install:*)",
       "Bash(brew link:*)",
       "Bash(brew unlink:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(grep:*)"
     ]
   }
 }

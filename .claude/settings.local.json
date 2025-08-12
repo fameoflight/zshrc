@@ -13,7 +13,8 @@
       "Bash(bash:*)",
       "Bash(git count-objects:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

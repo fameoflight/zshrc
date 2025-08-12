@@ -1,6 +1,12 @@
 # Custom utility scripts and functions
 # This file contains wrapper functions for scripts in the scripts/ directory
 
+# Note: Color logging functions are now loaded from logging.zsh
+
+# =============================================================================
+# SCRIPT WRAPPER FUNCTIONS
+# =============================================================================
+
 # Monitor arrangement script for stacked external monitors
 stack-monitors() {
   ruby "$ZSH_CONFIG/scripts/stacked-monitor.rb" "$@"
@@ -11,12 +17,46 @@ calibre-update() {
   local script_path="$ZSH_CONFIG/scripts/calibre-update.sh"
   
   if [[ ! -f "$script_path" ]]; then
-    echo "❌ Calibre update script not found at $script_path"
+    log_error "Calibre update script not found at $script_path"
     return 1
   fi
   
   if [[ ! -x "$script_path" ]]; then
-    echo "ℹ️  Making calibre-update.sh executable..."
+    log_info "Making calibre-update.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# VS Code settings backup utility
+vscode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "VS Code backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making vscode-backup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# Xcode settings backup utility
+xcode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Xcode backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making xcode-backup.sh executable..."
     chmod +x "$script_path"
   fi
   
@@ -28,12 +68,12 @@ merge-pdf() {
   local script_path="$ZSH_CONFIG/scripts/merge_pdf.py"
   
   if [[ ! -f "$script_path" ]]; then
-    echo "❌ PDF merge script not found at $script_path"
+    log_error "PDF merge script not found at $script_path"
     return 1
   fi
   
   if [[ $# -eq 0 ]]; then
-    echo "Usage: merge-pdf <output.pdf> <input1.pdf> <input2.pdf> [...]"
+    echo -e "${COLOR_BLUE}📖 Usage: merge-pdf <output.pdf> <input1.pdf> <input2.pdf> [...]${COLOR_NC}"
     echo "       merge-pdf output.pdf *.pdf"
     return 1
   fi
@@ -46,12 +86,46 @@ macos-optimize() {
   local script_path="$ZSH_CONFIG/scripts/macos-optimize.sh"
   
   if [[ ! -f "$script_path" ]]; then
-    echo "❌ macOS optimize script not found at $script_path"
+    log_error "macOS optimize script not found at $script_path"
     return 1
   fi
   
   if [[ ! -x "$script_path" ]]; then
-    echo "ℹ️  Making macos-optimize.sh executable..."
+    log_info "Making macos-optimize.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# VS Code settings backup utility
+vscode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "VS Code backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making vscode-backup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# Xcode settings backup utility
+xcode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Xcode backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making xcode-backup.sh executable..."
     chmod +x "$script_path"
   fi
   
@@ -104,13 +178,15 @@ list-scripts() {
   
   echo ""
   echo "🔧 Available script functions:"
-  echo "  calibre-update   - Update Calibre to the latest version"
-  echo "  stack-monitors   - Configure stacked monitor setup"  
-  echo "  merge-pdf        - Merge multiple PDF files"
-  echo "  macos-optimize   - Optimize macOS system settings for developers"
-  echo "  dropbox-backup   - Move directory to Dropbox with symlink backup"
-  echo "  claude-setup     - Setup Claude Code settings via symlinks"
-  echo "  list-scripts     - Show this help"
+  echo "  📚 calibre-update   - Update Calibre to the latest version"
+  echo "  🖥️  stack-monitors   - Configure stacked monitor setup"  
+  echo "  📄 merge-pdf        - Merge multiple PDF files"
+  echo "  ⚡ macos-optimize   - Optimize macOS system settings for developers"
+  echo "  ☁️  dropbox-backup   - Move directory to Dropbox with symlink backup"
+  echo "  🤖 claude-setup     - Setup Claude Code settings via symlinks"
+  echo "  💾 vscode-backup    - Backup VS Code essential settings"
+  echo "  💾 xcode-backup     - Backup Xcode essential settings"
+  echo "  📜 list-scripts     - Show this help"
 }
 
 # Dropbox backup utility
@@ -118,12 +194,46 @@ dropbox-backup() {
   local script_path="$ZSH_CONFIG/scripts/dropbox-backup.sh"
   
   if [[ ! -f "$script_path" ]]; then
-    echo "❌ Dropbox backup script not found at $script_path"
+    log_error "Dropbox backup script not found at $script_path"
     return 1
   fi
   
   if [[ ! -x "$script_path" ]]; then
-    echo "ℹ️  Making dropbox-backup.sh executable..."
+    log_info "Making dropbox-backup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# VS Code settings backup utility
+vscode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "VS Code backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making vscode-backup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# Xcode settings backup utility
+xcode-backup() {
+  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Xcode backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making xcode-backup.sh executable..."
     chmod +x "$script_path"
   fi
   
@@ -135,12 +245,12 @@ claude-setup() {
   local script_path="$ZSH_CONFIG/scripts/claude-setup.sh"
   
   if [[ ! -f "$script_path" ]]; then
-    echo "❌ Claude setup script not found at $script_path"
+    log_error "Claude setup script not found at $script_path"
     return 1
   fi
   
   if [[ ! -x "$script_path" ]]; then
-    echo "ℹ️  Making claude-setup.sh executable..."
+    log_info "Making claude-setup.sh executable..."
     chmod +x "$script_path"
   fi
   
