@@ -866,6 +866,10 @@ class LMChat
     }
     
     full_response = ""
+    formatted_lines = []
+    
+    # Save cursor position after "🤖 Assistant: " prompt
+    print "\e7"  # Save cursor position (ESC 7)
     
     Net::HTTP.start(uri.host, uri.port) do |http|
       request = Net::HTTP::Post.new(uri)
@@ -891,9 +895,24 @@ class LMChat
               json_data = JSON.parse(data)
               if json_data["choices"] && json_data["choices"][0]["delta"]["content"]
                 content = json_data["choices"][0]["delta"]["content"]
-                print content  # Just print raw content, no formatting
                 full_response += content
-                $stdout.flush
+                
+                # Format the accumulated response and update display
+                if has_markdown_content?(full_response) || full_response.length > 50
+                  formatted_text = @markdown.render(full_response)
+                  
+                  # Restore cursor position and clear everything after
+                  print "\e8"     # Restore cursor position (ESC 8)
+                  print "\e[0J"   # Clear from cursor to end of screen
+                  
+                  # Print the formatted version
+                  print formatted_text
+                  $stdout.flush
+                else
+                  # For short text without markdown, just print raw
+                  print content
+                  $stdout.flush
+                end
               end
             rescue JSON::ParserError
               # Skip malformed JSON
@@ -904,13 +923,17 @@ class LMChat
       end
     end
     
-    # Just add a newline after streaming - no complex cursor positioning
-    puts ""
-    
-    # If there's markdown content, show formatted version separately
-    if full_response && !full_response.strip.empty? && has_markdown_content?(full_response)
-      # puts "🎨 Formatted:"
-      puts @markdown.render(full_response)
+    # Final formatting pass
+    if full_response && !full_response.strip.empty?
+      formatted_text = @markdown.render(full_response)
+      
+      # Restore cursor position and clear everything after
+      print "\e8"     # Restore cursor position (ESC 8)
+      print "\e[0J"   # Clear from cursor to end of screen
+      
+      # Print the final formatted version
+      print formatted_text
+      puts "" # Final newline
     end
     
     full_response

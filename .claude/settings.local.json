@@ -24,7 +24,9 @@
       "Bash(gem uninstall:*)",
       "Bash(gem install:*)",
       "Bash(gem update:*)",
-      "WebFetch(domain:stackoverflow.com)"
+      "WebFetch(domain:stackoverflow.com)",
+      "WebFetch(domain:www.lihaoyi.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
