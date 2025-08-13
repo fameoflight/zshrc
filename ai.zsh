@@ -209,7 +209,6 @@ lms-get() {
 # =============================================================================
 
 # Quick Claude Code alias
-alias claude='claude-code'
 alias cc='claude-code'
 
 # =============================================================================
@@ -239,8 +238,4 @@ if command -v lms >/dev/null 2>&1; then
   if lms status >/dev/null 2>&1; then
     log_info "🤖 LM Studio available"
   fi
-fi
-
-if command -v claude-code >/dev/null 2>&1; then
-  log_info "🤖 Claude Code available"
 fi
