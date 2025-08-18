@@ -11,25 +11,16 @@ SETTINGS_DIR="$ZSH_CONFIG/Settings"
 XCODE_BACKUP_DIR="$SETTINGS_DIR/XCode"
 XCODE_USER_DATA="$HOME/Library/Developer/Xcode/UserData"
 
-# Colors and logging functions are inherited from the shell environment
-# (loaded from logging.zsh in zshrc)
-
-# Helper functions for bash compatibility
-log_info() {
-    echo -e "${COLOR_BLUE:-\033[0;34m}ℹ️  $1${COLOR_NC:-\033[0m}"
-}
-
-log_success() {
-    echo -e "${COLOR_GREEN:-\033[0;32m}✅ $1${COLOR_NC:-\033[0m}"
-}
-
-log_warning() {
-    echo -e "${COLOR_YELLOW:-\033[1;33m}⚠️  $1${COLOR_NC:-\033[0m}"
-}
-
-log_error() {
-    echo -e "${COLOR_RED:-\033[0;31m}❌ $1${COLOR_NC:-\033[0m}"
-}
+# Source centralized logging functions
+if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
+    source "$ZSH_CONFIG/logging.zsh"
+else
+    # Fallback definitions if logging.zsh not available
+    log_info() { echo -e "\033[0;34mℹ️  $1\033[0m"; }
+    log_success() { echo -e "\033[0;32m✅ $1\033[0m"; }
+    log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
+    log_warning() { echo -e "\033[1;33m⚠️  $1\033[0m"; }
+fi
 
 # Show help
 show_help() {

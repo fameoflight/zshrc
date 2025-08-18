@@ -234,6 +234,70 @@ function fix-project() {
   fi
 }
 
+# Fix all projects in the monorepo
+function fix-all() {
+  local has_errors=0
+  local fixed_projects=()
+  
+  echo "🔧 Running fixes across all monorepo projects..."
+  echo
+  
+  # Try to fix API project
+  local api_dir=$(find-project-dir "api")
+  if [[ -n "$api_dir" ]] && [[ -f "$api_dir/Gemfile" ]]; then
+    echo "🚀 Fixing API project..."
+    if fix-api; then
+      fixed_projects+=("✅ API")
+    else
+      fixed_projects+=("❌ API (failed)")
+      has_errors=1
+    fi
+    echo
+  fi
+  
+  # Try to fix Web project  
+  local web_dir=$(find-project-dir "web")
+  if [[ -n "$web_dir" ]] && [[ -f "$web_dir/package.json" ]]; then
+    echo "🚀 Fixing Web project..."
+    if fix-web; then
+      fixed_projects+=("✅ Web")
+    else
+      fixed_projects+=("❌ Web (failed)")
+      has_errors=1
+    fi
+    echo
+  fi
+  
+  # Try to fix Flutter project
+  local flutter_dir=$(find-project-dir "flutter")
+  if [[ -n "$flutter_dir" ]] && [[ -f "$flutter_dir/pubspec.yaml" ]]; then
+    echo "🚀 Fixing Flutter project..."
+    if fix-flutter; then
+      fixed_projects+=("✅ Flutter")
+    else
+      fixed_projects+=("❌ Flutter (failed)")
+      has_errors=1
+    fi
+    echo
+  fi
+  
+  # Summary
+  if [[ ${#fixed_projects[@]} -eq 0 ]]; then
+    echo "⚠️  No projects found to fix"
+    return 1
+  else
+    echo "📋 Fix Summary:"
+    printf '%s\n' "${fixed_projects[@]}"
+    echo
+    if [[ $has_errors -eq 0 ]]; then
+      echo "🎉 All projects fixed successfully!"
+    else
+      echo "⚠️  Some projects had errors - check output above"
+      return 1
+    fi
+  fi
+}
+
 function railway-shell() {
   local api_dir=$(find-project-dir "api")
   if [[ -n "$api_dir" ]] && [[ -f "$api_dir/Gemfile" ]]; then

@@ -80,6 +80,7 @@ help:
 	@echo "💾 Backup targets:"
 	@echo "  xcode-backup    - 📋 Backup current Xcode settings"
 	@echo "  vscode-backup   - 📋 Backup current VS Code settings"
+	@echo "  iterm-backup    - 📋 Backup current iTerm2 settings"
 	@echo ""
 	@echo "🩺 Troubleshooting:"
 	@echo "  fix-brew        - 🔧 Fix Homebrew issues (with permissions)"
@@ -299,6 +300,10 @@ xcode-backup:
 .PHONY: vscode-backup
 vscode-backup:
 	@bash "${ZSH}/scripts/vscode-backup.sh"
+
+.PHONY: iterm-backup
+iterm-backup:
+	@bash "${ZSH}/scripts/iterm-backup.sh"
 
 .PHONY: claude-setup
 claude-setup:

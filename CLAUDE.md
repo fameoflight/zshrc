@@ -11,15 +11,16 @@ This is a ZSH configuration repository containing modular shell configuration fi
 The configuration follows a modular design where the main `zshrc` file sources multiple `.zsh` files in a specific order:
 
 ### Core Configuration Flow
-1. `environment.zsh` - Environment variables and paths
-2. `options.zsh` - Shell options and settings
-3. `prompt.zsh` - Prompt configuration
-4. `functions.zsh` - Custom functions and key bindings
-5. `aliases.zsh` - Command aliases and suffix handlers
-6. Platform-specific files (e.g., `darwin.zsh` for macOS)
-7. Application-specific configurations (`git.zsh`, `rails.zsh`, `claude.zsh`, etc.)
-8. `completion.zsh` - Tab completion setup
-9. `private.zsh` - User-specific private configurations
+1. `logging.zsh` - **Centralized logging functions (loaded first for universal access)**
+2. `environment.zsh` - Environment variables and paths
+3. `options.zsh` - Shell options and settings
+4. `prompt.zsh` - Prompt configuration
+5. `functions.zsh` - Custom functions and key bindings
+6. `aliases.zsh` - Command aliases and suffix handlers
+7. Platform-specific files (e.g., `darwin.zsh` for macOS)
+8. Application-specific configurations (`git.zsh`, `rails.zsh`, `claude.zsh`, etc.)
+9. `completion.zsh` - Tab completion setup
+10. `private.zsh` - User-specific private configurations
 
 ### Key Components
 
@@ -158,6 +159,7 @@ The repository is organized with the following structure:
 ├── zshrc                         # Main ZSH configuration entry point
 │
 ├── Core ZSH Configuration Files:
+├── logging.zsh                   # Centralized logging functions (loaded first)
 ├── environment.zsh               # Environment variables and PATH management
 ├── options.zsh                   # ZSH shell options and settings
 ├── prompt.zsh                    # Command prompt configuration
@@ -239,7 +241,7 @@ The repository is organized with the following structure:
 
 #### Core Configuration Flow
 The main `zshrc` file sources these files in order:
-1. `environment.zsh` → `options.zsh` → `prompt.zsh` → `functions.zsh` → `aliases.zsh`
+1. `logging.zsh` → `environment.zsh` → `options.zsh` → `prompt.zsh` → `functions.zsh` → `aliases.zsh`
 2. Platform detection: `darwin.zsh` (macOS) or `linux.zsh`
 3. Application integrations: `git.zsh`, `rails.zsh`, `claude.zsh`, etc.
 4. Completion system: `completion.zsh`
@@ -321,24 +323,79 @@ The main `zshrc` file sources these files in order:
 - **Keep color usage consistent** across all scripts and makefiles
 - **Test color output** in different terminal environments to ensure compatibility
 
-### Using Built-in Color Logging Functions
-The repository includes pre-defined color logging functions in `scripts/scripts.zsh` that can be used in any ZSH script or function:
+### Using Centralized Logging Functions
 
+**IMPORTANT**: Always use the centralized logging functions defined in `logging.zsh` for consistent output across all scripts and functions.
+
+#### Core Logging Functions
 ```bash
-# Available logging functions:
+# Available in ALL ZSH contexts (functions, scripts, aliases):
 log_success "Installation completed successfully"     # Green + ✅
-log_error "Failed to find required file"            # Red + ❌  
+log_error "Failed to find required file"            # Red + ❌ (to stderr)
 log_warning "Backup recommended before proceeding"   # Yellow + ⚠️
 log_info "Checking system requirements"              # Blue + ℹ️
 log_progress "Downloading updates"                   # Cyan + 🔄
 log_section "System Configuration"                   # Magenta + 🔧
+log_debug "Debugging information"                    # Dim + 🐛 (only if DEBUG=1)
+```
 
-# Example usage in a function:
+#### Specialized Logging Functions
+```bash
+# File operations:
+log_file_created "/path/to/file"                    # Green + 📄
+log_file_updated "/path/to/file"                    # Blue + 📝
+log_file_backed_up "/path/to/file"                  # Cyan + 💾
+
+# System operations:
+log_install "package-name"                          # Green + 📦
+log_clean "cache files"                             # Cyan + 🧹
+log_update "system packages"                        # Blue + 🔄
+
+# Platform-specific:
+log_brew "Installing packages"                       # Yellow + 🍺
+log_git "Committing changes"                        # Magenta + 🐙
+log_python "Running script"                         # Blue + 🐍
+log_ruby "Installing gems"                          # Red + 💎
+log_macos "System configuration"                    # Blue + 🍎
+log_linux "Package installation"                   # Blue + 🐧
+
+# Utility functions:
+log_separator                                       # Print separator line
+log_complete "Setup process"                        # Celebration message
+log_banner "Script Title"                          # Header with separator
+```
+
+#### Usage in Bash Scripts
+For bash scripts, source the logging functions at the top:
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Source logging functions
+if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
+    source "$ZSH_CONFIG/logging.zsh"
+else
+    # Fallback definitions if logging.zsh not available
+    log_info() { echo -e "\033[0;34mℹ️  $1\033[0m"; }
+    log_success() { echo -e "\033[0;32m✅ $1\033[0m"; }
+    log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
+    log_warning() { echo -e "\033[1;33m⚠️  $1\033[0m"; }
+fi
+
+# Now use logging functions throughout script
+log_info "Starting script execution"
+log_success "Script completed successfully"
+```
+
+#### Example Usage in Functions
+```bash
 my_function() {
-  log_info "Starting configuration process"
+  log_section "Starting Configuration Process"
+  log_info "Checking system requirements"
   
   if command -v brew >/dev/null 2>&1; then
     log_success "Homebrew found"
+    log_brew "Updating package lists"
   else
     log_error "Homebrew not installed"
     return 1
@@ -347,11 +404,19 @@ my_function() {
   log_progress "Installing packages"
   # ... installation logic ...
   
-  log_success "Configuration complete"
+  log_file_created "/path/to/config"
+  log_complete "Configuration process"
 }
 ```
 
-These functions automatically handle color codes, emojis, and proper formatting, ensuring consistent visual styling across all scripts.
+#### Mandatory Usage Rules
+- **NEVER use raw `echo` with color codes** - always use logging functions
+- **NEVER redefine color constants** - use the ones from `logging.zsh`
+- **ALWAYS use `log_error`** for error messages (outputs to stderr)
+- **ALWAYS use appropriate semantic functions** (e.g., `log_git` for Git operations)
+- **Use `log_debug`** for debug information that should be hidden by default
+
+These functions automatically handle color codes, emojis, proper formatting, and stderr redirection for errors, ensuring consistent visual styling across all scripts.
 
 ### Color Scheme Philosophy
 - **Visual Hierarchy**: Colors create clear information hierarchy and improve scanability

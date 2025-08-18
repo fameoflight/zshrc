@@ -68,6 +68,23 @@ xcode-backup() {
   bash "$script_path" "$@"
 }
 
+# iTerm2 settings backup utility
+iterm-backup() {
+  local script_path="$ZSH_CONFIG/scripts/iterm-backup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "iTerm2 backup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making iterm-backup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
 # PDF merger script (Python)
 merge-pdf() {
   local script_path="$ZSH_CONFIG/scripts/merge_pdf.py"
@@ -191,6 +208,7 @@ list-scripts() {
   echo "  🤖 claude-setup     - Setup Claude Code settings via symlinks"
   echo "  💾 vscode-backup    - Backup VS Code essential settings"
   echo "  💾 xcode-backup     - Backup Xcode essential settings"
+  echo "  💾 iterm-backup     - Backup iTerm2 essential settings"
   echo "  📜 list-scripts     - Show this help"
 }
 

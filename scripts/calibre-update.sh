@@ -19,29 +19,20 @@ readonly TMP_DMG="/tmp/calibre.dmg"
 readonly APP_NAME="calibre.app"
 readonly INSTALL_DIR="/Applications"
 
-# Colors for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly NC='\033[0m' # No Color
+# Source centralized logging functions
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ZSH_CONFIG="$(dirname "$SCRIPT_DIR")"
 
-# Logging functions
-log_info() {
-    echo -e "${BLUE}ℹ️  $1${NC}"
-}
-
-log_success() {
-    echo -e "${GREEN}✅ $1${NC}"
-}
-
-log_warn() {
-    echo -e "${YELLOW}⚠️  $1${NC}"
-}
-
-log_error() {
-    echo -e "${RED}❌ $1${NC}" >&2
-}
+if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
+    source "$ZSH_CONFIG/logging.zsh"
+else
+    # Fallback definitions if logging.zsh not available
+    log_info() { echo -e "\033[0;34mℹ️  $1\033[0m"; }
+    log_success() { echo -e "\033[0;32m✅ $1\033[0m"; }
+    log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
+    log_warning() { echo -e "\033[1;33m⚠️  $1\033[0m"; }
+    log_warn() { log_warning "$1"; }  # Backward compatibility alias
+fi
 
 # Exit with error message
 error_exit() {

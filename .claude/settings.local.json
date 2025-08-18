@@ -26,7 +26,9 @@
       "Bash(gem update:*)",
       "WebFetch(domain:stackoverflow.com)",
       "WebFetch(domain:www.lihaoyi.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(defaults read:*)",
+      "Bash(iterm-backup:*)"
     ],
     "deny": []
   }

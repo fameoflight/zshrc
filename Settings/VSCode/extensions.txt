@@ -12,6 +12,7 @@ dart-code.dart-code
 dart-code.flutter
 davidanson.vscode-markdownlint
 dbaeumer.vscode-eslint
+dnicolson.binary-plist
 donjayamanne.githistory
 dsobotta.godot-rust-vscode
 esbenp.prettier-vscode
