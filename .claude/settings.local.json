@@ -28,7 +28,9 @@
       "WebFetch(domain:www.lihaoyi.com)",
       "WebFetch(domain:github.com)",
       "Bash(defaults read:*)",
-      "Bash(iterm-backup:*)"
+      "Bash(iterm-backup:*)",
+      "Bash(displayplacer:*)",
+      "Bash(ruby:*)"
     ],
     "deny": []
   }

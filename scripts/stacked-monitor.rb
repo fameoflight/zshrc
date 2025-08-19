@@ -16,6 +16,12 @@ class MonitorSetup
   def run
     validate_dependencies
     displays_info = get_display_info
+    
+    # Show current setup first if debug is enabled
+    if @debug
+      show_current_setup(displays_info)
+    end
+    
     validate_display_count(displays_info)
     
     primary_display, monitor_1, monitor_2 = identify_displays(displays_info)
@@ -96,7 +102,7 @@ class MonitorSetup
       hertz: display.match(/Hertz: (.+)/)&.[](1),
       color_depth: display.match(/Color Depth: (.+)/)&.[](1),
       scaling: display.match(/Scaling: (.+)/)&.[](1),
-      origin: display.match(/Origin: \\((.+)\\)/)&.[](1),
+      origin: display.match(/Origin: \(([^)]+)\)/)&.[](1),
       rotation: display.match(/Rotation: (.+)/)&.[](1),
       size_inches: size_inches
     }
@@ -155,6 +161,60 @@ class MonitorSetup
     end
   end
 
+  def show_current_setup(displays_info)
+    puts "\n🔍 CURRENT MONITOR SETUP DEBUG INFO"
+    puts "=" * 50
+    
+    displays_info.each_with_index do |display, i|
+      puts "\nDisplay #{i + 1}:"
+      puts "  Type: #{display[:type]}"
+      puts "  Size: #{display[:size_inches]}\" #{display[:size_inches] == 16 ? '(16-inch monitor)' : '(primary candidate)'}"
+      puts "  Resolution: #{display[:resolution]}"
+      puts "  Current Position: #{display[:origin] || 'Unknown'}"
+      puts "  Persistent ID: #{display[:persistent_id]}"
+      puts "  Main Display: #{display[:main] ? '✅ Yes' : '❌ No'}"
+      puts "  Hertz: #{display[:hertz]}"
+      puts "  Color Depth: #{display[:color_depth]}"
+      puts "  Scaling: #{display[:scaling]}"
+      puts "  Rotation: #{display[:rotation]}"
+    end
+
+    # Show spatial arrangement
+    puts "\n📍 SPATIAL ARRANGEMENT:"
+    sorted_displays = displays_info.sort_by { |d| [d[:origin]&.split(',')&.first&.to_i || 0, d[:origin]&.split(',')&.last&.to_i || 0] }
+    
+    sorted_displays.each do |display|
+      x, y = display[:origin]&.split(',')&.map(&:to_i) || [0, 0]
+      width, height = parse_resolution(display[:resolution])
+      puts "  #{display[:type]} (#{display[:size_inches]}\"):"
+      puts "    Position: (#{x}, #{y})"
+      puts "    Size: #{width} x #{height}"
+      puts "    Right edge: #{x + width}, Bottom edge: #{y + height}"
+      puts "    #{display[:main] ? '👑 MAIN DISPLAY' : ''}"
+    end
+
+    # Analyze potential issues
+    puts "\n⚠️  POTENTIAL ISSUES:"
+    main_display = displays_info.find { |d| d[:main] }
+    if main_display && main_display[:size_inches] == 16
+      puts "  🚨 Main display is a 16-inch monitor (should be the non-16\" display)"
+    end
+
+    # Check if displays are overlapping or have gaps
+    puts "\n🔧 RECOMMENDED CONFIGURATION:"
+    sixteen_inch = displays_info.select { |d| d[:size_inches] == 16 }
+    non_sixteen = displays_info.reject { |d| d[:size_inches] == 16 }.first
+    
+    if sixteen_inch.length == 2 && non_sixteen
+      puts "  Primary: #{non_sixteen[:type]} should be at (0,0)"
+      puts "  Stack: Two 16\" monitors should be to the right, vertically stacked"
+    else
+      puts "  ❌ Unexpected display configuration"
+    end
+    
+    puts "\n" + "=" * 50
+  end
+
   def configure_positions(primary_display, monitor_1, monitor_2)
     log('Calculating monitor positions...', :debug)
     
@@ -169,17 +229,33 @@ class MonitorSetup
     # Position monitors to the right of primary, stacked
     stack_x = primary_width + SPACING
     
-    # Center the stack vertically relative to primary
+    # Calculate stack positioning
     total_stack_height = mon1_height + mon2_height
-    stack_center_offset = (primary_height - total_stack_height) / 2
     
-    # Monitor 1 (bottom of stack)
-    monitor_1_y = stack_center_offset
+    if @debug
+      log("Primary display: #{primary_width}x#{primary_height} (Y: 0 to #{primary_height})", :debug)
+      log("Stack total height: #{total_stack_height} (#{mon1_height} + #{mon2_height})", :debug)
+      log("Stack position X: #{stack_x} (primary width #{primary_width} + spacing #{SPACING})", :debug)
+    end
+    
+    # Center the stack vertically relative to primary display center
+    primary_center_y = primary_height / 2
+    stack_center_y = primary_center_y - (total_stack_height / 2)
+    
+    log("Primary center Y: #{primary_center_y}, Stack will start at Y: #{stack_center_y}", :debug) if @debug
+    
+    # Monitor 1 (bottom of stack) - starts at stack_center_y
+    monitor_1_y = stack_center_y + mon2_height  # Bottom monitor goes below top monitor
     monitor_1[:origin] = "#{stack_x},#{monitor_1_y}"
     
-    # Monitor 2 (top of stack)
-    monitor_2_y = stack_center_offset - mon2_height
+    # Monitor 2 (top of stack) - goes above monitor 1
+    monitor_2_y = stack_center_y
     monitor_2[:origin] = "#{stack_x},#{monitor_2_y}"
+
+    if @debug
+      log("Monitor 2 (top): Y #{monitor_2_y} to #{monitor_2_y + mon2_height}", :debug)
+      log("Monitor 1 (bottom): Y #{monitor_1_y} to #{monitor_1_y + mon1_height}", :debug)
+    end
 
     log("Primary position: #{primary_display[:origin]}", :debug)
     log("Monitor 1 position: #{monitor_1[:origin]}", :debug)  
