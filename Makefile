@@ -48,13 +48,18 @@ MAC_APPS_CASK := iterm2 rectangle raycast finder-toolbar docker postman tableplu
 
 .DEFAULT_GOAL := help
 
-.PHONY: all help
+.PHONY: all help setup
 all: detect-platform
+
+setup: install app-settings ai-tools
+	@echo -e "$(BOLD)$(GREEN)✅ Complete system setup finished$(NC)"
+	@echo -e "$(BOLD)$(CYAN)🎉 Your development environment is ready!$(NC)"
 
 help:
 	@echo -e "$(BOLD)$(CYAN)🐚 ZSH Configuration Setup$(NC)"
 	@echo ""
 	@echo -e "$(BOLD)$(BLUE)🎯 Main targets:$(NC)"
+	@echo -e "  $(GREEN)setup$(NC)           - 🚀 Complete setup - restore all settings and configurations"
 	@echo -e "  $(GREEN)all$(NC)              - 🔍 Auto-detect platform and run setup"
 	@echo -e "  $(GREEN)mac$(NC)             - 🍎 Complete macOS setup"
 	@echo -e "  $(GREEN)linux$(NC)           - 🐧 Complete Linux setup"
@@ -85,6 +90,18 @@ help:
 	@echo "  github-setup    - 🐙 Configure Git settings"
 	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
 	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
+	@echo ""
+	@echo "🔄 Settings restoration:"
+	@echo "  app-settings    - 📱 Restore all application settings (iTerm, VS Code, Xcode, Sublime, Dock, Ruby)"
+	@echo "  ai-tools        - 🤖 Setup AI development tools (Claude, Gemini)"
+	@echo "  restore-iterm   - 🖥️  Restore iTerm2 settings"
+	@echo "  restore-vscode  - 💻 Restore VS Code settings"
+	@echo "  restore-xcode   - 🎨 Restore Xcode settings"
+	@echo "  restore-sublime - 📝 Restore Sublime Text settings"
+	@echo "  restore-dock    - 🔵 Restore macOS Dock settings"
+	@echo "  restore-ruby-config - 💎 Restore Ruby configuration (IRB, Gem, ctags)"
+	@echo "  restore-claude  - 🤖 Setup Claude Code"
+	@echo "  restore-gemini  - 🤖 Setup Gemini CLI"
 	@echo ""
 	@echo "💾 Backup targets:"
 	@echo "  xcode-backup    - 📋 Backup current Xcode settings"
@@ -384,6 +401,112 @@ macos-optimize:
 linux-settings:
 	@echo "⚙️  Configuring Linux settings..."
 	@sudo update-alternatives --install /usr/bin/editor editor /usr/bin/vim 100
+
+# =============================================================================
+# SETTINGS RESTORATION
+# =============================================================================
+
+.PHONY: app-settings ai-tools restore-all-settings restore-ruby-config
+app-settings: restore-iterm restore-vscode restore-xcode restore-sublime restore-dock restore-ruby-config
+	@echo -e "$(BOLD)$(GREEN)✅ Application settings restoration complete$(NC)"
+
+ai-tools: restore-claude restore-gemini
+	@echo -e "$(BOLD)$(GREEN)✅ AI tools setup complete$(NC)"
+
+restore-all-settings: app-settings ai-tools
+	@echo -e "$(BOLD)$(GREEN)✅ All settings restored successfully$(NC)"
+
+.PHONY: restore-iterm
+restore-iterm:
+	@echo -e "$(CYAN)🖥️  Restoring iTerm2 settings...$(NC)"
+	@if [ -f "scripts/iterm-setup.sh" ]; then \
+		bash "scripts/iterm-setup.sh"; \
+		echo -e "$(GREEN)✅ iTerm2 settings restored$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  iTerm2 setup script not found$(NC)"; \
+	fi
+
+.PHONY: restore-vscode
+restore-vscode: vscode-setup
+
+.PHONY: restore-xcode  
+restore-xcode: xcode-setup
+
+.PHONY: restore-sublime
+restore-sublime:
+	@echo -e "$(CYAN)📝 Restoring Sublime Text settings...$(NC)"
+	@if [ -d "$(SETTINGS)/Sublime3" ]; then \
+		echo "Setting up Sublime Text 3 configuration..."; \
+		mkdir -p "${HOME}/Library/Application Support/Sublime Text 3/Packages/User"; \
+		if [ -f "$(SETTINGS)/Sublime3/Preferences.sublime-settings" ]; then \
+			cp "$(SETTINGS)/Sublime3/Preferences.sublime-settings" \
+			   "${HOME}/Library/Application Support/Sublime Text 3/Packages/User/"; \
+			echo -e "$(GREEN)✅ Sublime Text preferences restored$(NC)"; \
+		fi; \
+		if [ -d "$(SETTINGS)/Sublime3/User" ]; then \
+			cp -r "$(SETTINGS)/Sublime3/User/"* \
+			      "${HOME}/Library/Application Support/Sublime Text 3/Packages/User/"; \
+			echo -e "$(GREEN)✅ Sublime Text user settings restored$(NC)"; \
+		fi; \
+	else \
+		echo -e "$(YELLOW)⚠️  Sublime Text settings not found in repository$(NC)"; \
+	fi
+
+.PHONY: restore-dock
+restore-dock:
+	@echo -e "$(CYAN)🔵 Restoring macOS Dock settings...$(NC)"
+	@if [ -f "$(SETTINGS)/dock.plist" ]; then \
+		echo "Restoring Dock configuration..."; \
+		cp "$(SETTINGS)/dock.plist" "${HOME}/Library/Preferences/com.apple.dock.plist"; \
+		killall Dock 2>/dev/null || true; \
+		echo -e "$(GREEN)✅ Dock settings restored and reloaded$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  Dock settings file not found$(NC)"; \
+	fi
+
+.PHONY: restore-claude
+restore-claude:
+	@echo -e "$(CYAN)🤖 Setting up Claude Code...$(NC)"
+	@if [ -f "scripts/claude-setup.sh" ]; then \
+		bash "scripts/claude-setup.sh"; \
+		echo -e "$(GREEN)✅ Claude Code setup complete$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  Claude setup script not found$(NC)"; \
+	fi
+
+.PHONY: restore-gemini
+restore-gemini:
+	@echo -e "$(CYAN)🤖 Setting up Gemini CLI...$(NC)"
+	@if [ -f "scripts/gemini-setup.sh" ]; then \
+		bash "scripts/gemini-setup.sh"; \
+		echo -e "$(GREEN)✅ Gemini CLI setup complete$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  Gemini setup script not found$(NC)"; \
+	fi
+
+.PHONY: restore-ruby-config
+restore-ruby-config:
+	@echo -e "$(CYAN)💎 Restoring Ruby configuration...$(NC)"
+	@if [ -f "$(SETTINGS)/irbrc" ]; then \
+		cp "$(SETTINGS)/irbrc" "${HOME}/.irbrc"; \
+		echo -e "$(GREEN)✅ IRB configuration restored$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  IRB configuration file not found$(NC)"; \
+	fi
+	@if [ -f "$(SETTINGS)/gemrc" ]; then \
+		cp "$(SETTINGS)/gemrc" "${HOME}/.gemrc"; \
+		echo -e "$(GREEN)✅ Gem configuration restored$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  Gem configuration file not found$(NC)"; \
+	fi
+	@if [ -f "$(SETTINGS)/ctags_for_ruby" ]; then \
+		mkdir -p "${USER_BIN}"; \
+		cp "$(SETTINGS)/ctags_for_ruby" "${USER_BIN}/ctags_for_ruby"; \
+		chmod +x "${USER_BIN}/ctags_for_ruby"; \
+		echo -e "$(GREEN)✅ Ruby ctags configuration restored$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  Ruby ctags file not found$(NC)"; \
+	fi
 
 # =============================================================================
 # SHELL CONFIGURATION
