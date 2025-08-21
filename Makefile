@@ -35,9 +35,18 @@ SETTINGS := ${ZSH}/Settings
 # System Detection
 UNAME := $(shell uname)
 
+# Package Lists for Homebrew
+CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq
+DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash
+MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli
+EDITORS_CASK := visual-studio-code zed lm-studio
+MAC_APPS_CASK := iterm2 rectangle raycast finder-toolbar docker postman tableplus the-unarchiver keka cleanmaster-cleaner
+
 # =============================================================================
 # MAIN TARGETS
 # =============================================================================
+
+.DEFAULT_GOAL := help
 
 .PHONY: all help
 all: detect-platform
@@ -93,6 +102,7 @@ help:
 	@echo "  update          - 🔄 Update repository and submodules"
 	@echo "  clean           - 🧹 Clean up temporary files"
 
+
 detect-platform:
 ifeq ($(UNAME), Darwin)
 	@echo "🍎 Detected macOS - running macOS setup"
@@ -143,7 +153,7 @@ brew-install:
 	@echo -e "$(BLUE)🍺 Checking Homebrew installation...$(NC)"
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo -e "$(YELLOW)📥 Installing Homebrew...$(NC)"; \
-		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
 	else \
 		echo -e "$(GREEN)✅ Homebrew already installed$(NC)"; \
 	fi
@@ -184,40 +194,30 @@ dev-tools: brew core-utils dev-utils modern-cli editors
 # Install essential command-line utilities
 core-utils:
 	@echo -e "$(MAGENTA)📦 Installing core utilities...$(NC)"
-	-@brew install --quiet tree 2>/dev/null || true      # Directory tree viewer
-	-@brew install --quiet wget 2>/dev/null || true      # File downloader
-	-@brew install --quiet watch 2>/dev/null || true     # Command watcher
-	-@brew install --quiet ripgrep 2>/dev/null || true   # Fast text search
-	-@brew install --quiet fd 2>/dev/null || true        # Fast file finder
-	-@brew install --quiet bat 2>/dev/null || true       # Better cat with syntax highlighting
-	-@brew install --quiet eza 2>/dev/null || true       # Modern ls replacement
-	-@brew install --quiet htop 2>/dev/null || true      # Better top
-	-@brew install --quiet jq 2>/dev/null || true        # JSON processor
-	-@brew install --quiet yq 2>/dev/null || true        # YAML processor
+	@for pkg in $(CORE_UTILS_BREW); do \
+		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+	done
 
 # Install development utilities
 dev-utils:
 	@echo "🔧 Installing development utilities..."
-	-@brew install --quiet duti 2>/dev/null || true          # Default app manager
-	-@brew install --quiet fswatch 2>/dev/null || true       # File watcher
-	-@brew install --quiet ssh-copy-id 2>/dev/null || true   # SSH key helper
-	-@brew install --quiet rmtrash 2>/dev/null || true       # Safe rm replacement
+	@for pkg in $(DEV_UTILS_BREW); do \
+		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+	done
 
 # Install modern CLI tools and enhancements
 modern-cli:
 	@echo "✨ Installing modern CLI tools..."
-	-@brew install --quiet zoxide 2>/dev/null || true     # Smart cd replacement
-	-@brew install --quiet starship 2>/dev/null || true   # Cross-shell prompt
-	-@brew install --quiet fzf 2>/dev/null || true        # Fuzzy finder
-	-@brew install --quiet claude-code 2>/dev/null || true # Claude Code CLI
-	-@brew install --quiet gemini-cli 2>/dev/null || true # Gemini CLI
+	@for pkg in $(MODERN_CLI_BREW); do \
+		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+	done
 
 # Install text editors and IDEs
 editors:
 	@echo "📝 Installing editors and IDEs..."
-	-@brew install --cask --quiet visual-studio-code 2>/dev/null || echo "⚠️  VS Code install failed (may already be installed)"
-	-@brew install --cask --quiet zed 2>/dev/null || echo "⚠️  Zed install failed (may already be installed)"
-	-@brew install --cask --quiet lm-studio 2>/dev/null || echo "⚠️  LM Studio install failed (may already be installed)"
+	@for cask in $(EDITORS_CASK); do \
+		brew install --cask --quiet $cask 2>/dev/null || echo "⚠️  Could not install $cask (may already be installed)"; \
+	done
 	-@brew install --quiet vim 2>/dev/null || true        # Classic editor
 	-@brew install --quiet neovim 2>/dev/null || true     # Modern Vim
 
@@ -329,16 +329,16 @@ vscode-setup:
 	else \
 		echo "⚠️  No VS Code settings found in repository to apply"; \
 	fi
-	@if [ -f "${SETTINGS}/VSCode/extensions.txt" ]; then \
-		echo "Installing VS Code extensions from list..."; \
-		while read extension; do \
-			if [ -n "$$extension" ]; then \
-				code --install-extension "$$extension" 2>/dev/null || echo "⚠️  Could not install extension: $$extension"; \
-			fi \
-		done < "${SETTINGS}/VSCode/extensions.txt"; \
-		echo "✅ VS Code extensions installation completed"; \
-	else \
-		echo "⚠️  No extensions list found to install"; \
+	@if [ -f "${SETTINGS}/VSCode/extensions.txt" ]; then 
+		echo "Installing VS Code extensions from list..."; 
+		while read extension; do 
+			if [ -n "$extension" ]; then 
+				code --install-extension "$extension" 2>/dev/null || echo "⚠️  Could not install extension: $extension"; 
+			fi 
+		done < "${SETTINGS}/VSCode/extensions.txt"; 
+		echo "✅ VS Code extensions installation completed"; 
+	else 
+		echo "⚠️  No extensions list found to install"; 
 	fi
 	@echo ""
 	@echo "🔄 Note: You may need to restart VS Code for all settings to take effect"
@@ -350,26 +350,15 @@ vscode-setup:
 .PHONY: mac-apps
 mac-apps: github-tools xcode-setup
 	@echo "🖥️  Installing macOS applications..."
-	# Productivity
-	-@brew install --cask --quiet iterm2 2>/dev/null || echo "⚠️  iTerm2 install failed (may already be installed)"
-	-@brew install --cask --quiet rectangle 2>/dev/null || echo "⚠️  Rectangle install failed (may already be installed)"
-	-@brew install --cask --quiet raycast 2>/dev/null || echo "⚠️  Raycast install failed (may already be installed)"
-	-@brew install --cask --quiet finder-toolbar 2>/dev/null || echo "⚠️  Finder Toolbar install failed (may already be installed)"
-	
-	# Development
-	-@brew install --cask --quiet docker 2>/dev/null || echo "⚠️  Docker install failed (may already be installed)"
-	-@brew install --cask --quiet postman 2>/dev/null || echo "⚠️  Postman install failed (may already be installed)"
-	-@brew install --cask --quiet tableplus 2>/dev/null || echo "⚠️  TablePlus install failed (may already be installed)"
-	
-	# Utilities
-	-@brew install --cask --quiet the-unarchiver 2>/dev/null || echo "⚠️  The Unarchiver install failed (may already be installed)"
-	-@brew install --cask --quiet keka 2>/dev/null || echo "⚠️  Keka install failed (may already be installed)"
-	-@brew install --cask --quiet cleanmaster- cleaner 2>/dev/null || echo "⚠️  CleanMaster install failed (may already be installed)"
+	@for cask in $(MAC_APPS_CASK); do \
+		brew install --cask --quiet $cask 2>/dev/null || echo "⚠️  Could not install $cask (may already be installed)"; \
+	done
 	
 	# Optional (commented out - uncomment as needed)
 	# -@brew install --cask slack
 	# -@brew install --cask discord
 	# -@brew install --cask zoom
+
 
 # =============================================================================
 # SYSTEM SETTINGS

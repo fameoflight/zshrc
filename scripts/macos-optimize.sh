@@ -67,8 +67,8 @@ request_sudo() {
 # Show confirmation before making changes
 confirm_changes() {
     echo ""
-    log_warn "This script will modify your macOS system preferences."
-    log_warn "Some changes require a restart to take effect."
+    log_warning "This script will modify your macOS system preferences."
+    log_warning "Some changes require a restart to take effect."
     echo ""
     read -p "Do you want to continue? (y/N): " -n 1 -r
     echo
