@@ -81,6 +81,7 @@ help:
 	@echo "  xcode-backup    - 📋 Backup current Xcode settings"
 	@echo "  vscode-backup   - 📋 Backup current VS Code settings"
 	@echo "  iterm-backup    - 📋 Backup current iTerm2 settings"
+	@echo "  iterm-setup     - ⚙️  Restore iTerm2 settings from backup"
 	@echo ""
 	@echo "🩺 Troubleshooting:"
 	@echo "  fix-brew        - 🔧 Fix Homebrew issues (with permissions)"
@@ -209,6 +210,7 @@ modern-cli:
 	-@brew install --quiet starship 2>/dev/null || true   # Cross-shell prompt
 	-@brew install --quiet fzf 2>/dev/null || true        # Fuzzy finder
 	-@brew install --quiet claude-code 2>/dev/null || true # Claude Code CLI
+	-@brew install --quiet gemini-cli 2>/dev/null || true # Gemini CLI
 
 # Install text editors and IDEs
 editors:
@@ -304,6 +306,10 @@ vscode-backup:
 .PHONY: iterm-backup
 iterm-backup:
 	@bash "${ZSH}/scripts/iterm-backup.sh"
+
+.PHONY: iterm-setup
+iterm-setup:
+	@bash "${ZSH}/scripts/iterm-setup.sh"
 
 .PHONY: claude-setup
 claude-setup:

@@ -30,7 +30,10 @@
       "Bash(defaults read:*)",
       "Bash(iterm-backup:*)",
       "Bash(displayplacer:*)",
-      "Bash(ruby:*)"
+      "Bash(ruby:*)",
+      "Bash(iterm-setup:*)",
+      "Bash(gemini-cli:*)",
+      "Bash(claude status)",
     ],
     "deny": []
   }

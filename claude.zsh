@@ -1,4 +1,12 @@
 function claude() {
+  # Source ai-env.zsh if _load_claude_env is not available
+  if ! typeset -f _load_claude_env >/dev/null; then
+    source "$ZSH_CONFIG/ai-env.zsh"
+  fi
+  
+  # Load Claude API key on demand (optional)
+  _load_claude_env
+
   local RED='\033[0;31m'
   local GREEN='\033[0;32m'
   local YELLOW='\033[1;33m'
@@ -23,9 +31,13 @@ function claude() {
     # Go to the root of the git repository
     cd `git rev-parse --show-toplevel` || return 1
 
-    # Check for CLAUDE.md
-    if [[ ! -f CLAUDE.md ]]; then
-      echo -e "${YELLOW}⚠️  Warning: CLAUDE.md does not exist in the root of the git repository.${NC}"
+    # Ensure CLAUDE.md exists (create symlink to AGENT.md if needed)
+    if [[ -f AGENT.md ]] && [[ ! -f CLAUDE.md ]]; then
+      ln -sf AGENT.md CLAUDE.md
+      echo -e "${BLUE}🔗 Created CLAUDE.md → AGENT.md symlink${NC}"
+    elif [[ ! -f CLAUDE.md ]] && [[ ! -f AGENT.md ]]; then
+      echo -e "${YELLOW}⚠️  Warning: Neither CLAUDE.md nor AGENT.md exists in the root of the git repository.${NC}"
+      echo -e "${BLUE}ℹ️  Run 'agent-setup' to set up unified agent documentation${NC}"
     fi
 
     echo -e "${BLUE}🚀 Running claude in: ${GREEN}`pwd`${NC}"

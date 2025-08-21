@@ -85,6 +85,23 @@ iterm-backup() {
   bash "$script_path" "$@"
 }
 
+# iTerm2 settings setup utility
+iterm-setup() {
+  local script_path="$ZSH_CONFIG/scripts/iterm-setup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "iTerm2 setup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making iterm-setup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
 # PDF merger script (Python)
 merge-pdf() {
   local script_path="$ZSH_CONFIG/scripts/merge_pdf.py"
@@ -206,9 +223,12 @@ list-scripts() {
   echo "  ⚡ macos-optimize   - Optimize macOS system settings for developers"
   echo "  ☁️  dropbox-backup   - Move directory to Dropbox with symlink backup"
   echo "  🤖 claude-setup     - Setup Claude Code settings via symlinks"
+  echo "  🤖 gemini-setup     - Setup Gemini settings via symlinks"
+  echo "  🤖 agent-setup      - Convert CLAUDE.md to AGENT.md with symlinks for unified AI docs"
   echo "  💾 vscode-backup    - Backup VS Code essential settings"
   echo "  💾 xcode-backup     - Backup Xcode essential settings"
   echo "  💾 iterm-backup     - Backup iTerm2 essential settings"
+  echo "  ⚙️  iterm-setup      - Restore iTerm2 settings from backup"
   echo "  📜 list-scripts     - Show this help"
 }
 
@@ -274,6 +294,40 @@ claude-setup() {
   
   if [[ ! -x "$script_path" ]]; then
     log_info "Making claude-setup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# Gemini settings symlink setup utility
+gemini-setup() {
+  local script_path="$ZSH_CONFIG/scripts/gemini-setup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Gemini setup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making gemini-setup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
+# Agent documentation setup utility
+agent-setup() {
+  local script_path="$ZSH_CONFIG/scripts/agent-setup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Agent setup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making agent-setup.sh executable..."
     chmod +x "$script_path"
   fi
   
