@@ -1,9 +1,40 @@
-function gemini-cli() {
-  # Source ai-env.zsh if _load_gemini_env is not available
-  if ! typeset -f _load_gemini_env >/dev/null; then
-    source "$ZSH_CONFIG/ai-env.zsh"
+
+# Function to load Gemini API key on demand
+_load_gemini_env() {
+  if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+    # Try to load from various common locations
+    local env_files=(
+      "$HOME/.gemini/api_key"
+      "$HOME/.config/gemini/api_key"
+      "$HOME/.google_ai_api_key"
+      "$HOME/.gemini_api_key"
+      "$ZSH_CONFIG/private.env"
+    )
+    
+    for env_file in "${env_files[@]}"; do
+      if [[ -f "$env_file" ]]; then
+        # Check if it's a multi-line env file or single key
+        if grep -q "GEMINI_API_KEY=" "$env_file" 2>/dev/null; then
+          source "$env_file"
+          log_debug "Loaded GEMINI_API_KEY from $env_file (env format)"
+        else
+          export GEMINI_API_KEY="$(cat "$env_file" | tr -d '\n\r')"
+          log_debug "Loaded GEMINI_API_KEY from $env_file (plain text)"
+        fi
+        break
+      fi
+    done
+    
+    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+      log_warning "GEMINI_API_KEY not found - Gemini CLI may require manual authentication"
+      log_debug "Checked locations: ${env_files[*]}"
+      return 0
+    fi
   fi
-  
+  return 0
+}
+
+function gemini-cli() {
   # Load Gemini API key on demand (optional)
   _load_gemini_env
 

@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a ZSH configuration repository containing modular shell configuration files. The repository originated from Sebastian Tramp's ZSH configuration and has been customized by Hemant Verma (fameoflight@gmail.com).
+This is a ZSH configuration repository containing modular shell configuration files. The repository originated from Sebastian Tramp's ZSH configuration and has been customized by Hemant Verma (<fameoflight@gmail.com>).
 
 ## Architecture
 
 The configuration follows a modular design where the main `zshrc` file sources multiple `.zsh` files in a specific order:
 
 ### Core Configuration Flow
+
 1. `logging.zsh` - **Centralized logging functions (loaded first for universal access)**
 2. `environment.zsh` - Environment variables and paths
 3. `options.zsh` - Shell options and settings
@@ -32,6 +33,7 @@ The configuration follows a modular design where the main `zshrc` file sources m
 ## Installation and Setup Commands
 
 ### Initial Setup
+
 ```bash
 make install          # Full installation - creates symlinks and directories
 make install-zsh      # ZSH-only installation
@@ -39,6 +41,7 @@ make install-bash     # Bash installation
 ```
 
 ### macOS Setup
+
 ```bash
 make mac             # Complete macOS setup with applications
 make mac-helpers     # Install development tools via Homebrew
@@ -46,11 +49,13 @@ make brew            # Install/update Homebrew
 ```
 
 ### Git Configuration
+
 ```bash
 make github-setup    # Configure Git with user info and aliases
 ```
 
 ### Updates
+
 ```bash
 make update          # Update repository and submodules
 ```
@@ -60,17 +65,20 @@ make update          # Update repository and submodules
 The configuration provides numerous custom functions in `aliases.zsh` and `functions.zsh`:
 
 ### Development Helpers
+
 - `kill-port <port>` - Kill process running on specific port
 - `kill-grep <pattern>` - Kill processes matching pattern
 - `clean-pyc` - Remove all .pyc files recursively
 - `fix-pep8` - Auto-fix Python PEP8 issues in git staged files
 
 ### Navigation
+
 - `workspace` - cd to ~/workspace
 - `latest-dir` - Enter most recently created directory
 - `..`, `...`, `....` - Quick navigation up directory tree
 
-### File Operations  
+### File Operations
+
 - `path <pattern>` - Find files matching pattern
 - `buf <file>` - Backup file with timestamp
 - `massmove` - Batch rename files interactively
@@ -78,6 +86,7 @@ The configuration provides numerous custom functions in `aliases.zsh` and `funct
 ## Environment Variables
 
 Key environment variables set by the configuration:
+
 - `ZSH_CONFIG` - Points to ~/.config/zsh (this repository when linked)
 - `EDITOR` - Set to "vim"
 - Various PATH extensions for development tools
@@ -95,14 +104,18 @@ The configuration includes integration for AI development tools including Claude
 ### API Key Storage (Optional)
 
 #### Claude (ANTHROPIC_API_KEY)
+
 Store your Claude API key in any of these locations:
+
 - `~/.claude/anthropic_api_key` (recommended)
 - `~/.config/claude/api_key`
-- `~/.anthropic_api_key` 
+- `~/.anthropic_api_key`
 - `$ZSH_CONFIG/private.env` (for multiple keys)
 
 #### Gemini (GEMINI_API_KEY)
+
 Store your Gemini API key in any of these locations:
+
 - `~/.gemini/api_key` (recommended)
 - `~/.config/gemini/api_key`
 - `~/.google_ai_api_key`
@@ -110,20 +123,18 @@ Store your Gemini API key in any of these locations:
 - `$ZSH_CONFIG/private.env` (for multiple keys)
 
 #### Setup Commands
+
 ```bash
 # One-time setup (creates files with proper permissions)
 setup-claude-key "sk-ant-api03-your-key-here"
 setup-gemini-key "AIzaSyYour-gemini-key-here"
 
-# Check if keys are configured
-check-ai-keys
-check-claude-key
-check-gemini-key
 ```
 
 #### Available Functions
+
 - `claude` - Claude Code CLI wrapper (loads API key automatically)
-- `gemini-cli` - Gemini CLI wrapper (loads API key automatically) 
+- `gemini-cli` - Gemini CLI wrapper (loads API key automatically)
 - `cc` - Alias for claude-code
 - `gg` - Alias for gemini-cli
 
@@ -132,6 +143,7 @@ check-gemini-key
 ## Git Integration
 
 The configuration includes extensive Git integration:
+
 - Custom aliases (lg, cp, ri, rc, pushf, etc.)
 - Rebase editor configuration
 - Push behavior defaults
@@ -144,16 +156,19 @@ The repository includes a custom scripts system located in the `scripts/` direct
 ### Available Custom Scripts
 
 - **`calibre-update`** - Update Calibre e-book manager to the latest version
+
   - Usage: `calibre-update [--help] [--version] [--no-launch]`
   - Automatically downloads, installs, and launches the latest Calibre
   - Includes backup of existing installation and proper error handling
 
 - **`stack-monitors`** - Configure stacked external monitor setup
-  - Usage: `stack-monitors [--dry-run] [--debug]`  
+
+  - Usage: `stack-monitors [--dry-run] [--debug]`
   - Configures non-16" primary monitor with two stacked 16" monitors
   - Uses `displayplacer` tool for precise monitor arrangement
 
 - **`merge-pdf`** - Merge multiple PDF files into one
+
   - Usage: `merge-pdf output.pdf input1.pdf input2.pdf [...]`
   - Python-based PDF merging utility
 
@@ -168,12 +183,14 @@ To add new custom scripts:
 1. **Create the script** in `scripts/` directory (e.g., `scripts/my-script.sh`)
 2. **Make it executable**: `chmod +x scripts/my-script.sh`
 3. **Add wrapper function** in `scripts/scripts.zsh`:
+
    ```zsh
    my-script() {
      local script_path="$ZSH_CONFIG/scripts/my-script.sh"
      bash "$script_path" "$@"
    }
    ```
+
 4. **Test the function**: The wrapper will be available after reloading the shell
 5. **Update `list-scripts`** function if needed to include new functionality
 
@@ -281,7 +298,9 @@ The repository is organized with the following structure:
 ### Key Directory Details
 
 #### Core Configuration Flow
+
 The main `zshrc` file sources these files in order:
+
 1. `logging.zsh` → `environment.zsh` → `options.zsh` → `prompt.zsh` → `functions.zsh` → `aliases.zsh`
 2. Platform detection: `darwin.zsh` (macOS) or `linux.zsh`
 3. Application integrations: `git.zsh`, `rails.zsh`, `claude.zsh`, etc.
@@ -289,15 +308,18 @@ The main `zshrc` file sources these files in order:
 5. Private overrides: `private.zsh`
 
 #### Scripts System (`scripts/`)
+
 - **`scripts.zsh`** - Contains wrapper functions for all custom scripts
 - **Utility Scripts** - Bash, Python, and Ruby scripts for various system tasks
 - **Wrapper Functions** - ZSH functions that provide easy access to scripts with error handling
 
 #### External Dependencies
+
 - **`zsh-syntax-highlighting/`** - Git submodule providing real-time syntax highlighting
 - **`dircolors-solarized/`** - Solarized color schemes for directory listings
 
 #### Settings Archive (`Settings/`)
+
 - **`Sublime3/`** - Text editor preferences and packages
 - **`XCode/`** - Development environment settings including iOS simulator data
 - **`iTerm/`** - Terminal emulator configuration
@@ -306,24 +328,26 @@ The main `zshrc` file sources these files in order:
 ## Style Guidelines
 
 ### Function Naming Convention
+
 - Use hyphen-separated names (kebab-case) for ZSH functions and aliases
-- **Preferred**: `flutter-studio` 
+- **Preferred**: `flutter-studio`
 - **Avoid**: `flutter_studio`
 - This follows the existing pattern used throughout the configuration (e.g., `kill-port`, `clean-pyc`, `latest-dir`)
 
 ### Emoji Usage in Scripts and Output
+
 - **Use emojis liberally** in user-facing messages, status updates, and progress indicators
 - **Emojis enhance readability** and make the terminal output more visually appealing
 - **Common emoji patterns used in this project**:
   - ✅ Success/completion
   - ❌ Errors/failures
-  - ⚠️  Warnings
+  - ⚠️ Warnings
   - 🔍 Searching/checking
   - 🔄 Updating/processing
   - 📦 Installing/packages
   - 🔗 Linking/connections
   - 🧹 Cleaning/maintenance
-  - 🛠️  Tools/utilities
+  - 🛠️ Tools/utilities
   - 🚀 Starting/launching
   - 📝 Writing/editing
   - 💾 Backing up
@@ -332,12 +356,13 @@ The main `zshrc` file sources these files in order:
   - 🐙 Git operations
   - 🐍 Python operations
   - 💎 Ruby operations
-- **Examples**: 
+- **Examples**:
   - `echo "✅ Installation complete"`
   - `echo "🔄 Updating packages..."`
   - `echo "⚠️  Warning: File not found"`
 
 ### Color Usage in Terminal Output
+
 - **Combine colors with emojis** for maximum visual impact and user experience
 - **Use colors consistently** to establish visual patterns for different message types
 - **Color definitions and usage patterns**:
@@ -351,15 +376,18 @@ The main `zshrc` file sources these files in order:
   - **NC** (`\033[0m`) - Reset to no color (always use at end)
 
 ### Color Implementation Guidelines
+
 - **Always use `-e` flag** with echo when using color codes: `echo -e "$(COLOR)message$(NC)"`
 - **Always reset colors** with `$(NC)` at the end of colored text
 - **Combine colors and emojis** for maximum effectiveness:
+
   ```bash
   echo -e "$(BOLD)$(GREEN)✅ Installation complete$(NC)"
   echo -e "$(RED)❌ Error: File not found$(NC)"
   echo -e "$(YELLOW)⚠️  Warning: Backup recommended$(NC)"
   echo -e "$(BLUE)🔍 Searching for files...$(NC)"
   ```
+
 - **Use BOLD for emphasis** on important status messages and headings
 - **Keep color usage consistent** across all scripts and makefiles
 - **Test color output** in different terminal environments to ensure compatibility
@@ -369,6 +397,7 @@ The main `zshrc` file sources these files in order:
 **IMPORTANT**: Always use the centralized logging functions defined in `logging.zsh` for consistent output across all scripts and functions.
 
 #### Core Logging Functions
+
 ```bash
 # Available in ALL ZSH contexts (functions, scripts, aliases):
 log_success "Installation completed successfully"     # Green + ✅
@@ -381,6 +410,7 @@ log_debug "Debugging information"                    # Dim + 🐛 (only if DEBUG
 ```
 
 #### Specialized Logging Functions
+
 ```bash
 # File operations:
 log_file_created "/path/to/file"                    # Green + 📄
@@ -407,7 +437,9 @@ log_banner "Script Title"                          # Header with separator
 ```
 
 #### Usage in Bash Scripts
+
 For bash scripts, source the logging functions at the top:
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -429,11 +461,12 @@ log_success "Script completed successfully"
 ```
 
 #### Example Usage in Functions
+
 ```bash
 my_function() {
   log_section "Starting Configuration Process"
   log_info "Checking system requirements"
-  
+
   if command -v brew >/dev/null 2>&1; then
     log_success "Homebrew found"
     log_brew "Updating package lists"
@@ -441,16 +474,17 @@ my_function() {
     log_error "Homebrew not installed"
     return 1
   fi
-  
+
   log_progress "Installing packages"
   # ... installation logic ...
-  
+
   log_file_created "/path/to/config"
   log_complete "Configuration process"
 }
 ```
 
 #### Mandatory Usage Rules
+
 - **NEVER use raw `echo` with color codes** - always use logging functions
 - **NEVER redefine color constants** - use the ones from `logging.zsh`
 - **ALWAYS use `log_error`** for error messages (outputs to stderr)
@@ -460,6 +494,7 @@ my_function() {
 These functions automatically handle color codes, emojis, proper formatting, and stderr redirection for errors, ensuring consistent visual styling across all scripts.
 
 ### Color Scheme Philosophy
+
 - **Visual Hierarchy**: Colors create clear information hierarchy and improve scanability
 - **Semantic Consistency**: Each color has specific meaning (red=error, green=success, etc.)
 - **Accessibility**: Color choices work in both light and dark terminal themes

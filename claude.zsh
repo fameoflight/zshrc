@@ -1,9 +1,32 @@
-function claude() {
-  # Source ai-env.zsh if _load_claude_env is not available
-  if ! typeset -f _load_claude_env >/dev/null; then
-    source "$ZSH_CONFIG/ai-env.zsh"
+# Function to load Claude API key on demand
+_load_claude_env() {
+  if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+    # Try to load from various common locations
+    local env_files=(
+      "$HOME/.claude/anthropic_api_key"
+      "$HOME/.config/claude/api_key"
+      "$HOME/.anthropic_api_key"
+      "$ZSH_CONFIG/private.env"
+    )
+    
+    for env_file in "${env_files[@]}"; do
+      if [[ -f "$env_file" ]]; then
+        export ANTHROPIC_API_KEY="$(cat "$env_file" | tr -d '\n\r')"
+        log_debug "Loaded ANTHROPIC_API_KEY from $env_file"
+        break
+      fi
+    done
+    
+    if [[ -z "${ANTHROPIC_API_KEY:-}" ]]; then
+      log_warning "ANTHROPIC_API_KEY not found - Claude will use interactive authentication"
+      log_debug "Checked locations: ${env_files[*]}"
+      return 0
+    fi
   fi
-  
+  return 0
+}
+
+function claude() {
   # Load Claude API key on demand (optional)
   _load_claude_env
 
