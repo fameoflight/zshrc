@@ -17,3 +17,6 @@ export PATH="$(brew --prefix qt@5.5)/bin:$PATH"
 export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
 # End of LM Studio CLI section
 
+
+# rbenv initialization
+eval "$(rbenv init -)"
