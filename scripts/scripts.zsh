@@ -5,12 +5,36 @@
 # Note: Color logging functions are loaded from logging.zsh
 
 # =============================================================================
+# COMMON UTILITY FUNCTIONS
+# =============================================================================
+
+# Execute a Ruby script with proper bundle setup and error handling
+_execute_ruby_script() {
+  local script_name="$1"
+  local script_path="$ZSH_CONFIG/scripts/$1"
+  shift # Remove script name from arguments
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "$script_name not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making $script_name executable..."
+    chmod +x "$script_path"
+  fi
+  
+  # Set BUNDLE_GEMFILE to use project gems and execute
+  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+}
+
+# =============================================================================
 # UTILITY SCRIPT FUNCTIONS (Available in ZSH)
 # =============================================================================
 
 # Monitor arrangement script for stacked external monitors
 stack-monitors() {
-  ruby "$ZSH_CONFIG/scripts/stacked-monitor.rb" "$@"
+  _execute_ruby_script "stacked-monitor.rb" "$@"
 }
 
 # Calibre e-book manager updater
@@ -32,20 +56,7 @@ calibre-update() {
 
 # PDF merger script (Ruby)
 merge-pdf() {
-  local script_path="$ZSH_CONFIG/scripts/merge-pdf.rb"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "PDF merge script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making merge-pdf.rb executable..."
-    chmod +x "$script_path"
-  fi
-  
-  # Set BUNDLE_GEMFILE to use project gems
-  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+  _execute_ruby_script "merge-pdf.rb" "$@"
 }
 
 # Dropbox backup utility
@@ -67,20 +78,7 @@ dropbox-backup() {
 
 # Application uninstaller - comprehensive removal of apps, processes, and files
 uninstall-app() {
-  local script_path="$ZSH_CONFIG/scripts/uninstall-app.rb"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Uninstall app script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making uninstall-app.rb executable..."
-    chmod +x "$script_path"
-  fi
-  
-  # Set BUNDLE_GEMFILE to use project gems
-  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+  _execute_ruby_script "uninstall-app.rb" "$@"
 }
 
 # =============================================================================

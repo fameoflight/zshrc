@@ -1,89 +1,87 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '.common/script_base'
+
 # Script to quickly setup stacked monitors
 # Configuration: Non-16" monitor (primary, left, centered between stack), 16" Monitor 2 above 16" Monitor 1
-
-require 'json'
-require 'optparse'
-
-class MonitorSetup
+class StackedMonitor < ScriptBase
   SPACING = 20 # Pixels between monitors
 
-  def initialize
-    @options = parse_options
-    @debug = @options[:debug]
+  def banner_text
+    <<~BANNER
+      📺 Stacked Monitor Setup
+
+      Usage: #{script_name} [OPTIONS]
+
+      Configures a 3-monitor setup with:
+      - Non-16" monitor as primary (left side, centered between stack)  
+      - Two 16" monitors stacked vertically on the right side
+    BANNER
+  end
+
+  def add_custom_options(opts)
+    opts.on('--debug', 'Enable debug output with current setup analysis') do
+      @options[:debug] = true
+      ENV['DEBUG'] = '1'
+    end
+  end
+
+  def validate!
+    unless System.command?('displayplacer')
+      log_error('displayplacer is not installed')
+      log_info('Install with: brew install jakehilborn/jakehilborn/displayplacer')
+      exit(1)
+    end
+    log_debug('displayplacer found')
+    super
   end
 
   def run
-    validate_dependencies
-    displays_info = get_display_info
+    log_banner("Stacked Monitor Setup")
     
-    # Show current setup first if debug is enabled
-    if @debug
-      show_current_setup(displays_info)
-    end
+    displays_info = get_display_info
+    show_current_setup(displays_info) if debug_mode?
     
     validate_display_count(displays_info)
-    
     primary_display, monitor_1, monitor_2 = identify_displays(displays_info)
     configure_positions(primary_display, monitor_1, monitor_2)
     
     command = build_command([primary_display, monitor_1, monitor_2])
     
-    if @options[:dry_run]
+    if dry_run?
       show_dry_run(command, primary_display, monitor_1, monitor_2)
     else
-      execute_command(command, primary_display, monitor_1, monitor_2)
+      execute_monitor_setup(command, primary_display, monitor_1, monitor_2)
     end
+    
+    show_completion("Stacked Monitor Setup")
   end
 
   private
 
-  def parse_options
-    options = { dry_run: false, debug: false }
-    
-    OptionParser.new do |opts|
-      opts.banner = "Usage: #{$0} [options]"
-      opts.on("-d", "--dry-run", "Show command without executing") { options[:dry_run] = true }
-      opts.on("--debug", "Enable debug output") { options[:debug] = true }
-      opts.on("-h", "--help", "Show this help") { puts opts; exit }
-    end.parse!
-    
-    options
+  def debug_mode?
+    @options[:debug] || ENV['DEBUG'] == '1'
   end
 
-  def log(message, level = :info)
-    case level
-    when :error
-      puts "❌ #{message}"
-    when :success
-      puts "✅ #{message}"
-    when :debug
-      puts "🔍 #{message}" if @debug
-    else
-      puts "ℹ️  #{message}"
-    end
-  end
-
-  def validate_dependencies
-    unless system('which displayplacer > /dev/null 2>&1')
-      log('displayplacer is not installed', :error)
-      log('Install with: brew install jakehilborn/jakehilborn/displayplacer')
-      exit 1
-    end
-    log('displayplacer found', :debug)
+  def validate_display_dependency
+    return if System.command?('displayplacer')
+    
+    log_error('displayplacer is not installed')
+    log_info('Install with: brew install jakehilborn/jakehilborn/displayplacer')
+    exit(1)
   end
 
   def get_display_info
-    log('Getting display information...', :debug)
-    display_list = `displayplacer list`
+    log_debug('Getting display information...')
     
-    if $?.exitstatus != 0
-      log('Failed to get display list', :error)
-      exit 1
+    display_list = execute_cmd('displayplacer list', description: 'Getting display information')
+    unless display_list
+      log_error('Failed to get display list')
+      exit(1)
     end
 
     displays = display_list.split("\n\n").select { |block| block.include?('Persistent screen id:') }
-    
     displays.map { |display| parse_display_info(display) }
   end
 
@@ -109,15 +107,14 @@ class MonitorSetup
   end
 
   def validate_display_count(displays_info)
-    if displays_info.length != 3
-      log("Found #{displays_info.length} displays, expected 3", :error)
-      log('Available displays:')
-      displays_info.each_with_index do |display, i|
-        puts "  #{i + 1}. #{display[:type]} - #{display[:resolution]}"
-      end
-      exit 1
+    return if displays_info.length == 3
+    
+    log_error("Found #{displays_info.length} displays, expected 3")
+    log_info('Available displays:')
+    displays_info.each_with_index do |display, i|
+      puts "  #{i + 1}. #{display[:type]} - #{display[:resolution]}"
     end
-    log("Found 3 displays as expected", :debug)
+    exit(1)
   end
 
   def identify_displays(displays_info)
@@ -131,31 +128,31 @@ class MonitorSetup
     monitor_1 = sixteen_inch_displays[0]  # Bottom 16-inch monitor
     monitor_2 = sixteen_inch_displays[1]  # Top 16-inch monitor
 
-    log("Primary: #{primary_display[:type]}", :debug)
-    log("Monitor 1: #{monitor_1[:type]}", :debug)
-    log("Monitor 2: #{monitor_2[:type]}", :debug)
+    log_debug("Primary: #{primary_display[:type]}")
+    log_debug("Monitor 1: #{monitor_1[:type]}")
+    log_debug("Monitor 2: #{monitor_2[:type]}")
 
     [primary_display, monitor_1, monitor_2]
   end
 
   def validate_sixteen_inch_count(sixteen_inch_displays, displays_info)
-    if sixteen_inch_displays.length != 2
-      log("Found #{sixteen_inch_displays.length} 16-inch displays, expected 2", :error)
-      show_available_displays(displays_info)
-      exit 1
-    end
+    return unless sixteen_inch_displays.length != 2
+
+    log_error("Found #{sixteen_inch_displays.length} 16-inch displays, expected 2")
+    show_available_displays(displays_info)
+    exit(1)
   end
 
   def validate_primary_display(other_display, displays_info)
-    if other_display.nil?
-      log('Could not find a non-16-inch display to use as primary', :error)
-      show_available_displays(displays_info)
-      exit 1
-    end
+    return unless other_display.nil?
+
+    log_error('Could not find a non-16-inch display to use as primary')
+    show_available_displays(displays_info)
+    exit(1)
   end
 
   def show_available_displays(displays_info)
-    log('Available displays:')
+    log_info('Available displays:')
     displays_info.each_with_index do |display, i|
       puts "  #{i + 1}. #{display[:type]} - #{display[:resolution]} (#{display[:size_inches]}\")"
     end
@@ -163,8 +160,8 @@ class MonitorSetup
 
   def show_current_setup(displays_info)
     puts "\n🔍 CURRENT MONITOR SETUP DEBUG INFO"
-    puts "=" * 50
-    
+    puts '=' * 50
+
     displays_info.each_with_index do |display, i|
       puts "\nDisplay #{i + 1}:"
       puts "  Type: #{display[:type]}"
@@ -181,8 +178,10 @@ class MonitorSetup
 
     # Show spatial arrangement
     puts "\n📍 SPATIAL ARRANGEMENT:"
-    sorted_displays = displays_info.sort_by { |d| [d[:origin]&.split(',')&.first&.to_i || 0, d[:origin]&.split(',')&.last&.to_i || 0] }
-    
+    sorted_displays = displays_info.sort_by do |d|
+      [d[:origin]&.split(',')&.first&.to_i || 0, d[:origin]&.split(',')&.last&.to_i || 0]
+    end
+
     sorted_displays.each do |display|
       x, y = display[:origin]&.split(',')&.map(&:to_i) || [0, 0]
       width, height = parse_resolution(display[:resolution])
@@ -197,69 +196,69 @@ class MonitorSetup
     puts "\n⚠️  POTENTIAL ISSUES:"
     main_display = displays_info.find { |d| d[:main] }
     if main_display && main_display[:size_inches] == 16
-      puts "  🚨 Main display is a 16-inch monitor (should be the non-16\" display)"
+      puts '  🚨 Main display is a 16-inch monitor (should be the non-16" display)'
     end
 
     # Check if displays are overlapping or have gaps
     puts "\n🔧 RECOMMENDED CONFIGURATION:"
     sixteen_inch = displays_info.select { |d| d[:size_inches] == 16 }
     non_sixteen = displays_info.reject { |d| d[:size_inches] == 16 }.first
-    
+
     if sixteen_inch.length == 2 && non_sixteen
       puts "  Primary: #{non_sixteen[:type]} should be at (0,0)"
-      puts "  Stack: Two 16\" monitors should be to the right, vertically stacked"
+      puts '  Stack: Two 16" monitors should be to the right, vertically stacked'
     else
-      puts "  ❌ Unexpected display configuration"
+      puts '  ❌ Unexpected display configuration'
     end
-    
-    puts "\n" + "=" * 50
+
+    puts "\n" + '=' * 50
   end
 
   def configure_positions(primary_display, monitor_1, monitor_2)
-    log('Calculating monitor positions...', :debug)
-    
+    log_debug('Calculating monitor positions...')
+
     # Parse resolutions
     primary_width, primary_height = parse_resolution(primary_display[:resolution])
-    mon1_width, mon1_height = parse_resolution(monitor_1[:resolution])
-    mon2_width, mon2_height = parse_resolution(monitor_2[:resolution])
+    _, mon1_height = parse_resolution(monitor_1[:resolution])
+    _, mon2_height = parse_resolution(monitor_2[:resolution])
 
     # Position primary display at origin
     primary_display[:origin] = '0,0'
 
     # Position monitors to the right of primary, stacked
     stack_x = primary_width + SPACING
-    
+
     # Calculate stack positioning
     total_stack_height = mon1_height + mon2_height
-    
-    if @debug
-      log("Primary display: #{primary_width}x#{primary_height} (Y: 0 to #{primary_height})", :debug)
-      log("Stack total height: #{total_stack_height} (#{mon1_height} + #{mon2_height})", :debug)
-      log("Stack position X: #{stack_x} (primary width #{primary_width} + spacing #{SPACING})", :debug)
+
+    if debug_mode?
+      log_debug("Primary display: #{primary_width}x#{primary_height} (Y: 0 to #{primary_height})")
+      log_debug("Stack total height: #{total_stack_height} (#{mon1_height} + #{mon2_height})")
+      log_debug("Stack position X: #{stack_x} (primary width #{primary_width} + spacing #{SPACING})")
     end
-    
+
     # Center the stack vertically relative to primary display center
     primary_center_y = primary_height / 2
     stack_center_y = primary_center_y - (total_stack_height / 2)
-    
-    log("Primary center Y: #{primary_center_y}, Stack will start at Y: #{stack_center_y}", :debug) if @debug
-    
+
+    log_debug("Primary center Y: #{primary_center_y}, Stack will start at Y: #{stack_center_y}") if debug_mode?
+
     # Monitor 1 (bottom of stack) - starts at stack_center_y
-    monitor_1_y = stack_center_y + mon2_height  # Bottom monitor goes below top monitor
+    monitor_1_y = stack_center_y + mon2_height # Bottom monitor goes below top monitor
     monitor_1[:origin] = "#{stack_x},#{monitor_1_y}"
-    
+
     # Monitor 2 (top of stack) - goes above monitor 1
     monitor_2_y = stack_center_y
     monitor_2[:origin] = "#{stack_x},#{monitor_2_y}"
 
-    if @debug
-      log("Monitor 2 (top): Y #{monitor_2_y} to #{monitor_2_y + mon2_height}", :debug)
-      log("Monitor 1 (bottom): Y #{monitor_1_y} to #{monitor_1_y + mon1_height}", :debug)
+    if debug_mode?
+      log_debug("Monitor 2 (top): Y #{monitor_2_y} to #{monitor_2_y + mon2_height}")
+      log_debug("Monitor 1 (bottom): Y #{monitor_1_y} to #{monitor_1_y + mon1_height}")
     end
 
-    log("Primary position: #{primary_display[:origin]}", :debug)
-    log("Monitor 1 position: #{monitor_1[:origin]}", :debug)  
-    log("Monitor 2 position: #{monitor_2[:origin]}", :debug)
+    log_debug("Primary position: #{primary_display[:origin]}")
+    log_debug("Monitor 1 position: #{monitor_1[:origin]}")
+    log_debug("Monitor 2 position: #{monitor_2[:origin]}")
   end
 
   def parse_resolution(resolution)
@@ -270,23 +269,23 @@ class MonitorSetup
   def build_command(displays)
     command_parts = displays.map do |display|
       "id:#{display[:persistent_id]} " +
-      "res:#{display[:resolution]} " +
-      "hz:#{display[:hertz]} " +
-      "color_depth:#{display[:color_depth]} " +
-      "scaling:#{display[:scaling]} " +
-      "origin:(#{display[:origin]}) " +
-      "degree:#{display[:rotation]}"
+        "res:#{display[:resolution]} " +
+        "hz:#{display[:hertz]} " +
+        "color_depth:#{display[:color_depth]} " +
+        "scaling:#{display[:scaling]} " +
+        "origin:(#{display[:origin]}) " +
+        "degree:#{display[:rotation]}"
     end
-    
+
     'displayplacer ' + command_parts.map { |part| "\"#{part}\"" }.join(' ')
   end
 
   def show_configuration(primary_display, monitor_1, monitor_2)
     puts "\n📺 Monitor Configuration:"
     puts "  Primary Display (#{primary_display[:type]}): Left side, centered between stack"
-    puts "  Monitor 1 (#{monitor_1[:type]}): Right side, bottom of stack"  
+    puts "  Monitor 1 (#{monitor_1[:type]}): Right side, bottom of stack"
     puts "  Monitor 2 (#{monitor_2[:type]}): Right side, top of stack"
-    
+
     puts "\n📍 Calculated Positions:"
     puts "  Primary: #{primary_display[:origin]} (#{primary_display[:resolution]})"
     puts "  Monitor 1: #{monitor_1[:origin]} (#{monitor_1[:resolution]})"
@@ -295,37 +294,38 @@ class MonitorSetup
 
   def show_dry_run(command, primary_display, monitor_1, monitor_2)
     show_configuration(primary_display, monitor_1, monitor_2)
-    
+
     puts "\n🚀 Command to execute:"
     puts command
     puts "\nRun without --dry-run to execute automatically"
   end
 
-  def execute_command(command, primary_display, monitor_1, monitor_2)
+  def execute_monitor_setup(command, primary_display, monitor_1, monitor_2)
     show_configuration(primary_display, monitor_1, monitor_2)
-    
-    log('Executing monitor setup...') 
-    log("Command: #{command}", :debug)
-    
-    if system(command)
-      log('Monitor arrangement completed successfully!', :success)
+
+    log_progress('🔄 Executing monitor setup...')
+    log_debug("Command: #{command}")
+
+
+    success = execute_cmd?(command, description: 'Applying monitor configuration')
+    if success
+      log_success('Monitor arrangement completed successfully!')
     else
-      log('Failed to execute displayplacer command', :error)
-      exit 1
+      log_error('Failed to execute displayplacer command')
+      exit(1)
     end
+  end
+
+  def show_examples
+    puts <<~EXAMPLES
+      Examples:
+        #{script_name}                    # Run interactive setup
+        #{script_name} --dry-run          # Show configuration without applying
+        #{script_name} --debug            # Show detailed setup analysis
+        #{script_name} --dry-run --debug  # Show everything without applying
+    EXAMPLES
   end
 end
 
-# Run the script
-if __FILE__ == $0
-  begin
-    MonitorSetup.new.run
-  rescue Interrupt
-    puts "\n\n❌ Setup cancelled by user"
-    exit 1
-  rescue => e
-    puts "❌ Error: #{e.message}"
-    puts e.backtrace if ARGV.include?('--debug')
-    exit 1
-  end
-end
+# Execute the script
+StackedMonitor.execute if __FILE__ == $0

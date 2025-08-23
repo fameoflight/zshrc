@@ -154,7 +154,7 @@ The configuration includes extensive Git integration:
 The repository implements a sophisticated **Ruby-based** custom scripts system that provides modular utility functions across the development environment. This system consists of five key components:
 
 1. **Centralized Gemfile** for dependency management
-2. **Common Ruby utilities** in `scripts/.common/` directory  
+2. **Common Ruby utilities** in `scripts/.common/` directory
 3. **Ruby script files** in the `scripts/` directory
 4. **ZSH wrapper functions** in `scripts/scripts.zsh`
 5. **Makefile integration** for automated deployment and gem installation
@@ -186,25 +186,29 @@ This ensures all script wrapper functions are available immediately when startin
 #### Component Integration
 
 1. **Centralized Gemfile** (`Gemfile`) - Manages all Ruby dependencies:
+
    - Terminal UI gems (tty-prompt, tty-progressbar, pastel)
-   - System interaction gems (open3, sqlite3, rexml) 
+   - System interaction gems (open3, sqlite3, rexml)
    - Development tools (rspec, rubocop)
    - Installed via `make ruby-gems` target
 
 2. **Common Utilities** (`scripts/.common/`) - Shared Ruby modules:
+
    - `logger.rb` - Centralized logging with emoji indicators and colors
-   - `system.rb` - System command execution and platform utilities  
+   - `system.rb` - System command execution and platform utilities
    - `script_base.rb` - Base class providing common functionality for all scripts
 
 3. **Ruby Scripts** (`scripts/`) - Utility scripts inheriting from ScriptBase:
+
    - `uninstall-app.rb` - Comprehensive application removal
    - `calibre-update.rb` - E-book manager updates (planned migration)
    - `stack-monitors.rb` - Monitor configuration utility
 
 4. **Wrapper Functions** (`scripts/scripts.zsh`) - ZSH functions for utility scripts only:
+
    - Handle script path resolution with Ruby execution
    - Set `BUNDLE_GEMFILE` environment for dependency access
-   - Provide error checking and validation  
+   - Provide error checking and validation
    - Use centralized logging functions
    - **Only available for utility scripts**, not setup/backup scripts
 
@@ -231,10 +235,12 @@ These scripts handle system configuration, application setup, and backup operati
 ##### AI Development Tools Setup
 
 - **`make claude-setup`** - Setup Claude Code settings via symlinks
+
   - Creates symlinks for Claude Code configuration files
   - **Script**: `scripts/claude-setup.sh`
 
-- **`make gemini-setup`** - Setup Gemini CLI settings via symlinks  
+- **`make gemini-setup`** - Setup Gemini CLI settings via symlinks
+
   - Configures Gemini CLI with appropriate settings
   - **Script**: `scripts/gemini-setup.sh`
 
@@ -245,14 +251,17 @@ These scripts handle system configuration, application setup, and backup operati
 ##### Application Backup/Restore
 
 - **`make xcode-backup`** - Backup current Xcode essential settings
+
   - Backs up themes, key bindings, and simulator configurations
   - **Script**: `scripts/xcode-backup.sh`
 
 - **`make vscode-backup`** - Backup VS Code essential settings
+
   - Saves user settings, extensions list, and keybindings
   - **Script**: `scripts/vscode-backup.sh`
 
 - **`make iterm-backup`** - Backup iTerm2 essential settings
+
   - Exports iTerm2 preferences and profile configurations
   - **Script**: `scripts/iterm-backup.sh`
 
@@ -265,24 +274,28 @@ These scripts handle system configuration, application setup, and backup operati
 These scripts provide general utilities and are available as interactive ZSH functions:
 
 - **`calibre-update`** - Update Calibre e-book manager to the latest version
+
   - **Usage**: `calibre-update [--help] [--version] [--no-launch]`
   - Automatically downloads, installs, and launches the latest Calibre
   - Includes backup of existing installation and proper error handling
   - **Script**: `scripts/calibre-update.sh`
 
 - **`stack-monitors`** - Configure stacked external monitor setup
+
   - **Usage**: `stack-monitors [--dry-run] [--debug]`
   - Configures non-16" primary monitor with two stacked 16" monitors
   - Uses `displayplacer` tool for precise monitor arrangement
   - **Script**: `scripts/stacked-monitor.rb`
 
 - **`merge-pdf`** - Merge multiple PDF files into one
+
   - **Usage**: `merge-pdf [OPTIONS] <output_file> <input_files_or_directory>`
   - Ruby-based PDF merging utility using combine_pdf gem
   - Supports directory input with recursive scanning option
   - **Script**: `scripts/merge-pdf.rb`
 
 - **`dropbox-backup`** - Move directory to Dropbox with symlink backup
+
   - **Usage**: `dropbox-backup [source-directory]`
   - Safely moves directories to Dropbox and creates symlinks
   - **Script**: `scripts/dropbox-backup.sh`
@@ -329,7 +342,7 @@ Setup and backup scripts are only accessible via Makefile targets:
 
 ```makefile
 setup-script:
-	@bash "${ZSH_CONFIG}/scripts/setup-script.sh"
+ @bash "${ZSH_CONFIG}/scripts/setup-script.sh"
 ```
 
 This two-tier approach provides:
@@ -372,16 +385,19 @@ claude-setup:
 #### Setting Up Development Environment
 
 1. **Install Ruby dependencies:**
+
    ```bash
    make ruby-gems
    ```
 
 2. **Common utilities are automatically available:**
+
    - `logger.rb` - Centralized logging system
-   - `system.rb` - System interaction utilities  
+   - `system.rb` - System interaction utilities
    - `script_base.rb` - Base class for all scripts
 
 3. **Available gems in scripts:**
+
    ```ruby
    require 'tty-prompt'     # Interactive prompts
    require 'tty-progressbar' # Progress indicators
@@ -393,18 +409,21 @@ claude-setup:
 #### Script Testing and Quality
 
 **Run RuboCop for code quality:**
+
 ```bash
 cd $ZSH_CONFIG
 bundle exec rubocop scripts/
 ```
 
 **Run RSpec tests:**
+
 ```bash
-cd $ZSH_CONFIG  
+cd $ZSH_CONFIG
 bundle exec rspec spec/
 ```
 
 **Debug mode:**
+
 ```bash
 DEBUG=1 uninstall-app --verbose "TestApp"
 ```
@@ -412,6 +431,7 @@ DEBUG=1 uninstall-app --verbose "TestApp"
 #### Common Ruby Patterns
 
 **Using the logger:**
+
 ```ruby
 log_info("Processing request")
 log_success("Operation completed")
@@ -421,6 +441,7 @@ log_progress("Working on task...")
 ```
 
 **System command execution:**
+
 ```ruby
 # Execute and return output
 result = System.execute("brew list", description: "Listing packages")
@@ -435,6 +456,7 @@ end
 ```
 
 **File operations with logging:**
+
 ```ruby
 remove_file("/path/to/file")           # Single file
 remove_files(["/path1", "/path2"])     # Multiple files with confirmation
@@ -448,13 +470,15 @@ To add new custom scripts to the system:
 #### 1. Create the Ruby Script File
 
 **For utility scripts (Ruby - preferred):**
+
 ```bash
-# Create script in scripts/ directory  
+# Create script in scripts/ directory
 touch scripts/my-utility-script.rb
 chmod +x scripts/my-utility-script.rb
 ```
 
 **For setup/backup scripts (Bash - legacy):**
+
 ```bash
 touch scripts/my-setup-script.sh
 chmod +x scripts/my-setup-script.sh
@@ -463,6 +487,7 @@ chmod +x scripts/my-setup-script.sh
 #### 2. Add Script Content
 
 **Ruby utility script template:**
+
 ```ruby
 #!/usr/bin/env ruby
 # frozen_string_literal: true
@@ -474,7 +499,7 @@ class MyUtilityScript < ScriptBase
   def banner_text
     <<~BANNER
       🔧 My Utility Script
-      
+
       Usage: #{script_name} [OPTIONS] <arguments>
     BANNER
   end
@@ -492,12 +517,12 @@ class MyUtilityScript < ScriptBase
 
   def run
     log_banner("My Utility Script")
-    
+
     # Main script logic
     log_info("Starting process...")
-    
+
     # Your implementation here
-    
+
     show_completion("My Utility Script")
   end
 end
@@ -507,6 +532,7 @@ MyUtilityScript.execute if __FILE__ == $0
 ```
 
 **Bash setup/backup script template:**
+
 ```bash
 #!/bin/bash
 set -euo pipefail
@@ -552,7 +578,7 @@ my-utility-script() {
 ```makefile
 .PHONY: my-setup-script
 my-setup-script:
-	@bash "${ZSH_CONFIG}/scripts/my-setup-script.sh"
+ @bash "${ZSH_CONFIG}/scripts/my-setup-script.sh"
 ```
 
 #### 5. Update list-scripts Function
@@ -560,11 +586,13 @@ my-setup-script:
 Update the appropriate section in the `list-scripts` function:
 
 **For Ruby utility scripts:**
+
 ```zsh
 echo "  🔧 my-utility-script - Description of what this utility does"
 ```
 
 **For bash setup/backup scripts:**
+
 ```zsh
 echo "  🛠️  make my-setup-script - Description of what this setup does"
 ```
@@ -574,6 +602,7 @@ echo "  🛠️  make my-setup-script - Description of what this setup does"
 #### Determining Script Category
 
 **Setup/Backup Scripts (Makefile-only)** should be used for:
+
 - System configuration and optimization
 - Application setup and configuration
 - Backup and restore operations
@@ -581,6 +610,7 @@ echo "  🛠️  make my-setup-script - Description of what this setup does"
 - Operations that modify system settings
 
 **Utility Scripts (ZSH functions)** should be used for:
+
 - General-purpose utilities
 - Frequently used interactive tools
 - File manipulation and processing
@@ -638,10 +668,10 @@ class MyUtilityScript < ScriptBase
 
   def run
     log_banner("Starting #{script_name}")
-    
+
     # Your script logic here
     log_info("Processing...")
-    
+
     show_completion(script_name)
   end
 
@@ -993,3 +1023,177 @@ These functions automatically handle color codes, emojis, proper formatting, and
 - **Accessibility**: Color choices work in both light and dark terminal themes
 - **Performance Feedback**: Colors provide immediate visual feedback for user actions
 - **Professional Appearance**: Enhanced terminal output creates a more polished user experience
+
+# Using Gemini CLI for Large Codebase Analysis
+
+When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive
+context window. Use `gg -p` to leverage Google Gemini's large context capacity.
+
+## File and Directory Inclusion Syntax
+
+Use the `@` syntax to include files and directories in your Gemini prompts. The paths should be relative to WHERE you run the
+gemini command:
+
+### Examples
+
+**Single file analysis:**
+
+````bash
+gg -p "@src/main.py Explain this file's purpose and structure"
+
+Multiple files:
+gg -p "@package.json @src/index.js Analyze the dependencies used in the code"
+
+Entire directory:
+gg -p "@src/ Summarize the architecture of this codebase"
+
+Multiple directories:
+gg -p "@src/ @tests/ Analyze test coverage for the source code"
+
+Current directory and subdirectories:
+gg -p "@./ Give me an overview of this entire project"
+
+#
+Or use --all_files flag:
+gemini --all_files -p "Analyze the project structure and dependencies"
+
+Implementation Verification Examples
+
+Check if a feature is implemented:
+gg -p "@src/ @lib/ Has dark mode been implemented in this codebase? Show me the relevant files and functions"
+
+Verify authentication implementation:
+gg -p "@src/ @middleware/ Is JWT authentication implemented? List all auth-related endpoints and middleware"
+
+Check for specific patterns:
+gg -p "@src/ Are there any React hooks that handle WebSocket connections? List them with file paths"
+
+Verify error handling:
+gg -p "@src/ @api/ Is proper error handling implemented for all API endpoints? Show examples of try-catch blocks"
+
+Check for rate limiting:
+gg -p "@backend/ @middleware/ Is rate limiting implemented for the API? Show the implementation details"
+
+Verify caching strategy:
+gg -p "@src/ @lib/ @services/ Is Redis caching implemented? List all cache-related functions and their usage"
+
+Check for specific security measures:
+gg -p "@src/ @api/ Are SQL injection protections implemented? Show how user inputs are sanitized"
+
+Verify test coverage for features:
+gg -p "@src/payment/ @tests/ Is the payment processing module fully tested? List all test cases"
+
+When to Use Gemini CLI
+
+Use gg -p when:
+- Analyzing entire codebases or large directories
+- Comparing multiple large files
+- Need to understand project-wide patterns or architecture
+- Current context window is insufficient for the task
+- Working with files totaling more than 100KB
+- Verifying if specific features, patterns, or security measures are implemented
+- Checking for the presence of certain coding patterns across the entire codebase
+
+Important Notes
+
+- Paths in @ syntax are relative to your current working directory when invoking gemini
+- The CLI will include file contents directly in the context
+- No need for --yolo flag for read-only analysis
+- Gemini's context window can handle entire codebases that would overflow Claude's context
+- When checking implementations, be specific about what you're looking for to get accurate results # Using Gemini CLI for Large Codebase Analysis
+
+
+When analyzing large codebases or multiple files that might exceed context limits, use the Gemini CLI with its massive
+context window. Use `gg -p` to leverage Google Gemini's large context capacity.
+
+
+## File and Directory Inclusion Syntax
+
+
+Use the `@` syntax to include files and directories in your Gemini prompts. The paths should be relative to WHERE you run the
+ gemini command:
+
+
+### Examples:
+
+
+**Single file analysis:**
+```bash
+gg -p "@src/main.py Explain this file's purpose and structure"
+
+
+Multiple files:
+gg -p "@package.json @src/index.js Analyze the dependencies used in the code"
+
+
+Entire directory:
+gg -p "@src/ Summarize the architecture of this codebase"
+
+
+Multiple directories:
+gg -p "@src/ @tests/ Analyze test coverage for the source code"
+
+
+Current directory and subdirectories:
+gg -p "@./ Give me an overview of this entire project"
+# Or use --all_files flag:
+gemini --all_files -p "Analyze the project structure and dependencies"
+
+
+Implementation Verification Examples
+
+
+Check if a feature is implemented:
+gg -p "@src/ @lib/ Has dark mode been implemented in this codebase? Show me the relevant files and functions"
+
+
+Verify authentication implementation:
+gg -p "@src/ @middleware/ Is JWT authentication implemented? List all auth-related endpoints and middleware"
+
+
+Check for specific patterns:
+gg -p "@src/ Are there any React hooks that handle WebSocket connections? List them with file paths"
+
+
+Verify error handling:
+gg -p "@src/ @api/ Is proper error handling implemented for all API endpoints? Show examples of try-catch blocks"
+
+
+Check for rate limiting:
+gg -p "@backend/ @middleware/ Is rate limiting implemented for the API? Show the implementation details"
+
+
+Verify caching strategy:
+gg -p "@src/ @lib/ @services/ Is Redis caching implemented? List all cache-related functions and their usage"
+
+
+Check for specific security measures:
+gg -p "@src/ @api/ Are SQL injection protections implemented? Show how user inputs are sanitized"
+
+
+Verify test coverage for features:
+gg -p "@src/payment/ @tests/ Is the payment processing module fully tested? List all test cases"
+
+
+When to Use Gemini CLI
+
+
+Use gg -p when:
+- Analyzing entire codebases or large directories
+- Comparing multiple large files
+- Need to understand project-wide patterns or architecture
+- Current context window is insufficient for the task
+- Working with files totaling more than 100KB
+- Verifying if specific features, patterns, or security measures are implemented
+- Checking for the presence of certain coding patterns across the entire codebase
+
+
+Important Notes
+
+
+- Paths in @ syntax are relative to your current working directory when invoking gemini
+- The CLI will include file contents directly in the context
+- No need for --yolo flag for read-only analysis
+- Gemini's context window can handle entire codebases that would overflow Claude's context
+- When checking implementations, be specific about what you're looking for to get accurate results
+````
