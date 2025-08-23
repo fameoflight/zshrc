@@ -1,17 +1,17 @@
 # Custom utility scripts and functions
-# This file contains wrapper functions for scripts in the scripts/ directory
+# This file contains wrapper functions for utility scripts that should be available in ZSH
+# Setup/backup scripts are only available via Makefile targets
 
-# Note: Color logging functions are now loaded from logging.zsh
+# Note: Color logging functions are loaded from logging.zsh
 
 # =============================================================================
-# SCRIPT WRAPPER FUNCTIONS
+# UTILITY SCRIPT FUNCTIONS (Available in ZSH)
 # =============================================================================
 
 # Monitor arrangement script for stacked external monitors
 stack-monitors() {
   ruby "$ZSH_CONFIG/scripts/stacked-monitor.rb" "$@"
 }
-
 
 # Calibre e-book manager updater
 calibre-update() {
@@ -30,202 +30,22 @@ calibre-update() {
   bash "$script_path" "$@"
 }
 
-# VS Code settings backup utility
-vscode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "VS Code backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making vscode-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# Xcode settings backup utility
-xcode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Xcode backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making xcode-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# iTerm2 settings backup utility
-iterm-backup() {
-  local script_path="$ZSH_CONFIG/scripts/iterm-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "iTerm2 backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making iterm-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# iTerm2 settings setup utility
-iterm-setup() {
-  local script_path="$ZSH_CONFIG/scripts/iterm-setup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "iTerm2 setup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making iterm-setup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# PDF merger script (Python)
+# PDF merger script (Ruby)
 merge-pdf() {
-  local script_path="$ZSH_CONFIG/scripts/merge_pdf.py"
+  local script_path="$ZSH_CONFIG/scripts/merge-pdf.rb"
   
   if [[ ! -f "$script_path" ]]; then
     log_error "PDF merge script not found at $script_path"
     return 1
   fi
   
-  if [[ $# -eq 0 ]]; then
-    echo -e "${COLOR_BLUE}📖 Usage: merge-pdf <output.pdf> <input1.pdf> <input2.pdf> [...]${COLOR_NC}"
-    echo "       merge-pdf output.pdf *.pdf"
-    return 1
-  fi
-  
-  python3 "$script_path" "$@"
-}
-
-# macOS system optimization script
-macos-optimize() {
-  local script_path="$ZSH_CONFIG/scripts/macos-optimize.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "macOS optimize script not found at $script_path"
-    return 1
-  fi
-  
   if [[ ! -x "$script_path" ]]; then
-    log_info "Making macos-optimize.sh executable..."
+    log_info "Making merge-pdf.rb executable..."
     chmod +x "$script_path"
   fi
   
-  bash "$script_path" "$@"
-}
-
-# VS Code settings backup utility
-vscode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "VS Code backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making vscode-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# Xcode settings backup utility
-xcode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Xcode backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making xcode-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# List all available custom scripts
-list-scripts() {
-  local scripts_dir="$ZSH_CONFIG/scripts"
-  
-  echo "📜 Available custom scripts in $scripts_dir:"
-  echo ""
-  
-  if [[ -d "$scripts_dir" ]]; then
-    for script in "$scripts_dir"/*; do
-      if [[ -f "$script" ]]; then
-        local basename_script=$(basename "$script")
-        local extension="${basename_script##*.}"
-        
-        case "$extension" in
-          sh)
-            echo "  🔧 $basename_script (Bash script)"
-            ;;
-          rb)
-            echo "  💎 $basename_script (Ruby script)"
-            ;;
-          py)
-            echo "  🐍 $basename_script (Python script)"
-            ;;
-          zsh)
-            echo "  🐚 $basename_script (ZSH functions)"
-            ;;
-          *)
-            echo "  📄 $basename_script"
-            ;;
-        esac
-        
-        # Show first comment line if available
-        if [[ "$extension" == "sh" || "$extension" == "rb" || "$extension" == "py" ]]; then
-          local desc=$(grep -m1 "^#.*" "$script" 2>/dev/null | head -1 | sed 's/^# *//' | sed 's/^#!//')
-          if [[ -n "$desc" && "$desc" != *"bin/"* ]]; then
-            echo "     ↳ $desc"
-          fi
-        fi
-      fi
-    done
-  else
-    echo "  ❌ Scripts directory not found"
-  fi
-  
-  echo ""
-  echo "🔧 Available script functions:"
-  echo "  📚 calibre-update   - Update Calibre to the latest version"
-  echo "  🖥️  stack-monitors   - Configure stacked monitor setup"  
-  echo "  📄 merge-pdf        - Merge multiple PDF files"
-  echo "  ⚡ macos-optimize   - Optimize macOS system settings for developers"
-  echo "  ☁️  dropbox-backup   - Move directory to Dropbox with symlink backup"
-  echo "  🤖 claude-setup     - Setup Claude Code settings via symlinks"
-  echo "  🤖 gemini-setup     - Setup Gemini settings via symlinks"
-  echo "  🤖 agent-setup      - Convert CLAUDE.md to AGENT.md with symlinks for unified AI docs"
-  echo "  💾 vscode-backup    - Backup VS Code essential settings"
-  echo "  💾 xcode-backup     - Backup Xcode essential settings"
-  echo "  💾 iterm-backup     - Backup iTerm2 essential settings"
-  echo "  ⚙️  iterm-setup      - Restore iTerm2 settings from backup"
-  echo "  📜 list-scripts     - Show this help"
+  # Set BUNDLE_GEMFILE to use project gems
+  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
 }
 
 # Dropbox backup utility
@@ -245,87 +65,82 @@ dropbox-backup() {
   bash "$script_path" "$@"
 }
 
-# VS Code settings backup utility
-vscode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/vscode-backup.sh"
+# Application uninstaller - comprehensive removal of apps, processes, and files
+uninstall-app() {
+  local script_path="$ZSH_CONFIG/scripts/uninstall-app.rb"
   
   if [[ ! -f "$script_path" ]]; then
-    log_error "VS Code backup script not found at $script_path"
+    log_error "Uninstall app script not found at $script_path"
     return 1
   fi
   
   if [[ ! -x "$script_path" ]]; then
-    log_info "Making vscode-backup.sh executable..."
+    log_info "Making uninstall-app.rb executable..."
     chmod +x "$script_path"
   fi
   
-  bash "$script_path" "$@"
+  # Set BUNDLE_GEMFILE to use project gems
+  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
 }
 
-# Xcode settings backup utility
-xcode-backup() {
-  local script_path="$ZSH_CONFIG/scripts/xcode-backup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Xcode backup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making xcode-backup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
 
-# Claude Code settings symlink setup utility
-claude-setup() {
-  local script_path="$ZSH_CONFIG/scripts/claude-setup.sh"
+# List all available custom scripts and functions
+list-scripts() {
+  local scripts_dir="$ZSH_CONFIG/scripts"
   
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Claude setup script not found at $script_path"
-    return 1
+  echo "📜 Custom Scripts Organization:"
+  echo ""
+  
+  # Show utility scripts available in ZSH
+  echo "🐚 ZSH Utility Functions (interactive use):"
+  echo "  📚 calibre-update   - Update Calibre to the latest version"
+  echo "  🖥️  stack-monitors   - Configure stacked monitor setup"  
+  echo "  📄 merge-pdf        - Merge multiple PDF files"
+  echo "  ☁️  dropbox-backup   - Move directory to Dropbox with symlink backup"
+  echo "  🗑️  uninstall-app    - Comprehensive application uninstaller"
+  echo "  📜 list-scripts     - Show this help"
+  echo ""
+  
+  # Show setup/backup scripts available via Makefile only
+  echo "🔧 Setup/Backup Scripts (Makefile targets only):"
+  echo "  🛠️  make macos-optimize - Optimize macOS system settings"
+  echo "  🤖 make claude-setup   - Setup Claude Code settings via symlinks"
+  echo "  🤖 make gemini-setup   - Setup Gemini settings via symlinks"
+  echo "  🤖 make agent-setup    - Convert CLAUDE.md to AGENT.md with symlinks"
+  echo "  💾 make vscode-backup  - Backup VS Code essential settings"
+  echo "  💾 make xcode-backup   - Backup Xcode essential settings"
+  echo "  💾 make iterm-backup   - Backup iTerm2 essential settings"
+  echo "  ⚙️  make iterm-setup    - Restore iTerm2 settings from backup"
+  echo ""
+  
+  # Show all script files for reference
+  echo "📂 All Script Files in $scripts_dir:"
+  if [[ -d "$scripts_dir" ]]; then
+    for script in "$scripts_dir"/*; do
+      if [[ -f "$script" && $(basename "$script") != "scripts.zsh" ]]; then
+        local basename_script=$(basename "$script")
+        local extension="${basename_script##*.}"
+        
+        case "$extension" in
+          sh)
+            echo "  🔧 $basename_script"
+            ;;
+          rb)
+            echo "  💎 $basename_script"
+            ;;
+          py)
+            echo "  🐍 $basename_script"
+            ;;
+          *)
+            echo "  📄 $basename_script"
+            ;;
+        esac
+      fi
+    done
+  else
+    echo "  ❌ Scripts directory not found"
   fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making claude-setup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# Gemini settings symlink setup utility
-gemini-setup() {
-  local script_path="$ZSH_CONFIG/scripts/gemini-setup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Gemini setup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making gemini-setup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
-}
-
-# Agent documentation setup utility
-agent-setup() {
-  local script_path="$ZSH_CONFIG/scripts/agent-setup.sh"
-  
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Agent setup script not found at $script_path"
-    return 1
-  fi
-  
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making agent-setup.sh executable..."
-    chmod +x "$script_path"
-  fi
-  
-  bash "$script_path" "$@"
 }

@@ -151,57 +151,550 @@ The configuration includes extensive Git integration:
 
 ## Custom Scripts System
 
-The repository includes a custom scripts system located in the `scripts/` directory with wrapper functions in `scripts/scripts.zsh`.
+The repository implements a sophisticated **Ruby-based** custom scripts system that provides modular utility functions across the development environment. This system consists of five key components:
 
-### Available Custom Scripts
+1. **Centralized Gemfile** for dependency management
+2. **Common Ruby utilities** in `scripts/.common/` directory  
+3. **Ruby script files** in the `scripts/` directory
+4. **ZSH wrapper functions** in `scripts/scripts.zsh`
+5. **Makefile integration** for automated deployment and gem installation
+
+### Architecture Overview
+
+#### Ruby-First Design Philosophy
+
+The scripts system is built using **Ruby as the primary scripting language** with centralized dependency management and shared utilities. This provides:
+
+- **Rich standard library** for file operations, system integration, and data processing
+- **Powerful gems ecosystem** for terminal UI, HTTP requests, database operations, and more
+- **Object-oriented structure** with inheritance and modular design
+- **Centralized logging and error handling** across all scripts
+- **Interactive prompts** with confirmation dialogs and progress indicators
+- **Comprehensive testing capabilities** with RSpec and RuboCop integration
+
+#### Loading Mechanism
+
+The scripts system is loaded automatically as part of the ZSH configuration:
+
+```bash
+# In zshrc (line 29):
+sources+="$ZSH_CONFIG/scripts/scripts.zsh"
+```
+
+This ensures all script wrapper functions are available immediately when starting a new shell session.
+
+#### Component Integration
+
+1. **Centralized Gemfile** (`Gemfile`) - Manages all Ruby dependencies:
+   - Terminal UI gems (tty-prompt, tty-progressbar, pastel)
+   - System interaction gems (open3, sqlite3, rexml) 
+   - Development tools (rspec, rubocop)
+   - Installed via `make ruby-gems` target
+
+2. **Common Utilities** (`scripts/.common/`) - Shared Ruby modules:
+   - `logger.rb` - Centralized logging with emoji indicators and colors
+   - `system.rb` - System command execution and platform utilities  
+   - `script_base.rb` - Base class providing common functionality for all scripts
+
+3. **Ruby Scripts** (`scripts/`) - Utility scripts inheriting from ScriptBase:
+   - `uninstall-app.rb` - Comprehensive application removal
+   - `calibre-update.rb` - E-book manager updates (planned migration)
+   - `stack-monitors.rb` - Monitor configuration utility
+
+4. **Wrapper Functions** (`scripts/scripts.zsh`) - ZSH functions for utility scripts only:
+   - Handle script path resolution with Ruby execution
+   - Set `BUNDLE_GEMFILE` environment for dependency access
+   - Provide error checking and validation  
+   - Use centralized logging functions
+   - **Only available for utility scripts**, not setup/backup scripts
+
+5. **Makefile Integration** - Setup/backup scripts and gem installation:
+   - `make ruby-gems` → Installs all Gemfile dependencies
+   - `make macos-optimize` → `scripts/macos-optimize.sh` (bash - to be migrated)
+   - `make claude-setup` → `scripts/claude-setup.sh` (bash - to be migrated)
+   - Setup scripts remain bash-based during migration period
+
+### Available Scripts and Functions
+
+The scripts system is organized into two distinct categories:
+
+#### 🛠️ Setup/Backup Scripts (Makefile Targets Only)
+
+These scripts handle system configuration, application setup, and backup operations. They are **only accessible via Makefile targets** and are not available as ZSH functions:
+
+##### System Configuration
+
+- **`make macos-optimize`** - Optimize macOS system settings for developers
+  - Configures Finder, Dock, energy settings, and development tools
+  - **Script**: `scripts/macos-optimize.sh`
+
+##### AI Development Tools Setup
+
+- **`make claude-setup`** - Setup Claude Code settings via symlinks
+  - Creates symlinks for Claude Code configuration files
+  - **Script**: `scripts/claude-setup.sh`
+
+- **`make gemini-setup`** - Setup Gemini CLI settings via symlinks  
+  - Configures Gemini CLI with appropriate settings
+  - **Script**: `scripts/gemini-setup.sh`
+
+- **`make agent-setup`** - Convert CLAUDE.md to AGENT.md with symlinks
+  - Creates unified documentation for multiple AI tools
+  - **Script**: `scripts/agent-setup.sh`
+
+##### Application Backup/Restore
+
+- **`make xcode-backup`** - Backup current Xcode essential settings
+  - Backs up themes, key bindings, and simulator configurations
+  - **Script**: `scripts/xcode-backup.sh`
+
+- **`make vscode-backup`** - Backup VS Code essential settings
+  - Saves user settings, extensions list, and keybindings
+  - **Script**: `scripts/vscode-backup.sh`
+
+- **`make iterm-backup`** - Backup iTerm2 essential settings
+  - Exports iTerm2 preferences and profile configurations
+  - **Script**: `scripts/iterm-backup.sh`
+
+- **`make iterm-setup`** - Restore iTerm2 settings from backup
+  - Restores iTerm2 configuration from backup files
+  - **Script**: `scripts/iterm-setup.sh`
+
+#### 🐚 Utility Scripts (ZSH Functions)
+
+These scripts provide general utilities and are available as interactive ZSH functions:
 
 - **`calibre-update`** - Update Calibre e-book manager to the latest version
-
-  - Usage: `calibre-update [--help] [--version] [--no-launch]`
+  - **Usage**: `calibre-update [--help] [--version] [--no-launch]`
   - Automatically downloads, installs, and launches the latest Calibre
   - Includes backup of existing installation and proper error handling
+  - **Script**: `scripts/calibre-update.sh`
 
 - **`stack-monitors`** - Configure stacked external monitor setup
-
-  - Usage: `stack-monitors [--dry-run] [--debug]`
+  - **Usage**: `stack-monitors [--dry-run] [--debug]`
   - Configures non-16" primary monitor with two stacked 16" monitors
   - Uses `displayplacer` tool for precise monitor arrangement
+  - **Script**: `scripts/stacked-monitor.rb`
 
 - **`merge-pdf`** - Merge multiple PDF files into one
+  - **Usage**: `merge-pdf [OPTIONS] <output_file> <input_files_or_directory>`
+  - Ruby-based PDF merging utility using combine_pdf gem
+  - Supports directory input with recursive scanning option
+  - **Script**: `scripts/merge-pdf.rb`
 
-  - Usage: `merge-pdf output.pdf input1.pdf input2.pdf [...]`
-  - Python-based PDF merging utility
+- **`dropbox-backup`** - Move directory to Dropbox with symlink backup
+  - **Usage**: `dropbox-backup [source-directory]`
+  - Safely moves directories to Dropbox and creates symlinks
+  - **Script**: `scripts/dropbox-backup.sh`
+
+- **`uninstall-app`** - Comprehensive application uninstaller
+  - **Usage**: `uninstall-app [app-name]`
+  - Removes Homebrew packages, kills processes, and cleans up files
+  - **Script**: `scripts/uninstall-app.sh`
+
+#### Discovery and Help
 
 - **`list-scripts`** - Display all available custom scripts and functions
-  - Shows scripts in the `scripts/` directory with descriptions
-  - Lists available wrapper functions and their usage
+  - Shows both ZSH utility functions and Makefile-only setup/backup scripts
+  - Provides clear organization of the two-tier system
+  - Quick overview of all available functionality
+
+### Two-Tier Script Organization
+
+#### ZSH Utility Functions Pattern
+
+Utility scripts available in ZSH follow this wrapper function pattern in `scripts.zsh`:
+
+```zsh
+utility-script() {
+  local script_path="$ZSH_CONFIG/scripts/utility-script.sh"
+
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Script not found at $script_path"
+    return 1
+  fi
+
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making script executable..."
+    chmod +x "$script_path"
+  fi
+
+  bash "$script_path" "$@"
+}
+```
+
+#### Makefile-Only Scripts Pattern
+
+Setup and backup scripts are only accessible via Makefile targets:
+
+```makefile
+setup-script:
+	@bash "${ZSH_CONFIG}/scripts/setup-script.sh"
+```
+
+This two-tier approach provides:
+
+- **Clear separation** - Utilities vs setup/backup operations
+- **Controlled access** - Setup scripts require intentional `make` invocation
+- **Interactive utilities** - Common tools available directly in shell
+- **Consistent error handling** - Both tiers use centralized logging
+
+### Integration with Makefile
+
+The scripts system integrates seamlessly with the Makefile automation:
+
+#### Direct Script Execution
+
+```makefile
+# Makefile calls script directly
+macos-optimize:
+ @if [ -f "scripts/macos-optimize.sh" ]; then \
+  bash scripts/macos-optimize.sh; \
+ fi
+```
+
+#### Through Wrapper Functions
+
+```makefile
+# Makefile calls through bash wrapper
+claude-setup:
+ @bash "${ZSH}/scripts/claude-setup.sh"
+```
+
+#### Complex Integration Examples
+
+- **`make setup`** - Calls `app-settings` and `ai-tools` targets
+- **`make app-settings`** - Orchestrates multiple backup/restore scripts
+- **`make ai-tools`** - Runs both Claude and Gemini setup scripts
+
+### Ruby Development Workflow
+
+#### Setting Up Development Environment
+
+1. **Install Ruby dependencies:**
+   ```bash
+   make ruby-gems
+   ```
+
+2. **Common utilities are automatically available:**
+   - `logger.rb` - Centralized logging system
+   - `system.rb` - System interaction utilities  
+   - `script_base.rb` - Base class for all scripts
+
+3. **Available gems in scripts:**
+   ```ruby
+   require 'tty-prompt'     # Interactive prompts
+   require 'tty-progressbar' # Progress indicators
+   require 'pastel'         # Terminal colors
+   require 'sqlite3'        # Database operations
+   require 'rexml'          # XML/Plist parsing
+   ```
+
+#### Script Testing and Quality
+
+**Run RuboCop for code quality:**
+```bash
+cd $ZSH_CONFIG
+bundle exec rubocop scripts/
+```
+
+**Run RSpec tests:**
+```bash
+cd $ZSH_CONFIG  
+bundle exec rspec spec/
+```
+
+**Debug mode:**
+```bash
+DEBUG=1 uninstall-app --verbose "TestApp"
+```
+
+#### Common Ruby Patterns
+
+**Using the logger:**
+```ruby
+log_info("Processing request")
+log_success("Operation completed")
+log_warning("Potential issue detected")
+log_error("Critical error occurred")
+log_progress("Working on task...")
+```
+
+**System command execution:**
+```ruby
+# Execute and return output
+result = System.execute("brew list", description: "Listing packages")
+
+# Execute and return success/failure
+success = System.execute?("which brew", description: "Checking Homebrew")
+
+# Interactive confirmation
+if confirm_action("Proceed with operation?")
+  # User confirmed
+end
+```
+
+**File operations with logging:**
+```ruby
+remove_file("/path/to/file")           # Single file
+remove_files(["/path1", "/path2"])     # Multiple files with confirmation
+find_in_directories(dirs, "pattern")   # Search across directories
+```
 
 ### Adding New Scripts
 
-To add new custom scripts:
+To add new custom scripts to the system:
 
-1. **Create the script** in `scripts/` directory (e.g., `scripts/my-script.sh`)
-2. **Make it executable**: `chmod +x scripts/my-script.sh`
-3. **Add wrapper function** in `scripts/scripts.zsh`:
+#### 1. Create the Ruby Script File
 
-   ```zsh
-   my-script() {
-     local script_path="$ZSH_CONFIG/scripts/my-script.sh"
-     bash "$script_path" "$@"
-   }
-   ```
+**For utility scripts (Ruby - preferred):**
+```bash
+# Create script in scripts/ directory  
+touch scripts/my-utility-script.rb
+chmod +x scripts/my-utility-script.rb
+```
 
-4. **Test the function**: The wrapper will be available after reloading the shell
-5. **Update `list-scripts`** function if needed to include new functionality
+**For setup/backup scripts (Bash - legacy):**
+```bash
+touch scripts/my-setup-script.sh
+chmod +x scripts/my-setup-script.sh
+```
 
-### Script Guidelines
+#### 2. Add Script Content
 
-- Use proper error handling and validation
-- Include help options (`--help`, `-h`)
-- Follow the kebab-case naming convention for wrapper functions
-- Include descriptive comments at the top of scripts
-- Use modern shell scripting practices (`set -euo pipefail` for bash)
-- Add appropriate logging with emoji indicators for better UX
+**Ruby utility script template:**
+```ruby
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '.common/script_base'
+
+# Description: What this script does
+class MyUtilityScript < ScriptBase
+  def banner_text
+    <<~BANNER
+      🔧 My Utility Script
+      
+      Usage: #{script_name} [OPTIONS] <arguments>
+    BANNER
+  end
+
+  def add_custom_options(opts)
+    opts.on('-x', '--example', 'Example custom option') do
+      @options[:example] = true
+    end
+  end
+
+  def validate!
+    # Add any validation logic
+    super
+  end
+
+  def run
+    log_banner("My Utility Script")
+    
+    # Main script logic
+    log_info("Starting process...")
+    
+    # Your implementation here
+    
+    show_completion("My Utility Script")
+  end
+end
+
+# Execute the script
+MyUtilityScript.execute if __FILE__ == $0
+```
+
+**Bash setup/backup script template:**
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Source logging functions if available
+if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
+    source "$ZSH_CONFIG/logging.zsh"
+fi
+
+# Script implementation
+log_info "Starting my-setup-script"
+# ... script logic ...
+log_success "Script completed successfully"
+```
+
+#### 3. Add Wrapper Function (Ruby Utility Scripts Only)
+
+**For Ruby utility scripts**, add to `scripts/scripts.zsh`:
+
+```zsh
+my-utility-script() {
+  local script_path="$ZSH_CONFIG/scripts/my-utility-script.rb"
+
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Script not found at $script_path"
+    return 1
+  fi
+
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making script executable..."
+    chmod +x "$script_path"
+  fi
+
+  # Set BUNDLE_GEMFILE to use project gems
+  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+}
+```
+
+**For setup/backup scripts**, do NOT add wrapper functions. They should only be accessible via Makefile targets.
+
+#### 4. Add Makefile Target (Required for Setup/Backup Scripts)
+
+```makefile
+.PHONY: my-setup-script
+my-setup-script:
+	@bash "${ZSH_CONFIG}/scripts/my-setup-script.sh"
+```
+
+#### 5. Update list-scripts Function
+
+Update the appropriate section in the `list-scripts` function:
+
+**For Ruby utility scripts:**
+```zsh
+echo "  🔧 my-utility-script - Description of what this utility does"
+```
+
+**For bash setup/backup scripts:**
+```zsh
+echo "  🛠️  make my-setup-script - Description of what this setup does"
+```
+
+### Script Development Guidelines
+
+#### Determining Script Category
+
+**Setup/Backup Scripts (Makefile-only)** should be used for:
+- System configuration and optimization
+- Application setup and configuration
+- Backup and restore operations
+- One-time or infrequent setup tasks
+- Operations that modify system settings
+
+**Utility Scripts (ZSH functions)** should be used for:
+- General-purpose utilities
+- Frequently used interactive tools
+- File manipulation and processing
+- Development workflow helpers
+- Day-to-day operational commands
+
+#### Error Handling
+
+- Use `set -euo pipefail` in bash scripts for strict error handling
+- Always validate input parameters and required dependencies
+- Provide meaningful error messages using `log_error`
+
+#### Logging Standards
+
+- Use centralized logging functions from `logging.zsh`
+- Source logging functions at the start of each script
+- Provide fallback logging functions if `logging.zsh` unavailable
+- Use appropriate log levels: `log_info`, `log_success`, `log_warning`, `log_error`
+
+#### Help and Documentation
+
+- Include `--help` option for all scripts
+- Add descriptive comments at the top of each script
+- Follow consistent parameter naming conventions
+- Document expected environment variables
+
+#### Language-Specific Patterns
+
+**Ruby Scripts (Preferred):**
+
+All new utility scripts should be written in Ruby using the ScriptBase class:
+
+```ruby
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '.common/script_base'
+
+# Brief description of what this script does
+class MyUtilityScript < ScriptBase
+  def banner_text
+    "Usage: #{script_name} [OPTIONS] <arguments>"
+  end
+
+  def add_custom_options(opts)
+    opts.on('-c', '--custom', 'Custom option') do
+      @options[:custom] = true
+    end
+  end
+
+  def validate!
+    # Add validation logic here
+    super
+  end
+
+  def run
+    log_banner("Starting #{script_name}")
+    
+    # Your script logic here
+    log_info("Processing...")
+    
+    show_completion(script_name)
+  end
+
+  private
+
+  def show_examples
+    puts "Examples:"
+    puts "  #{script_name} --custom argument"
+  end
+end
+
+# Execute the script
+MyUtilityScript.execute if __FILE__ == $0
+```
+
+**Bash Scripts (Legacy - Setup/Backup Only):**
+
+Setup and backup scripts remain in bash during migration period:
+
+```bash
+#!/bin/bash
+set -euo pipefail
+
+# Source centralized logging
+if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
+    source "$ZSH_CONFIG/logging.zsh"
+fi
+```
+
+**Ruby Script Features:**
+
+- **Automatic Bundler setup** - Gemfile dependencies available automatically
+- **Rich terminal UI** - Progress bars, colored output, interactive prompts
+- **Comprehensive logging** - Centralized logger with emoji indicators
+- **Error handling** - Proper exception handling and exit codes
+- **Option parsing** - Standardized help, dry-run, verbose, and force options
+- **Platform utilities** - Built-in macOS/Linux detection and system integration
+- **Testing support** - RSpec and RuboCop integration for quality assurance
+
+### Integration Benefits
+
+This two-tier scripts system provides several key advantages:
+
+1. **Clear Separation** - Utility vs setup/backup operations have distinct access patterns
+2. **Controlled Access** - Setup scripts require intentional Makefile invocation
+3. **Interactive Convenience** - Utility scripts available immediately in new shell sessions
+4. **Workflow Integration** - Setup scripts integrate seamlessly with automation workflows
+5. **Error Handling** - Consistent error checking and user feedback across both tiers
+6. **Discoverability** - `list-scripts` provides clear overview of both categories
+7. **Extensibility** - Easy to add new scripts following established patterns
+8. **Maintainability** - Centralized logging and error handling patterns
+9. **Safety** - Setup operations are protected from accidental execution
+10. **Flexibility** - Choose the right access pattern based on script purpose
 
 ## Directory Structure
 

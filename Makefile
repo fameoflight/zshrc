@@ -248,8 +248,8 @@ python: brew
 	@echo "Installing common Python tools..."
 	-@pip3 install --user black flake8 mypy pytest
 
-.PHONY: ruby
-ruby: brew
+.PHONY: ruby ruby-gems
+ruby: brew ruby-gems
 	@echo "💎 Setting up Ruby..."
 	@if ! command -v rvm >/dev/null 2>&1; then \
 		echo "Installing RVM..."; \
@@ -272,6 +272,22 @@ ruby: brew
 	@mkdir -p ${USER_BIN}
 	@echo "Installing ctags for Ruby development..."
 	-@brew install ctags
+
+# Install Ruby gems for scripts
+ruby-gems:
+	@echo -e "$(MAGENTA)💎 Installing Ruby gems for scripts...$(NC)"
+	@if ! command -v bundle >/dev/null 2>&1; then \
+		echo "Installing Bundler..."; \
+		gem install bundler; \
+	fi
+	@if [ -f "Gemfile" ]; then \
+		echo "Installing gems from Gemfile..."; \
+		bundle config set --local path 'vendor/bundle'; \
+		bundle install --quiet; \
+		echo -e "$(GREEN)✅ Ruby gems installed successfully$(NC)"; \
+	else \
+		echo -e "$(YELLOW)⚠️  No Gemfile found - skipping gem installation$(NC)"; \
+	fi
 
 .PHONY: postgres
 postgres: brew

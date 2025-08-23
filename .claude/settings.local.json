@@ -34,7 +34,10 @@
       "Bash(iterm-setup:*)",
       "Bash(gemini-cli:*)",
       "Bash(claude status)",
+      "Bash(ruby scripts/uninstall-app.rb:*)",
+      "Bash(bundle install)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": ["/tmp"]
   }
 }
