@@ -81,6 +81,16 @@ uninstall-app() {
   _execute_ruby_script "uninstall-app.rb" "$@"
 }
 
+# Comment-only changes detector - identify low-risk comment changes for safe commits
+comment-only-changes() {
+  _execute_ruby_script "comment-only-changes.rb" "$@"
+}
+
+# Markdown file merger - merge markdown files with their references into a single file
+merge-md() {
+  _execute_ruby_script "merge-markdown.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -94,12 +104,14 @@ list-scripts() {
   
   # Show utility scripts available in ZSH
   echo "🐚 ZSH Utility Functions (interactive use):"
-  echo "  📚 calibre-update   - Update Calibre to the latest version"
-  echo "  🖥️  stack-monitors   - Configure stacked monitor setup"  
-  echo "  📄 merge-pdf        - Merge multiple PDF files"
-  echo "  ☁️  dropbox-backup   - Move directory to Dropbox with symlink backup"
-  echo "  🗑️  uninstall-app    - Comprehensive application uninstaller"
-  echo "  📜 list-scripts     - Show this help"
+  echo "  📚 calibre-update        - Update Calibre to the latest version"
+  echo "  🖥️  stack-monitors        - Configure stacked monitor setup"  
+  echo "  📄 merge-pdf             - Merge multiple PDF files"
+  echo "  📝 merge-md              - Merge markdown files with their references into a single file"
+  echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
+  echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
+  echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
+  echo "  📜 list-scripts          - Show this help"
   echo ""
   
   # Show setup/backup scripts available via Makefile only

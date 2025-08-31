@@ -15,35 +15,48 @@ class UninstallApp < ScriptBase
     @discovery_results = {}
   end
 
-  def banner_text
-    <<~BANNER
-      🗑️  Comprehensive Application Uninstaller
+  # Script metadata for standardized help text
+  def script_emoji
+    '🗑️'
+  end
 
-      Usage: #{script_name} [OPTIONS] <application-name>
-    BANNER
+  def script_title
+    'Comprehensive Application Uninstaller'
+  end
+
+  def script_description
+    'Removes applications from multiple sources with complete cleanup including
+Homebrew packages, Mac App Store apps, processes, and associated files.'
+  end
+
+  def script_arguments
+    '<application-name>'
   end
 
   def add_custom_options(opts)
-    opts.separator ''
-    opts.separator 'Examples:'
-    opts.separator '    uninstall-app "Visual Studio Code"'
-    opts.separator '    uninstall-app --force docker'
-    opts.separator '    uninstall-app --dry-run slack'
-    opts.separator '    uninstall-app -v "Adobe Photoshop"'
-    opts.separator ''
-    opts.separator 'Features:'
-    opts.separator '    🍺 Homebrew packages & services'
-    opts.separator '    🏪 Mac App Store applications'
-    opts.separator '    🖥️  Application bundles'
-    opts.separator '    ⚡ Running process termination'
-    opts.separator '    🚀 Startup items cleanup'
-    opts.separator '    🌐 Browser extensions & data'
-    opts.separator '    🔧 Kernel extensions & drivers'
-    opts.separator '    🔒 Security & privacy entries'
-    opts.separator '    📦 Package managers (npm, yarn, pip, gems)'
-    opts.separator '    🌐 Network & system integration'
-    opts.separator '    🔍 Advanced cleanup features'
-    opts.separator '    🧹 Associated files & preferences'
+    # No custom options for this script
+  end
+
+  def show_examples
+    puts "Examples:"
+    puts "  #{script_name} \"Visual Studio Code\"    # Remove Visual Studio Code"
+    puts "  #{script_name} --force docker           # Force remove Docker"
+    puts "  #{script_name} --dry-run slack          # Preview what would be removed"
+    puts "  #{script_name} -v \"Adobe Photoshop\"     # Verbose removal"
+    puts ""
+    puts "Features:"
+    puts "  🍺 Homebrew packages & services"
+    puts "  🏪 Mac App Store applications"
+    puts "  🖥️  Application bundles"
+    puts "  ⚡ Running process termination"
+    puts "  🚀 Startup items cleanup"
+    puts "  🌐 Browser extensions & data"
+    puts "  🔧 Kernel extensions & drivers"
+    puts "  🔒 Security & privacy entries"
+    puts "  📦 Package managers (npm, yarn, pip, gems)"
+    puts "  🌐 Network & system integration"
+    puts "  🔍 Advanced cleanup features"
+    puts "  🧹 Associated files & preferences"
   end
 
   def validate!
@@ -58,7 +71,7 @@ class UninstallApp < ScriptBase
   end
 
   def run
-    log_banner("Uninstalling: #{@app_name}")
+    log_banner("#{script_title}: #{@app_name}")
 
     # Phase 1: Discovery
     log_section('🔍 DISCOVERY PHASE')
@@ -72,7 +85,7 @@ class UninstallApp < ScriptBase
     log_section('🗑️  REMOVAL PHASE')
     perform_removal
 
-    show_completion("Uninstall process for #{@app_name}")
+    show_completion("#{script_title} for #{@app_name}")
   end
 
   private

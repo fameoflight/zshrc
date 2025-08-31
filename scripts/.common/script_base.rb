@@ -8,6 +8,50 @@ require_relative 'system'
 
 # Base class for all ZSH configuration scripts
 # Provides common functionality, option parsing, and standardized structure
+#
+# ============================================================================
+# STANDARD SCRIPT INTERFACE
+# ============================================================================
+#
+# All scripts inheriting from ScriptBase should follow this structure:
+#
+# class MyScript < ScriptBase
+#   # REQUIRED: Implement these methods
+#   def run
+#     log_banner(script_title)
+#     # ... main script logic ...
+#     show_completion(script_title)
+#   end
+#
+#   # RECOMMENDED: Override these for better help text
+#   def script_emoji; '🔧'; end
+#   def script_title; 'My Script Tool'; end 
+#   def script_description; 'Description of what this script does'; end
+#   def script_arguments; '[OPTIONS] <required_arg>'; end
+#
+#   # OPTIONAL: Override these as needed
+#   def validate!
+#     # Custom validation logic
+#     super
+#   end
+#
+#   def add_custom_options(opts)
+#     opts.on('-c', '--custom', 'Custom option') do
+#       @options[:custom] = true
+#     end
+#   end
+#
+#   def show_examples
+#     puts "Examples:"
+#     puts "  #{script_name} arg1          # Description"
+#     puts "  #{script_name} --verbose     # Verbose mode"
+#   end
+# end
+#
+# # Execute with proper error handling
+# MyScript.execute if __FILE__ == $0
+#
+# ============================================================================
 class ScriptBase
   attr_reader :options, :args
 
@@ -71,9 +115,32 @@ class ScriptBase
     exit 0
   end
 
-  # Banner text for help - override in subclasses
+  # Banner text for help - subclasses should override these methods
   def banner_text
-    "Usage: #{script_name} [OPTIONS]"
+    <<~BANNER
+      #{script_emoji} #{script_title}
+
+      #{script_description}
+
+      Usage: #{script_name} [OPTIONS] #{script_arguments}
+    BANNER
+  end
+
+  # Script metadata methods - override in subclasses
+  def script_emoji
+    '🔧'
+  end
+
+  def script_title
+    script_name.tr('-', ' ').split.map(&:capitalize).join(' ')
+  end
+
+  def script_description
+    'A utility script for ZSH configuration management'
+  end
+
+  def script_arguments
+    ''
   end
 
   # Get script name from filename
@@ -81,15 +148,45 @@ class ScriptBase
     File.basename($0, '.rb')
   end
 
+  # =========================================================================
+  # REQUIRED METHODS - Subclasses MUST implement these
+  # =========================================================================
+
   # Main entry point - override in subclasses
   def run
     raise NotImplementedError, 'Subclasses must implement #run method'
   end
 
-  # Validation - override in subclasses
+  # =========================================================================
+  # OPTIONAL OVERRIDE METHODS - Subclasses can customize these
+  # =========================================================================
+
+  # Validation - override in subclasses for custom validation
   def validate!
     # Override in subclasses for custom validation
     true
+  end
+
+  # Add script-specific command line options
+  def add_custom_options(opts)
+    # Override in subclasses to add custom options
+    # Example:
+    # opts.on('-c', '--custom', 'Custom option') do
+    #   @options[:custom] = true
+    # end
+  end
+
+  # Show usage examples in help
+  def show_examples
+    # Override in subclasses to show usage examples
+    puts "Examples:"
+    puts "  #{script_name}                # Basic usage"
+  end
+
+  # Show restart notice after completion (optional)
+  def show_restart_notice
+    # Override in subclasses if restart/reload is needed
+    # log_info("Restart your shell: exec zsh")
   end
 
   # Setup bundler to use project gems

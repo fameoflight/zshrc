@@ -8,16 +8,22 @@ require_relative '.common/script_base'
 class StackedMonitor < ScriptBase
   SPACING = 20 # Pixels between monitors
 
-  def banner_text
-    <<~BANNER
-      📺 Stacked Monitor Setup
+  # Script metadata for standardized help text
+  def script_emoji
+    '📺'
+  end
 
-      Usage: #{script_name} [OPTIONS]
+  def script_title
+    'Stacked Monitor Setup'
+  end
 
-      Configures a 3-monitor setup with:
-      - Non-16" monitor as primary (left side, centered between stack)  
-      - Two 16" monitors stacked vertically on the right side
-    BANNER
+  def script_description
+    'Configures a 3-monitor setup with a non-16" monitor as primary (left side,
+centered between stack) and two 16" monitors stacked vertically on the right.'
+  end
+
+  def script_arguments
+    ''
   end
 
   def add_custom_options(opts)
@@ -25,6 +31,13 @@ class StackedMonitor < ScriptBase
       @options[:debug] = true
       ENV['DEBUG'] = '1'
     end
+  end
+
+  def show_examples
+    puts "Examples:"
+    puts "  #{script_name}                    # Configure stacked monitors"
+    puts "  #{script_name} --debug           # Show current setup and debug info"
+    puts "  #{script_name} --dry-run         # Preview what would be configured"
   end
 
   def validate!
@@ -38,7 +51,7 @@ class StackedMonitor < ScriptBase
   end
 
   def run
-    log_banner("Stacked Monitor Setup")
+    log_banner(script_title)
     
     displays_info = get_display_info
     show_current_setup(displays_info) if debug_mode?
@@ -55,7 +68,7 @@ class StackedMonitor < ScriptBase
       execute_monitor_setup(command, primary_display, monitor_1, monitor_2)
     end
     
-    show_completion("Stacked Monitor Setup")
+    show_completion(script_title)
   end
 
   private

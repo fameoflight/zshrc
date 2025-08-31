@@ -8,16 +8,22 @@ require 'pathname'
 # Merge multiple PDF files into a single PDF document
 # Supports both individual file arguments and directory scanning
 class MergePdf < ScriptBase
-  def banner_text
-    <<~BANNER
-      📄 PDF Merger
+  # Script metadata for standardized help text
+  def script_emoji
+    '📄'
+  end
 
-      Usage: #{script_name} [OPTIONS] <output_file> <input_files_or_directory>
+  def script_title
+    'PDF Merger'
+  end
 
-      Merges PDF files into a single document. Can accept:
-      - Multiple individual PDF files
-      - A directory containing PDF files (merged alphabetically)
-    BANNER
+  def script_description
+    'Merges PDF files into a single document. Can accept multiple individual
+PDF files or a directory containing PDF files (merged alphabetically).'
+  end
+
+  def script_arguments
+    '<output_file> <input_files_or_directory>'
   end
 
   def add_custom_options(opts)
@@ -28,6 +34,14 @@ class MergePdf < ScriptBase
     opts.on('-o', '--overwrite', 'Overwrite output file if it exists') do
       @options[:overwrite] = true
     end
+  end
+
+  def show_examples
+    puts "Examples:"
+    puts "  #{script_name} output.pdf file1.pdf file2.pdf    # Merge specific files"
+    puts "  #{script_name} merged.pdf ~/Documents/pdfs/      # Merge all PDFs in directory"
+    puts "  #{script_name} --recursive output.pdf ~/docs/   # Recursive directory merge"
+    puts "  #{script_name} --overwrite result.pdf input/    # Overwrite existing output"
   end
 
   def validate!
@@ -53,7 +67,7 @@ class MergePdf < ScriptBase
   end
 
   def run
-    log_banner("PDF Merger")
+    log_banner(script_title)
     
     pdf_files = collect_pdf_files
     
@@ -73,7 +87,7 @@ class MergePdf < ScriptBase
     end
 
     merge_pdfs(pdf_files)
-    show_completion("PDF Merger")
+    show_completion(script_title)
   end
 
   private

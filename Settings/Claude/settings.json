@@ -7,18 +7,19 @@
   "model": "claude-sonnet-4-20250514",
   "permissions": {
     "allow": [
+      "Bash(defaults read:*)",
+      "Bash(git:*)",
       "Bash(tree:*)",
       "Bash(bash:*)",
       "Bash(chmod:*)",
-      "Bash(git:*)",
       "Bash(make:*)",
       "WebFetch(domain:*)",
-      "Bash(brew upgrade:*)",
-      "Bash(brew install:*)",
-      "Bash(brew link:*)",
-      "Bash(brew unlink:*)",
+      "Bash(brew:*)",
       "Bash(curl:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebSearch(query:*)",
+      "Bash(ruby:*)",
+      "Bash(gem:*)"
     ]
   }
 }
