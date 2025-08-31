@@ -13,9 +13,12 @@
       "Bash(displayplacer:*)",
       "Bash(iterm-setup:*)",
       "Bash(gemini-cli:*)",
-      "Bash(claude status)"
+      "Bash(claude status)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }

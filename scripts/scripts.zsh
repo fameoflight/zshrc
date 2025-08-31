@@ -91,6 +91,16 @@ merge-md() {
   _execute_ruby_script "merge-markdown.rb" "$@"
 }
 
+# Git commit pure renames - commits only R100 renames after user confirmation
+git-commit-renames() {
+  _execute_ruby_script "git-commit-renames.rb" "$@"
+}
+
+# Git commit deletes - commits only deletions (D) after user confirmation
+git-commit-deletes() {
+  _execute_ruby_script "git-commit-deletes.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -111,6 +121,8 @@ list-scripts() {
   echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
   echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
   echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
+  echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
+  echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
