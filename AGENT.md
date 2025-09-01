@@ -154,9 +154,9 @@ The configuration includes extensive Git integration:
 The repository implements a sophisticated **Ruby-based** custom scripts system that provides modular utility functions across the development environment. This system consists of five key components:
 
 1. **Centralized Gemfile** for dependency management
-2. **Common Ruby utilities** in `scripts/.common/` directory
-3. **Ruby script files** in the `scripts/` directory
-4. **ZSH wrapper functions** in `scripts/scripts.zsh`
+2. **Common Ruby utilities** in `bin/.common/` directory
+3. **Ruby script files** in the `bin/` directory
+4. **ZSH wrapper functions** in `bin/scripts.zsh`
 5. **Makefile integration** for automated deployment and gem installation
 
 ### Architecture Overview
@@ -178,7 +178,7 @@ The scripts system is loaded automatically as part of the ZSH configuration:
 
 ```bash
 # In zshrc (line 29):
-sources+="$ZSH_CONFIG/scripts/scripts.zsh"
+sources+="$ZSH_CONFIG/bin/scripts.zsh"
 ```
 
 This ensures all script wrapper functions are available immediately when starting a new shell session.
@@ -192,19 +192,19 @@ This ensures all script wrapper functions are available immediately when startin
    - Development tools (rspec, rubocop)
    - Installed via `make ruby-gems` target
 
-2. **Common Utilities** (`scripts/.common/`) - Shared Ruby modules:
+2. **Common Utilities** (`bin/.common/`) - Shared Ruby modules:
 
    - `logger.rb` - Centralized logging with emoji indicators and colors
    - `system.rb` - System command execution and platform utilities
    - `script_base.rb` - Base class providing common functionality for all scripts
 
-3. **Ruby Scripts** (`scripts/`) - Utility scripts inheriting from ScriptBase:
+3. **Ruby Scripts** (`bin/`) - Utility scripts inheriting from ScriptBase:
 
    - `uninstall-app.rb` - Comprehensive application removal
    - `calibre-update.rb` - E-book manager updates (planned migration)
    - `stack-monitors.rb` - Monitor configuration utility
 
-4. **Wrapper Functions** (`scripts/scripts.zsh`) - ZSH functions for utility scripts only:
+4. **Wrapper Functions** (`bin/scripts.zsh`) - ZSH functions for utility scripts only:
 
    - Handle script path resolution with Ruby execution
    - Set `BUNDLE_GEMFILE` environment for dependency access
@@ -214,8 +214,8 @@ This ensures all script wrapper functions are available immediately when startin
 
 5. **Makefile Integration** - Setup/backup scripts and gem installation:
    - `make ruby-gems` → Installs all Gemfile dependencies
-   - `make macos-optimize` → `scripts/macos-optimize.sh` (bash - to be migrated)
-   - `make claude-setup` → `scripts/claude-setup.sh` (bash - to be migrated)
+   - `make macos-optimize` → `bin/macos-optimize.sh` (bash - to be migrated)
+   - `make claude-setup` → `bin/claude-setup.sh` (bash - to be migrated)
    - Setup scripts remain bash-based during migration period
 
 ### Available Scripts and Functions
@@ -230,44 +230,44 @@ These scripts handle system configuration, application setup, and backup operati
 
 - **`make macos-optimize`** - Optimize macOS system settings for developers
   - Configures Finder, Dock, energy settings, and development tools
-  - **Script**: `scripts/macos-optimize.sh`
+  - **Script**: `bin/macos-optimize.sh`
 
 ##### AI Development Tools Setup
 
 - **`make claude-setup`** - Setup Claude Code settings via symlinks
 
   - Creates symlinks for Claude Code configuration files
-  - **Script**: `scripts/claude-setup.sh`
+  - **Script**: `bin/claude-setup.sh`
 
 - **`make gemini-setup`** - Setup Gemini CLI settings via symlinks
 
   - Configures Gemini CLI with appropriate settings
-  - **Script**: `scripts/gemini-setup.sh`
+  - **Script**: `bin/gemini-setup.sh`
 
 - **`make agent-setup`** - Convert CLAUDE.md to AGENT.md with symlinks
   - Creates unified documentation for multiple AI tools
-  - **Script**: `scripts/agent-setup.sh`
+  - **Script**: `bin/agent-setup.sh`
 
 ##### Application Backup/Restore
 
 - **`make xcode-backup`** - Backup current Xcode essential settings
 
   - Backs up themes, key bindings, and simulator configurations
-  - **Script**: `scripts/xcode-backup.sh`
+  - **Script**: `bin/xcode-backup.sh`
 
 - **`make vscode-backup`** - Backup VS Code essential settings
 
   - Saves user settings, extensions list, and keybindings
-  - **Script**: `scripts/vscode-backup.sh`
+  - **Script**: `bin/vscode-backup.sh`
 
 - **`make iterm-backup`** - Backup iTerm2 essential settings
 
   - Exports iTerm2 preferences and profile configurations
-  - **Script**: `scripts/iterm-backup.sh`
+  - **Script**: `bin/iterm-backup.sh`
 
 - **`make iterm-setup`** - Restore iTerm2 settings from backup
   - Restores iTerm2 configuration from backup files
-  - **Script**: `scripts/iterm-setup.sh`
+  - **Script**: `bin/iterm-setup.sh`
 
 #### 🐚 Utility Scripts (ZSH Functions)
 
@@ -278,32 +278,32 @@ These scripts provide general utilities and are available as interactive ZSH fun
   - **Usage**: `calibre-update [--help] [--version] [--no-launch]`
   - Automatically downloads, installs, and launches the latest Calibre
   - Includes backup of existing installation and proper error handling
-  - **Script**: `scripts/calibre-update.sh`
+  - **Script**: `bin/calibre-update.sh`
 
 - **`stack-monitors`** - Configure stacked external monitor setup
 
   - **Usage**: `stack-monitors [--dry-run] [--debug]`
   - Configures non-16" primary monitor with two stacked 16" monitors
   - Uses `displayplacer` tool for precise monitor arrangement
-  - **Script**: `scripts/stacked-monitor.rb`
+  - **Script**: `bin/stacked-monitor.rb`
 
 - **`merge-pdf`** - Merge multiple PDF files into one
 
   - **Usage**: `merge-pdf [OPTIONS] <output_file> <input_files_or_directory>`
   - Ruby-based PDF merging utility using combine_pdf gem
   - Supports directory input with recursive scanning option
-  - **Script**: `scripts/merge-pdf.rb`
+  - **Script**: `bin/merge-pdf.rb`
 
 - **`dropbox-backup`** - Move directory to Dropbox with symlink backup
 
   - **Usage**: `dropbox-backup [source-directory]`
   - Safely moves directories to Dropbox and creates symlinks
-  - **Script**: `scripts/dropbox-backup.sh`
+  - **Script**: `bin/dropbox-backup.sh`
 
 - **`uninstall-app`** - Comprehensive application uninstaller
   - **Usage**: `uninstall-app [app-name]`
   - Removes Homebrew packages, kills processes, and cleans up files
-  - **Script**: `scripts/uninstall-app.sh`
+  - **Script**: `bin/uninstall-app.sh`
 
 #### Discovery and Help
 
@@ -320,7 +320,7 @@ Utility scripts available in ZSH follow this wrapper function pattern in `script
 
 ```zsh
 utility-script() {
-  local script_path="$ZSH_CONFIG/scripts/utility-script.sh"
+  local script_path="$ZSH_CONFIG/bin/utility-script.sh"
 
   if [[ ! -f "$script_path" ]]; then
     log_error "Script not found at $script_path"
@@ -342,7 +342,7 @@ Setup and backup scripts are only accessible via Makefile targets:
 
 ```makefile
 setup-script:
- @bash "${ZSH_CONFIG}/scripts/setup-script.sh"
+ @bash "${ZSH_CONFIG}/bin/setup-script.sh"
 ```
 
 This two-tier approach provides:
@@ -361,8 +361,8 @@ The scripts system integrates seamlessly with the Makefile automation:
 ```makefile
 # Makefile calls script directly
 macos-optimize:
- @if [ -f "scripts/macos-optimize.sh" ]; then \
-  bash scripts/macos-optimize.sh; \
+ @if [ -f "bin/macos-optimize.sh" ]; then \
+  bash bin/macos-optimize.sh; \
  fi
 ```
 
@@ -371,7 +371,7 @@ macos-optimize:
 ```makefile
 # Makefile calls through bash wrapper
 claude-setup:
- @bash "${ZSH}/scripts/claude-setup.sh"
+ @bash "${ZSH}/bin/claude-setup.sh"
 ```
 
 #### Complex Integration Examples
@@ -412,7 +412,7 @@ claude-setup:
 
 ```bash
 cd $ZSH_CONFIG
-bundle exec rubocop scripts/
+bundle exec rubocop bin/
 ```
 
 **Run RSpec tests:**
@@ -472,16 +472,16 @@ To add new custom scripts to the system:
 **For utility scripts (Ruby - preferred):**
 
 ```bash
-# Create script in scripts/ directory
-touch scripts/my-utility-script.rb
-chmod +x scripts/my-utility-script.rb
+# Create script in bin/ directory
+touch bin/my-utility-script.rb
+chmod +x bin/my-utility-script.rb
 ```
 
 **For setup/backup scripts (Bash - legacy):**
 
 ```bash
-touch scripts/my-setup-script.sh
-chmod +x scripts/my-setup-script.sh
+touch bin/my-setup-script.sh
+chmod +x bin/my-setup-script.sh
 ```
 
 #### 2. Add Script Content
@@ -550,11 +550,11 @@ log_success "Script completed successfully"
 
 #### 3. Add Wrapper Function (Ruby Utility Scripts Only)
 
-**For Ruby utility scripts**, add to `scripts/scripts.zsh`:
+**For Ruby utility scripts**, add to `bin/scripts.zsh`:
 
 ```zsh
 my-utility-script() {
-  local script_path="$ZSH_CONFIG/scripts/my-utility-script.rb"
+  local script_path="$ZSH_CONFIG/bin/my-utility-script.rb"
 
   if [[ ! -f "$script_path" ]]; then
     log_error "Script not found at $script_path"
@@ -578,7 +578,7 @@ my-utility-script() {
 ```makefile
 .PHONY: my-setup-script
 my-setup-script:
- @bash "${ZSH_CONFIG}/scripts/my-setup-script.sh"
+ @bash "${ZSH_CONFIG}/bin/my-setup-script.sh"
 ```
 
 #### 5. Update list-scripts Function
@@ -772,7 +772,7 @@ The repository is organized with the following structure:
 │   └── img/                      # Screenshot examples
 │
 ├── Custom Scripts System:
-├── scripts/                      # Custom utility scripts
+├── bin/                      # Custom utility scripts
 │   ├── scripts.zsh               # ZSH wrapper functions for scripts
 │   ├── calibre-update.sh         # Calibre e-book manager updater
 │   ├── dropbox-backup.sh         # Dropbox backup utility
@@ -830,7 +830,7 @@ The main `zshrc` file sources these files in order:
 4. Completion system: `completion.zsh`
 5. Private overrides: `private.zsh`
 
-#### Scripts System (`scripts/`)
+#### Scripts System (`bin/`)
 
 - **`scripts.zsh`** - Contains wrapper functions for all custom scripts
 - **Utility Scripts** - Bash, Python, and Ruby scripts for various system tasks
@@ -1137,7 +1137,7 @@ gg -p "@src/ @tests/ Analyze test coverage for the source code"
 Current directory and subdirectories:
 gg -p "@./ Give me an overview of this entire project"
 # Or use --all_files flag:
-gemini --all_files -p "Analyze the project structure and dependencies"
+gg --all_files -p "Analyze the project structure and dependencies"
 
 
 Implementation Verification Examples
@@ -1196,4 +1196,5 @@ Important Notes
 - No need for --yolo flag for read-only analysis
 - Gemini's context window can handle entire codebases that would overflow Claude's context
 - When checking implementations, be specific about what you're looking for to get accurate results
+```
 ````

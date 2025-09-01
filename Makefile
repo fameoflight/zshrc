@@ -37,7 +37,7 @@ UNAME := $(shell uname)
 
 # Package Lists for Homebrew
 CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq
-DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash
+DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash sleepwatcher pkgconf
 MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli
 EDITORS_CASK := visual-studio-code zed lm-studio
 MAC_APPS_CASK := iterm2 rectangle raycast finder-toolbar docker postman tableplus the-unarchiver keka cleanmaster-cleaner
@@ -137,7 +137,7 @@ endif
 # =============================================================================
 
 .PHONY: mac linux common mac-settings macos-optimize
-mac: check-requirements common brew dev-tools python ruby github-tools mac-apps mac-settings
+mac: check-requirements common brew dev-tools python ruby github-tools mac-apps mac-settings setup-wake-hook
 
 linux: common linux-packages linux-settings
 
@@ -170,7 +170,7 @@ brew-install:
 	@echo -e "$(BLUE)🍺 Checking Homebrew installation...$(NC)"
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo -e "$(YELLOW)📥 Installing Homebrew...$(NC)"; \
-		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+		/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
 	else \
 		echo -e "$(GREEN)✅ Homebrew already installed$(NC)"; \
 	fi
@@ -219,7 +219,7 @@ core-utils:
 dev-utils:
 	@echo "🔧 Installing development utilities..."
 	@for pkg in $(DEV_UTILS_BREW); do \
-		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 # Install modern CLI tools and enhancements
@@ -273,9 +273,9 @@ ruby: brew ruby-gems
 	@echo "Installing ctags for Ruby development..."
 	-@brew install ctags
 
-# Install Ruby gems for scripts
+# Install Ruby gems for bin
 ruby-gems:
-	@echo -e "$(MAGENTA)💎 Installing Ruby gems for scripts...$(NC)"
+	@echo -e "$(MAGENTA)💎 Installing Ruby gems for bin...$(NC)"
 	@if ! command -v bundle >/dev/null 2>&1; then \
 		echo "Installing Bundler..."; \
 		gem install bundler; \
@@ -330,23 +330,23 @@ xcode-setup:
 
 .PHONY: xcode-backup
 xcode-backup:
-	@bash "${ZSH}/scripts/xcode-backup.sh"
+	@bash "${ZSH}/bin/xcode-backup.sh"
 
 .PHONY: vscode-backup
 vscode-backup:
-	@bash "${ZSH}/scripts/vscode-backup.sh"
+	@bash "${ZSH}/bin/vscode-backup.sh"
 
 .PHONY: iterm-backup
 iterm-backup:
-	@bash "${ZSH}/scripts/iterm-backup.sh"
+	@bash "${ZSH}/bin/iterm-backup.sh"
 
 .PHONY: iterm-setup
 iterm-setup:
-	@bash "${ZSH}/scripts/iterm-setup.sh"
+	@bash "${ZSH}/bin/iterm-setup.sh"
 
 .PHONY: claude-setup
 claude-setup:
-	@bash "${ZSH}/scripts/claude-setup.sh"
+	@bash "${ZSH}/bin/claude-setup.sh"
 
 .PHONY: vscode-setup
 vscode-setup:
@@ -404,19 +404,45 @@ mac-settings: macos-optimize
 .PHONY: macos-optimize
 macos-optimize:
 	@echo -e "$(MAGENTA)⚡ Optimizing macOS system settings...$(NC)"
-	@if [ -f "scripts/macos-optimize.sh" ]; then \
+	@if [ -f "bin/macos-optimize.sh" ]; then \
 		echo -e "$(CYAN)🚀 Running macOS optimization script...$(NC)"; \
-		bash scripts/macos-optimize.sh; \
+		bash bin/macos-optimize.sh; \
 		echo -e "$(BOLD)$(GREEN)✅ macOS optimization complete$(NC)"; \
 	else \
-		echo -e "$(RED)❌ macOS optimization script not found at scripts/macos-optimize.sh$(NC)"; \
+		echo -e "$(RED)❌ macOS optimization script not found at bin/macos-optimize.sh$(NC)"; \
 		return 1; \
 	fi
+
+.PHONY: setup-wake-hook
+setup-wake-hook:
+	@echo "⚙️  Setting up wake hook..."
+	@echo "🍺 Ensuring sleepwatcher is installed..."
+	-@brew install sleepwatcher
+	@echo "🔗 Linking wakeup script to ~/.wakeup..."
+	@ln -sf "${PWD}/hooks/wakeup.sh" "${HOME}/.wakeup"
+	@echo "🔗 Linking sleep script to ~/.sleep..."
+	@ln -sf "${PWD}/hooks/sleep.sh" "${HOME}/.sleep"
+	@echo "🚀 Starting sleepwatcher service with brew services..."
+	-@brew services start sleepwatcher
+	@echo "✅ Wake hook setup complete"
+
+.PHONY: uninstall-wake-hook
+uninstall-wake-hook:
+	@echo "🗑️  Uninstalling wake hook..."
+	@echo "🚀 Stopping sleepwatcher service..."
+	-@brew services stop sleepwatcher
+	@echo "🔗 Removing wakeup script symlink..."
+	@rm -f "${HOME}/.wakeup"
+	@echo "🔗 Removing sleep script symlink..."
+	@rm -f "${HOME}/.sleep"
+	@echo "✅ Wake hook uninstalled"
 
 .PHONY: linux-settings
 linux-settings:
 	@echo "⚙️  Configuring Linux settings..."
 	@sudo update-alternatives --install /usr/bin/editor editor /usr/bin/vim 100
+
+
 
 # =============================================================================
 # SETTINGS RESTORATION
@@ -435,11 +461,11 @@ restore-all-settings: app-settings ai-tools
 .PHONY: restore-iterm
 restore-iterm:
 	@echo -e "$(CYAN)🖥️  Restoring iTerm2 settings...$(NC)"
-	@if [ -f "scripts/iterm-setup.sh" ]; then \
-		bash "scripts/iterm-setup.sh"; \
+	@if [ -f "bin/iterm-setup.sh" ]; then \
+		bash "bin/iterm-setup.sh"; \
 		echo -e "$(GREEN)✅ iTerm2 settings restored$(NC)"; \
-	else \
-		echo -e "$(YELLOW)⚠️  iTerm2 setup script not found$(NC)"; \
+	else 
+		echo -e "$(YELLOW)⚠️  iTerm2 setup script not found$(NC)"; 
 	fi
 
 .PHONY: restore-vscode
@@ -483,8 +509,8 @@ restore-dock:
 .PHONY: restore-claude
 restore-claude:
 	@echo -e "$(CYAN)🤖 Setting up Claude Code...$(NC)"
-	@if [ -f "scripts/claude-setup.sh" ]; then \
-		bash "scripts/claude-setup.sh"; \
+	@if [ -f "bin/claude-setup.sh" ]; then \
+		bash "bin/claude-setup.sh"; \
 		echo -e "$(GREEN)✅ Claude Code setup complete$(NC)"; \
 	else \
 		echo -e "$(YELLOW)⚠️  Claude setup script not found$(NC)"; \
@@ -493,8 +519,8 @@ restore-claude:
 .PHONY: restore-gemini
 restore-gemini:
 	@echo -e "$(CYAN)🤖 Setting up Gemini CLI...$(NC)"
-	@if [ -f "scripts/gemini-setup.sh" ]; then \
-		bash "scripts/gemini-setup.sh"; \
+	@if [ -f "bin/gemini-setup.sh" ]; then \
+		bash "bin/gemini-setup.sh"; \
 		echo -e "$(GREEN)✅ Gemini CLI setup complete$(NC)"; \
 	else \
 		echo -e "$(YELLOW)⚠️  Gemini setup script not found$(NC)"; \

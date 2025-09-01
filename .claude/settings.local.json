@@ -14,7 +14,12 @@
       "Bash(iterm-setup:*)",
       "Bash(gemini-cli:*)",
       "Bash(claude status)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(make:*)",
+      "Bash(echo:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "additionalDirectories": [

@@ -11,7 +11,7 @@
 # Execute a Ruby script with proper bundle setup and error handling
 _execute_ruby_script() {
   local script_name="$1"
-  local script_path="$ZSH_CONFIG/scripts/$1"
+  local script_path="$ZSH_CONFIG/bin/$1"
   shift # Remove script name from arguments
   
   if [[ ! -f "$script_path" ]]; then
@@ -39,7 +39,7 @@ stack-monitors() {
 
 # Calibre e-book manager updater
 calibre-update() {
-  local script_path="$ZSH_CONFIG/scripts/calibre-update.sh"
+  local script_path="$ZSH_CONFIG/bin/calibre-update.sh"
   
   if [[ ! -f "$script_path" ]]; then
     log_error "Calibre update script not found at $script_path"
@@ -61,7 +61,7 @@ merge-pdf() {
 
 # Dropbox backup utility
 dropbox-backup() {
-  local script_path="$ZSH_CONFIG/scripts/dropbox-backup.sh"
+  local script_path="$ZSH_CONFIG/bin/dropbox-backup.sh"
   
   if [[ ! -f "$script_path" ]]; then
     log_error "Dropbox backup script not found at $script_path"
@@ -107,7 +107,7 @@ git-commit-deletes() {
 
 # List all available custom scripts and functions
 list-scripts() {
-  local scripts_dir="$ZSH_CONFIG/scripts"
+  local scripts_dir="$ZSH_CONFIG/bin"
   
   echo "📜 Custom Scripts Organization:"
   echo ""

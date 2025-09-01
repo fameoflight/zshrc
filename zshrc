@@ -26,7 +26,7 @@ sources+="$ZSH_CONFIG/claude.zsh"
 sources+="$ZSH_CONFIG/gemini.zsh"
 sources+="$ZSH_CONFIG/ai.zsh"
 sources+="$ZSH_CONFIG/monorepo.zsh"
-sources+="$ZSH_CONFIG/scripts/scripts.zsh"
+sources+="$ZSH_CONFIG/bin/scripts.zsh"
 
 # highlights the live command line
 # Cloned From: git://github.com/nicoulaj/zsh-syntax-highlighting.git
