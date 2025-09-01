@@ -8,9 +8,6 @@ alias rollback="rails db:rollback && rails db:rollback RAILS_ENV=test"
 alias migrate-data="rails db:migrate:with_data && rails db:migrate:with_data RAILS_ENV=test"  
 alias rollback-data="rails db:rollback:with_data && rails db:rollback:with_data RAILS_ENV=test"
 
-# Legacy aliases (use fix-api, fix-modified, fix-branch from monorepo.zsh instead)
-alias autofix="bundle exec rubocop --autocorrect-all"
-
 # Enhanced test runner with fixing
 function rspec-modified() {
   echo "🧪 Running tests on modified files"

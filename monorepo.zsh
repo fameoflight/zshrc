@@ -2,40 +2,41 @@
 # Returns the path to project-type directory (e.g., jagora-api, jagora-web, jagora-flutter)
 find-project-dir() {
   local type="$1"  # api, web, or flutter
-  
+
   # Try git root first
   local git_root=$(git rev-parse --show-toplevel 2>/dev/null)
   if [[ -n "$git_root" ]]; then
     local git_basename=$(basename "$git_root")
-    
+
     # Check if we're already in the target type
-    if [[ "$git_basename" == *-"$type" ]]; then
+    if [[ "$git_basename" == *-"$type" || "$git_basename" == "$type" ]]; then
       echo "$git_root"
       return 0
     fi
-    
+
     # Check if git root has the pattern (e.g., jagora-web -> look for jagora-api)
     if [[ "$git_basename" =~ ^(.+)-(api|web|flutter|mobile)$ ]]; then
       local project_name="${BASH_REMATCH[1]}"
       local project_root=$(dirname "$git_root")
-      local target_dir="$project_root/${project_name}-${type}"
-      if [[ -d "$target_dir" ]]; then
-        echo "$target_dir"
-        return 0
-      fi
+      # Check for exact match first, then suffixed
+      for target_dir in "$project_root/$type" "$project_root/${project_name}-${type}"; do
+        if [[ -d "$target_dir" ]]; then
+          echo "$target_dir"
+          return 0
+        fi
+      done
     else
       # Git root might be parent dir (like jagora-ai), look for subdirs
-      # Try exact pattern first: *-flutter
-      for subdir in "$git_root"/*-"$type"; do
+      # Check for exact match 'api' first, then suffixed '*-api'
+      for subdir in "$git_root/$type" "$git_root"/*-"$type"(/N); do
         if [[ -d "$subdir" ]]; then
           echo "$subdir"
           return 0
         fi
       done
-      
     fi
   fi
-  
+
   return 1
 }
 
