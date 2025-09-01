@@ -18,3 +18,4 @@ grayscale/bin/*
 .vscode/ipch/*
 /Settings/Claude/projects
 *.log
+/vendor

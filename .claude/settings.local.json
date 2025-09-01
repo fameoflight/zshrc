@@ -27,9 +27,13 @@
       "Bash(claude-gemini:*)",
       "Bash(lsof:*)",
       "Bash(kill:*)",
-      "WebFetch(domain:ai.google.dev)"
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(osascript:*)",
+      "Bash(plutil:*)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }

@@ -40,7 +40,7 @@ CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq
 DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash sleepwatcher pkgconf
 MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli
 EDITORS_CASK := visual-studio-code zed lm-studio
-MAC_APPS_CASK := iterm2 rectangle raycast finder-toolbar docker postman tableplus the-unarchiver keka cleanmaster-cleaner
+MAC_APPS_CASK := iterm2 rectangle raycast docker postman tableplus the-unarchiver keka slack zoom
 
 # =============================================================================
 # MAIN TARGETS
@@ -90,6 +90,7 @@ help:
 	@echo "  github-setup    - 🐙 Configure Git settings"
 	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
 	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
+	@echo "  oled-optimize   - 🖥️  Optimize macOS settings for OLED displays (burn-in prevention)"
 	@echo ""
 	@echo "🔄 Settings restoration:"
 	@echo "  app-settings    - 📱 Restore all application settings (iTerm, VS Code, Xcode, Sublime, Dock, Ruby)"
@@ -136,7 +137,7 @@ endif
 # PLATFORM-SPECIFIC TARGETS
 # =============================================================================
 
-.PHONY: mac linux common mac-settings macos-optimize
+.PHONY: mac linux common mac-settings macos-optimize oled-optimize
 mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook
 
 linux: common linux-packages linux-settings
@@ -212,7 +213,7 @@ dev-tools: brew core-utils dev-utils modern-cli editors
 core-utils:
 	@echo -e "$(MAGENTA)📦 Installing core utilities...$(NC)"
 	@for pkg in $(CORE_UTILS_BREW); do \
-		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 # Install development utilities
@@ -226,14 +227,14 @@ dev-utils:
 modern-cli:
 	@echo "✨ Installing modern CLI tools..."
 	@for pkg in $(MODERN_CLI_BREW); do \
-		brew install --quiet $pkg 2>/dev/null || echo "⚠️  Could not install $pkg (may already be installed)"; \
+		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 # Install text editors and IDEs
 editors:
 	@echo "📝 Installing editors and IDEs..."
 	@for cask in $(EDITORS_CASK); do \
-		brew install --cask --quiet $cask 2>/dev/null || echo "⚠️  Could not install $cask (may already be installed)"; \
+		brew install --cask --quiet $$cask 2>/dev/null || echo "⚠️  Could not install $$cask (may already be installed)"; \
 	done
 	-@brew install --quiet vim 2>/dev/null || true        # Classic editor
 	-@brew install --quiet neovim 2>/dev/null || true     # Modern Vim
@@ -300,7 +301,7 @@ github-tools: brew
 	@echo "🐙 Installing GitHub tools..."
 	-@brew install gh
 	-@brew install git-lfs
-	-@brew install --cask github-desktop
+	-@brew install --cask github
 
 .PHONY: xcode-setup
 xcode-setup:
@@ -362,16 +363,16 @@ vscode-setup:
 	else \
 		echo "⚠️  No VS Code settings found in repository to apply"; \
 	fi
-	@if [ -f "${SETTINGS}/VSCode/extensions.txt" ]; then 
-		echo "Installing VS Code extensions from list..."; 
-		while read extension; do 
-			if [ -n "$extension" ]; then 
-				code --install-extension "$extension" 2>/dev/null || echo "⚠️  Could not install extension: $extension"; 
-			fi 
-		done < "${SETTINGS}/VSCode/extensions.txt"; 
-		echo "✅ VS Code extensions installation completed"; 
-	else 
-		echo "⚠️  No extensions list found to install"; 
+	@if [ -f "${SETTINGS}/VSCode/extensions.txt" ]; then \
+		echo "Installing VS Code extensions from list..."; \
+		while read extension; do \
+			if [ -n "$$extension" ]; then \
+				code --install-extension "$$extension" 2>/dev/null || echo "⚠️  Could not install extension: $$extension"; \
+			fi; \
+		done < "${SETTINGS}/VSCode/extensions.txt"; \
+		echo "✅ VS Code extensions installation completed"; \
+	else \
+		echo "⚠️  No extensions list found to install"; \
 	fi
 	@echo ""
 	@echo "🔄 Note: You may need to restart VS Code for all settings to take effect"
@@ -384,14 +385,9 @@ vscode-setup:
 mac-apps: github-tools xcode-setup
 	@echo "🖥️  Installing macOS applications..."
 	@for cask in $(MAC_APPS_CASK); do \
-		brew install --cask --quiet $cask 2>/dev/null || echo "⚠️  Could not install $cask (may already be installed)"; \
+		brew install --cask --quiet $$cask 2>/dev/null || echo "⚠️  Could not install $$cask (may already be installed)"; \
 	done
-	
-	# Optional (commented out - uncomment as needed)
-	# -@brew install --cask slack
-	# -@brew install --cask discord
-	# -@brew install --cask zoom
-
+	@echo -e "$(BOLD)$(GREEN)✅ macOS applications installation complete$(NC)"
 
 # =============================================================================
 # SYSTEM SETTINGS
@@ -410,6 +406,19 @@ macos-optimize:
 		echo -e "$(BOLD)$(GREEN)✅ macOS optimization complete$(NC)"; \
 	else \
 		echo -e "$(RED)❌ macOS optimization script not found at bin/macos-optimize.sh$(NC)"; \
+		return 1; \
+	fi
+
+# Optimize macOS settings specifically for OLED displays
+.PHONY: oled-optimize
+oled-optimize:
+	@echo -e "$(MAGENTA)🖥️  Optimizing macOS for OLED displays...$(NC)"
+	@if [ -f "bin/oled-optimize.sh" ]; then \
+		echo -e "$(CYAN)🚀 Running OLED optimization script...$(NC)"; \
+		bash bin/oled-optimize.sh; \
+		echo -e "$(BOLD)$(GREEN)✅ OLED optimization complete$(NC)"; \
+	else \
+		echo -e "$(RED)❌ OLED optimization script not found at bin/oled-optimize.sh$(NC)"; \
 		return 1; \
 	fi
 
@@ -464,8 +473,8 @@ restore-iterm:
 	@if [ -f "bin/iterm-setup.sh" ]; then \
 		bash "bin/iterm-setup.sh"; \
 		echo -e "$(GREEN)✅ iTerm2 settings restored$(NC)"; \
-	else 
-		echo -e "$(YELLOW)⚠️  iTerm2 setup script not found$(NC)"; 
+	else \
+		echo -e "$(YELLOW)⚠️  iTerm2 setup script not found$(NC)"; \
 	fi
 
 .PHONY: restore-vscode
