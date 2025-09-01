@@ -235,6 +235,54 @@ log_ruby() {
 }
 
 # =============================================================================
+# FILE LOGGING
+# =============================================================================
+
+# Generic function to log a message to a specified file
+log_to_file() {
+  local log_file_path="$1"
+  local message="$2"
+  
+  # Ensure the directory exists
+  mkdir -p "$(dirname "$log_file_path")"
+  
+  # Ensure the file exists
+  touch "$log_file_path"
+  
+  # Get the name of the script that called this function
+  local script_name
+  script_name=$(basename "$0")
+
+  # Log to file with timestamp and calling script name
+  echo "$(date '+%Y-%m-%d %H:%M:%S') - [$script_name] - $message" >> "$log_file_path"
+}
+
+# =============================================================================
+# HOOK LOGGING
+# =============================================================================
+
+# Log hook executions to a centralized file
+log_hook() {
+  local hook_name="$1"
+  local message="$2"
+  
+  # Determine the absolute path of the script that is running
+  local script_path
+  script_path=$(cd "$(dirname "$0")" && pwd)/$(basename "$0")
+  local script_dir
+  script_dir=$(dirname "$script_path")
+  
+  # Log file will be in the same directory as the script
+  local log_file="$script_dir/hooks.log"
+  
+  # Use the generic file logger
+  log_to_file "$log_file" "[$hook_name] - $message"
+
+  # Also log to console for immediate feedback
+  echo -e "${COLOR_CYAN}훅  Hook [${COLOR_BOLD}$hook_name${COLOR_NC}${COLOR_CYAN}]: $message${COLOR_NC}"
+}
+
+# =============================================================================
 # EXPORT FOR SHELL SCRIPTS
 # =============================================================================
 
