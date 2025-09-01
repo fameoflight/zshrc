@@ -137,7 +137,7 @@ endif
 # =============================================================================
 
 .PHONY: mac linux common mac-settings macos-optimize
-mac: check-requirements common brew dev-tools python ruby github-tools mac-apps mac-settings setup-wake-hook
+mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook
 
 linux: common linux-packages linux-settings
 
@@ -525,6 +525,25 @@ restore-gemini:
 	else \
 		echo -e "$(YELLOW)⚠️  Gemini setup script not found$(NC)"; \
 	fi
+
+.PHONY: claude-gemini-setup
+claude-gemini-setup:
+	@echo -e "$(CYAN)🤖 Setting up Claude-Gemini integration...$(NC)"
+	@echo -e "$(BLUE)📦 Ensuring gemini-claude-proxy submodule is initialized...$(NC)"
+	@git submodule update --init --recursive gemini-claude-proxy
+	@echo -e "$(BLUE)🐍 Setting up Python virtual environment...$(NC)"
+	@cd gemini-claude-proxy && python3.11 -m venv .venv
+	@echo -e "$(BLUE)📦 Installing Python dependencies...$(NC)"
+	@cd gemini-claude-proxy && .venv/bin/pip install -r requirements.txt
+	@echo -e "$(BLUE)⚙️  Setting up environment configuration...$(NC)"
+	@if [ -f "gemini-claude-proxy/.env.example" ]; then \
+		cp gemini-claude-proxy/.env.example gemini-claude-proxy/.env; \
+		echo -e "$(GREEN)✅ Created .env from .env.example$(NC)"; \
+	fi
+	@echo -e "$(YELLOW)⚠️  Please add your Gemini API key to gemini-claude-proxy/.env$(NC)"
+	@echo -e "$(BLUE)ℹ️  Or use: setup-gemini-key 'your-key-here'$(NC)"
+	@echo -e "$(GREEN)✅ Claude-Gemini integration setup complete$(NC)"
+	@echo -e "$(CYAN)🚀 Use 'claude-gemini' command to run Claude Code with Gemini API$(NC)"
 
 .PHONY: restore-ruby-config
 restore-ruby-config:

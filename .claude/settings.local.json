@@ -19,11 +19,17 @@
       "WebFetch(domain:github.com)",
       "Bash(make:*)",
       "Bash(echo:*)",
-      "Bash(done)"
+      "Bash(git submodule add:*)",
+      "Bash(.venv/bin/python:*)",
+      "Bash(brew list:*)",
+      "Bash(python3.11:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(claude-gemini:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "WebFetch(domain:ai.google.dev)"
     ],
     "deny": [],
-    "additionalDirectories": [
-      "/tmp"
-    ]
+    "additionalDirectories": ["/tmp"]
   }
 }

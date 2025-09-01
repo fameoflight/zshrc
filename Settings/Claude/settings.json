@@ -17,7 +17,6 @@
       "Bash(brew:*)",
       "Bash(curl:*)",
       "Bash(grep:*)",
-      "WebSearch(query:*)",
       "Bash(ruby:*)",
       "Bash(gem:*)"
     ]

@@ -4,3 +4,6 @@
 [submodule "dircolors-solarized"]
 	path = dircolors-solarized
 	url = https://github.com/seebi/dircolors-solarized.git
+[submodule "gemini-claude-proxy"]
+	path = gemini-claude-proxy
+	url = https://github.com/coffeegrind123/gemini-for-claude-code.git

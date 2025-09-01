@@ -101,6 +101,23 @@ git-commit-deletes() {
   _execute_ruby_script "git-commit-deletes.rb" "$@"
 }
 
+# Claude-Gemini integration - run Claude Code with Gemini API via proxy
+claude-gemini() {
+  local script_path="$ZSH_CONFIG/bin/claude-gemini.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Claude-Gemini script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making claude-gemini.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -123,6 +140,7 @@ list-scripts() {
   echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
   echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
+  echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
