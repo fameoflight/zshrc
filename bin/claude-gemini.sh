@@ -22,6 +22,7 @@ PROXY_DIR="${ZSH_CONFIG}/gemini-claude-proxy"
 VENV_DIR="${PROXY_DIR}/.venv"
 SERVER_PID_FILE="${PROXY_DIR}/server.pid"
 DEFAULT_PORT=8082
+ORIGINAL_DIR=""
 
 # Help function
 show_help() {
@@ -195,6 +196,8 @@ EOF
 
 # Ensure proxy setup is complete
 ensure_proxy_setup() {
+    local current_dir=$(pwd)
+    
     # Ensure virtual environment exists
     if [[ ! -d "$VENV_DIR" ]]; then
         log_progress "Creating Python virtual environment"
@@ -211,10 +214,15 @@ ensure_proxy_setup() {
     
     # Setup environment file
     setup_environment_file
+    
+    # Return to original directory
+    cd "$current_dir"
 }
 
 # Start the proxy server (restart if already running)
 start_proxy_server() {
+    local current_dir=$(pwd)
+    
     if is_server_running; then
         if [[ "$START_SERVER" == "true" ]]; then
             log_info "Restarting proxy server"
@@ -235,6 +243,9 @@ start_proxy_server() {
     local server_pid=$!
     
     echo $server_pid > "$SERVER_PID_FILE"
+    
+    # Return to original directory before waiting
+    cd "$current_dir"
     
     # Wait for server to start
     local attempts=0
@@ -280,13 +291,17 @@ setup_claude_md() {
 run_claude_with_proxy() {
     log_progress "Running Claude Code with Gemini API"
     
+    # Use the original directory where command was called
+    local target_dir="$ORIGINAL_DIR"
+    cd "$target_dir"
+    
     # Ensure we're in a git repository
     if ! git rev-parse --show-toplevel >/dev/null 2>&1; then
         log_error "claude can only be executed in a git repository"
         exit 1
     fi
     
-    # Change to git root
+    # Change to git root of the original project
     local git_root=$(git rev-parse --show-toplevel)
     cd "$git_root"
     
@@ -338,6 +353,9 @@ cleanup_pid_file() {
 
 # Main execution
 main() {
+    # Capture original directory before any processing
+    ORIGINAL_DIR=$(pwd)
+    
     parse_arguments "$@"
     validate_setup
     ensure_proxy_setup

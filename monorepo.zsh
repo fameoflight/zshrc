@@ -159,6 +159,7 @@ function nav-flutter() {
 
 # Generic project fixing/linting utilities using common helper
 function fix-api() {
+  local original_dir=$(pwd)
   local api_dir=$(find-project-dir "api")
   if [[ -n "$api_dir" ]] && [[ -f "$api_dir/Gemfile" ]]; then
     cd "$api_dir"
@@ -168,6 +169,7 @@ function fix-api() {
     else
       rubocop --autocorrect-all
     fi
+    cd "$original_dir"
   else
     echo "❌ Could not find API directory or not a Rails project"
     return 1
@@ -175,6 +177,7 @@ function fix-api() {
 }
 
 function fix-web() {
+  local original_dir=$(pwd)
   local web_dir=$(find-project-dir "web")
   if [[ -n "$web_dir" ]] && [[ -f "$web_dir/package.json" ]]; then
     cd "$web_dir"
@@ -187,6 +190,7 @@ function fix-web() {
     if ! npx prettier --write . 2>&1 | head -4; then
       echo "⚠️  Prettier failed - try: npm install prettier@latest"
     fi
+    cd "$original_dir"
   else
     echo "❌ Could not find Web directory or not a web project"
     return 1
@@ -194,6 +198,7 @@ function fix-web() {
 }
 
 function fix-flutter() {
+  local original_dir=$(pwd)
   local flutter_dir=$(find-project-dir "flutter")
   if [[ -n "$flutter_dir" ]] && [[ -f "$flutter_dir/pubspec.yaml" ]]; then
     cd "$flutter_dir"
@@ -212,8 +217,10 @@ function fix-flutter() {
       fi
     else
       echo "❌ Dart CLI not found"
+      cd "$original_dir"
       return 1
     fi
+    cd "$original_dir"
   else
     echo "❌ Could not find Flutter directory or not a Flutter project"
     return 1
