@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.hemantv.wakeup</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/hemantv/zshrc/hooks/wakeup.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/Users/hemantv/logs/wakeup.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/hemantv/logs/wakeup.error.log</string>
+</dict>
+</plist>

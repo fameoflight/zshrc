@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require_relative '.common/script_base'
-require 'set'
 require 'pathname'
 
 # Merge markdown files with their references into a single file
@@ -45,7 +44,7 @@ class MergeMarkdown < ScriptBase
     super
 
     if @args.empty?
-      log_error("Input file is required")
+      log_error('Input file is required')
       show_help
       exit 1
     end
@@ -57,7 +56,7 @@ class MergeMarkdown < ScriptBase
     end
 
     unless File.extname(@input_file).downcase == '.md'
-      log_error("Input file must be a markdown (.md) file")
+      log_error('Input file must be a markdown (.md) file')
       exit 1
     end
 
@@ -76,19 +75,19 @@ class MergeMarkdown < ScriptBase
 
     @base_dir = File.dirname(@input_file)
     @processed_files = Set.new
-    @file_order = []  # Preserve discovery order
+    @file_order = [] # Preserve discovery order
     @file_contents = {}
   end
 
   def run
-    log_banner("Merge Markdown Files")
+    log_banner('Merge Markdown Files')
 
     log_info("Input file: #{@input_file}")
     log_info("Output file: #{@output_file}")
     log_info("Recursive: #{@options[:recursive]}")
     log_info("Preserve structure: #{@options[:preserve_structure]}")
 
-    log_progress("Scanning for referenced files...")
+    log_progress('Scanning for referenced files...')
     scan_file(@input_file)
 
     log_info("Found #{@processed_files.size} unique files to merge")
@@ -99,7 +98,7 @@ class MergeMarkdown < ScriptBase
       create_merged_file
     end
 
-    show_completion("Markdown merge")
+    show_completion('Markdown merge')
   end
 
   private
@@ -109,7 +108,7 @@ class MergeMarkdown < ScriptBase
 
     log_debug("Scanning: #{file_path}")
     @processed_files.add(file_path)
-    @file_order << file_path  # Preserve discovery order
+    @file_order << file_path # Preserve discovery order
 
     unless File.exist?(file_path)
       log_warning("Referenced file not found: #{file_path}")
@@ -156,10 +155,10 @@ class MergeMarkdown < ScriptBase
   end
 
   def show_dry_run_results
-    log_section("Files to be merged (in discovery order):")
-    
+    log_section('Files to be merged (in discovery order):')
+
     @file_order.each_with_index do |file_path, index|
-      main_indicator = file_path == @input_file ? " (main file)" : ""
+      main_indicator = file_path == @input_file ? ' (main file)' : ''
       puts "  #{index + 1}. 📄 #{relative_path(file_path)}#{main_indicator}"
     end
 
@@ -168,17 +167,17 @@ class MergeMarkdown < ScriptBase
   end
 
   def create_merged_file
-    log_progress("Creating merged file...")
+    log_progress('Creating merged file...')
 
     File.open(@output_file, 'w') do |output|
       # Write header
-      output.puts "# Merged Documentation"
+      output.puts '# Merged Documentation'
       output.puts
       output.puts "Generated on: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
       output.puts "Source file: #{relative_path(@input_file)}"
       output.puts "Files merged: #{@processed_files.size}"
       output.puts
-      output.puts "---"
+      output.puts '---'
       output.puts
 
       # Write files in discovery order
@@ -193,13 +192,13 @@ class MergeMarkdown < ScriptBase
 
   def write_file_section(output, file_path)
     relative = relative_path(file_path)
-    
+
     # Create section header
-    if @options[:preserve_structure]
-      header = "# #{relative}"
-    else
-      header = "# #{File.basename(file_path, '.md').gsub(/[-_]/, ' ').split.map(&:capitalize).join(' ')}"
-    end
+    header = if @options[:preserve_structure]
+               "# #{relative}"
+             else
+               "# #{File.basename(file_path, '.md').gsub(/[-_]/, ' ').split.map(&:capitalize).join(' ')}"
+             end
 
     output.puts header
     output.puts
@@ -209,15 +208,13 @@ class MergeMarkdown < ScriptBase
     # Write content, but skip the first H1 header if it exists to avoid duplication
     content = @file_contents[file_path]
     lines = content.lines
-    
+
     # Skip first line if it's an H1 header
-    if lines.first&.start_with?('# ')
-      lines = lines[1..-1]
-    end
+    lines = lines[1..-1] if lines.first&.start_with?('# ')
 
     output.puts lines.join
     output.puts
-    output.puts "---"
+    output.puts '---'
     output.puts
   end
 
@@ -226,7 +223,7 @@ class MergeMarkdown < ScriptBase
   end
 
   def show_examples
-    puts "Examples:"
+    puts 'Examples:'
     puts "  #{script_name} README.md"
     puts "  #{script_name} docs/main.md merged_docs.md"
     puts "  #{script_name} --dry-run --preserve-structure project.md"

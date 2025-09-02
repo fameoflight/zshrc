@@ -38,25 +38,25 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
   end
 
   def show_examples
-    puts "Examples:"
+    puts 'Examples:'
     puts "  #{script_name} \"Visual Studio Code\"    # Remove Visual Studio Code"
     puts "  #{script_name} --force docker           # Force remove Docker"
     puts "  #{script_name} --dry-run slack          # Preview what would be removed"
     puts "  #{script_name} -v \"Adobe Photoshop\"     # Verbose removal"
-    puts ""
-    puts "Features:"
-    puts "  🍺 Homebrew packages & services"
-    puts "  🏪 Mac App Store applications"
-    puts "  🖥️  Application bundles"
-    puts "  ⚡ Running process termination"
-    puts "  🚀 Startup items cleanup"
-    puts "  🌐 Browser extensions & data"
-    puts "  🔧 Kernel extensions & drivers"
-    puts "  🔒 Security & privacy entries"
-    puts "  📦 Package managers (npm, yarn, pip, gems)"
-    puts "  🌐 Network & system integration"
-    puts "  🔍 Advanced cleanup features"
-    puts "  🧹 Associated files & preferences"
+    puts ''
+    puts 'Features:'
+    puts '  🍺 Homebrew packages & services'
+    puts '  🏪 Mac App Store applications'
+    puts '  🖥️  Application bundles'
+    puts '  ⚡ Running process termination'
+    puts '  🚀 Startup items cleanup'
+    puts '  🌐 Browser extensions & data'
+    puts '  🔧 Kernel extensions & drivers'
+    puts '  🔒 Security & privacy entries'
+    puts '  📦 Package managers (npm, yarn, pip, gems)'
+    puts '  🌐 Network & system integration'
+    puts '  🔍 Advanced cleanup features'
+    puts '  🧹 Associated files & preferences'
   end
 
   def validate!
@@ -504,7 +504,7 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
 
   def remove_processes
     log_progress('⚡ Removing running processes...')
-    
+
     pids = `pgrep -i "#{@app_name}"`.split.map(&:to_i)
     return if pids.empty?
 
@@ -523,7 +523,7 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
       end
     end
 
-    log_success("Stopped running processes")
+    log_success('Stopped running processes')
     puts
   end
 

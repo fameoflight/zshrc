@@ -195,6 +195,16 @@ class Database
     File.delete(@db_path) if File.exist?(@db_path)
   end
 
+  def clear_data!
+    with_connection do |db|
+      db.execute('DROP TABLE IF EXISTS attachments')
+      db.execute('DROP TABLE IF EXISTS messages')
+    end
+    # Re-create the tables
+    gmail_db = GmailDatabase.new(@db_path)
+    gmail_db.setup_schema
+  end
+
   private
 
   def ensure_directory

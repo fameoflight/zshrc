@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'database'
+require 'set'
 
 # Specialized Gmail database class
 class GmailDatabase < Database
@@ -17,6 +18,16 @@ class GmailDatabase < Database
     processed_at INTEGER DEFAULT (strftime('%s', 'now'))
   SQL
 
+  ATTACHMENT_SCHEMA = <<~SQL
+    id TEXT PRIMARY KEY,
+    message_id TEXT,
+    filename TEXT,
+    mime_type TEXT,
+    size INTEGER,
+    FOREIGN KEY(message_id) REFERENCES messages(id)
+  SQL
+
+
   MESSAGE_INDEXES = [
     { name: 'from_email', columns: 'from_email' },
     { name: 'date', columns: 'date_received' },
@@ -31,6 +42,7 @@ class GmailDatabase < Database
 
   def setup_schema
     create_table('messages', MESSAGE_SCHEMA, MESSAGE_INDEXES)
+    create_table('attachments', ATTACHMENT_SCHEMA, [{ name: 'message_id', columns: 'message_id' }])
   end
 
   # Gmail-specific methods
@@ -44,6 +56,10 @@ class GmailDatabase < Database
 
   def store_messages(messages)
     batch_upsert('messages', messages)
+  end
+
+  def store_attachments(attachments)
+    batch_upsert('attachments', attachments)
   end
 
   def inbox_message_count
@@ -64,7 +80,7 @@ class GmailDatabase < Database
       email = row['from_email']
       name = row['from_name'] || email
       count = row['count']
-      stats[email] = { name: name, count: count }
+      stats[email] = { :name => name, :count => count }
     end
     stats
   end
@@ -136,6 +152,97 @@ class GmailDatabase < Database
     end
   end
 
+  def get_domain_stats(limit: nil)
+    with_connection do |db|
+      # Get all messages with email addresses
+      sql = <<~SQL
+        SELECT from_email, from_name
+        FROM messages 
+        WHERE labels LIKE '%INBOX%' 
+        AND from_email IS NOT NULL 
+        AND from_email LIKE '%@%'
+      SQL
+
+      results = db.execute(sql)
+      
+      # Process in Ruby to extract domains
+      domain_stats = {}
+      
+      results.each do |row|
+        email = row[0]
+        name = row[1]
+        
+        # Extract domain - get everything after @, then get last 2 parts
+        # e.g. a@b.linkedin.com -> linkedin.com
+        full_domain = email.split('@').last
+        domain_parts = full_domain.split('.')
+        
+        # For domains like linkedin.com or mail.linkedin.com, we want linkedin.com
+        # Take the last 2 parts if there are more than 2 parts
+        if domain_parts.length >= 2
+          domain = domain_parts.last(2).join('.')
+        else
+          domain = full_domain
+        end
+        
+        next if domain.nil? || domain.empty?
+        
+        domain_stats[domain] ||= { count: 0, names: Set.new }
+        domain_stats[domain][:count] += 1
+        domain_stats[domain][:names] << name if name && !name.empty?
+      end
+      
+      # Convert to final format and sort
+      final_results = domain_stats.map do |domain, stats|
+        {
+          domain: domain,
+          count: stats[:count],
+          sample_names: stats[:names].to_a.first(5).join(', ')
+        }
+      end.sort_by { |d| -d[:count] }
+      
+      # Apply limit if specified
+      final_results = final_results.first(limit) if limit
+      
+      final_results
+    end
+  end
+
+  def messages_by_domain(domain)
+    # Match messages where the top-level domain matches
+    # For linkedin.com, this should match both @a.linkedin.com and @b.linkedin.com
+    select(
+      'messages',
+      where: "from_email LIKE ? AND labels LIKE '%INBOX%'",
+      params: ["%@%.#{domain}"],
+      order: 'date_received DESC'
+    )
+  end
+
+  def archive_domain_messages(domain)
+    # Update labels to remove INBOX for all messages from domain
+    with_connection do |db|
+      # Find all inbox messages from this domain (including subdomains)
+      messages = db.execute(
+        "SELECT id, labels FROM messages WHERE from_email LIKE ? AND labels LIKE '%INBOX%'",
+        ["%@%.#{domain}"]
+      )
+      
+      messages.each do |message|
+        current_labels = message['labels'] || ''
+        # Remove INBOX from labels
+        new_labels = current_labels.split(',').reject { |label| label.strip == 'INBOX' }.join(',')
+        
+        db.execute(
+          "UPDATE messages SET labels = ? WHERE id = ?",
+          [new_labels, message['id']]
+        )
+      end
+      
+      messages.length
+    end
+  end
+
   def search_messages(query, limit: 25)
     select(
       'messages',
@@ -153,6 +260,62 @@ class GmailDatabase < Database
       order: 'date_received DESC',
       limit: limit
     )
+  end
+
+  def get_attachments_for_message(message_id)
+    select('attachments', where: 'message_id = ?', params: [message_id])
+  end
+
+  def messages_with_attachments(limit: 25)
+    with_connection do |db|
+      # First get the messages
+      message_sql = <<~SQL
+        SELECT DISTINCT m.*, COUNT(a.id) as attachment_count
+        FROM messages m
+        INNER JOIN attachments a ON m.id = a.message_id
+        WHERE m.labels LIKE '%INBOX%'
+        GROUP BY m.id
+        ORDER BY m.date_received DESC
+        LIMIT ?
+      SQL
+      
+      messages = db.execute(message_sql, [limit]).map(&:to_h)
+      
+      # Then get attachments for each message (within the same connection)
+      messages.each do |message|
+        attachment_sql = 'SELECT * FROM attachments WHERE message_id = ?'
+        attachments = db.execute(attachment_sql, [message['id']]).map(&:to_h)
+        message['attachments'] = attachments
+      end
+      
+      messages
+    end
+  end
+
+  def attachment_stats
+    with_connection do |db|
+      results = {}
+      
+      # Total messages with attachments
+      results[:messages_with_attachments] = db.execute(
+        'SELECT COUNT(DISTINCT message_id) FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ?',
+        ['%INBOX%']
+      ).first.first
+      
+      # Total attachments
+      results[:total_attachments] = db.execute(
+        'SELECT COUNT(*) FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ?',
+        ['%INBOX%']
+      ).first.first
+      
+      # Most common file types
+      results[:common_file_types] = db.execute(
+        'SELECT mime_type, COUNT(*) as count FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ? GROUP BY mime_type ORDER BY count DESC LIMIT 10',
+        ['%INBOX%']
+      ).map { |row| { mime_type: row[0], count: row[1] } }
+      
+      results
+    end
   end
 
   def get_top_inbox_senders(limit: 10)

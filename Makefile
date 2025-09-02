@@ -424,7 +424,7 @@ oled-optimize:
 
 .PHONY: setup-wake-hook
 setup-wake-hook:
-	@echo "⚙️  Setting up wake hook..."
+	@echo "⚙️  Setting up wake and login hooks..."
 	@echo "🍺 Ensuring sleepwatcher is installed..."
 	-@brew install sleepwatcher
 	@echo "🔗 Linking wakeup script to ~/.wakeup..."
@@ -433,18 +433,27 @@ setup-wake-hook:
 	@ln -sf "${PWD}/hooks/sleep.sh" "${HOME}/.sleep"
 	@echo "🚀 Starting sleepwatcher service with brew services..."
 	-@brew services start sleepwatcher
-	@echo "✅ Wake hook setup complete"
+	@echo "📱 Setting up LaunchAgent for login hook..."
+	@mkdir -p "${HOME}/Library/LaunchAgents"
+	@mkdir -p "${HOME}/logs"
+	@ln -sf "${PWD}/hooks/com.hemantv.wakeup.plist" "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
+	@echo "🚀 Loading LaunchAgent..."
+	-@launchctl load "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
+	@echo "✅ Wake and login hooks setup complete"
 
 .PHONY: uninstall-wake-hook
 uninstall-wake-hook:
-	@echo "🗑️  Uninstalling wake hook..."
+	@echo "🗑️  Uninstalling wake and login hooks..."
 	@echo "🚀 Stopping sleepwatcher service..."
 	-@brew services stop sleepwatcher
 	@echo "🔗 Removing wakeup script symlink..."
 	@rm -f "${HOME}/.wakeup"
 	@echo "🔗 Removing sleep script symlink..."
 	@rm -f "${HOME}/.sleep"
-	@echo "✅ Wake hook uninstalled"
+	@echo "📱 Unloading and removing LaunchAgent..."
+	-@launchctl unload "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist" 2>/dev/null
+	@rm -f "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
+	@echo "✅ Wake and login hooks uninstalled"
 
 .PHONY: linux-settings
 linux-settings:

@@ -10,6 +10,9 @@ require 'fileutils'
 require 'tty-progressbar'
 require 'timeout'
 require 'thread'
+require 'securerandom'
+require 'set'
+require 'io/console'
 
 # Description: Fetches and manages Gmail inbox.
 class GmailInbox < InteractiveScriptBase
@@ -131,8 +134,10 @@ class GmailInbox < InteractiveScriptBase
     [
       menu_option('📊', 'Show inbox summary', :summary),
       menu_option('📧', 'Show recent messages', :recent_messages),
+      menu_option('📎', 'Find messages with attachments', :messages_with_attachments),
       menu_option('👥', 'Top senders analysis', :top_senders),
       menu_option('📦', 'Archive emails by sender', :archive_by_sender),
+      menu_option('🌐', 'Archive emails by domain', :archive_by_domain),
       menu_option('🔍', 'Search emails', :search_emails),
       menu_option('🗑️', 'Find unsubscribe emails', :find_unsubscribe),
       refresh_option(:refresh_cache),
@@ -156,11 +161,15 @@ class GmailInbox < InteractiveScriptBase
       when :recent_messages
         limit = ask_number('How many recent messages?', default: 10)
         show_recent_messages(@service, @user_id, limit)
+      when :messages_with_attachments
+        show_messages_with_attachments
       when :top_senders
         limit = ask_number('How many top senders to show?', default: 10)
         show_top_senders(@service, @user_id, limit)
       when :archive_by_sender
         archive_by_sender(@service, @user_id)
+      when :archive_by_domain
+        archive_by_domain(@service, @user_id)
       when :search_emails
         search_emails
       when :find_unsubscribe
@@ -200,6 +209,133 @@ class GmailInbox < InteractiveScriptBase
         date: "📅 #{Time.at(msg['date_received']).strftime('%m/%d %I:%M%p')}"
       }
     end)
+  end
+
+  def show_messages_with_attachments
+    log_info '📎 Finding messages with attachments'
+    puts
+
+    begin
+      # Ensure cache is up to date
+      cached_count = gmail_db.inbox_message_count
+      if cached_count == 0
+        log_info '🔄 Building initial cache to find attachments'
+        update_message_cache(@service, @user_id)
+        
+        # Check again after caching
+        cached_count = gmail_db.inbox_message_count
+        if cached_count == 0
+          log_info 'No messages found in your inbox'
+          return
+        end
+      else
+        log_info '📦 Using cached data to search for attachments'
+        # Quick incremental update
+        update_message_cache(@service, @user_id, force_update: false)
+      end
+
+      puts
+
+      # Get attachment statistics first
+      begin
+        stats = gmail_db.attachment_stats
+      rescue StandardError => e
+        log_warning "Could not get attachment statistics: #{e.message}"
+        log_info 'This might happen if the cache is still building attachment data'
+        log_info 'Try running "Refresh cache" to rebuild with attachment support'
+        return
+      end
+      
+      if stats[:messages_with_attachments] == 0
+        log_info 'No messages with attachments found in your inbox'
+        log_info '💡 This could mean:'
+        log_info '   • Your recent inbox messages have no attachments'
+        log_info '   • Attachment data is still being processed'
+        log_info '   • Try "Refresh cache" to rebuild with full attachment support'
+        return
+      end
+
+      # Show summary stats
+      log_success "📊 Found #{stats[:messages_with_attachments]} messages with #{stats[:total_attachments]} total attachments"
+      
+      if stats[:common_file_types].any?
+        puts
+        log_info '📋 Most common file types:'
+        stats[:common_file_types].first(5).each do |type_info|
+          puts "  #{type_info[:mime_type]}: #{type_info[:count]} files"
+        end
+      end
+
+      puts
+
+      # Ask for limit
+      limit = ask_number('How many messages with attachments to show?', default: 20)
+      
+      # Get messages with attachments
+      begin
+        messages = gmail_db.messages_with_attachments(limit: limit)
+      rescue StandardError => e
+        log_error "Could not retrieve messages with attachments: #{e.message}"
+        log_info 'Try running "Refresh cache" to rebuild the database with attachment support'
+        puts e.backtrace.first(3) if @options[:debug]
+        return
+      end
+      
+      if messages.empty?
+        log_info 'No messages with attachments found'
+        return
+      end
+
+      display_messages_with_attachments(messages)
+
+    rescue StandardError => e
+      log_error "Error finding messages with attachments: #{e.message}"
+      puts e.backtrace.first(3) if @options[:debug]
+    end
+  end
+
+  def display_messages_with_attachments(messages)
+    log_success "📎 Messages with attachments (#{messages.length} found):"
+    puts
+
+    messages.each_with_index do |msg, index|
+      attachments = msg['attachments'] || []
+      next if attachments.empty?
+
+      date_str = Time.at(msg['date_received']).strftime('%m/%d %I:%M%p')
+      from_name = msg['from_name'] || msg['from_email'] || 'Unknown'
+      
+      puts "#{(index + 1).to_s.rjust(2)}. 📨 #{msg['subject']}"
+      puts "    👤 #{from_name}"
+      puts "    📅 #{date_str}"
+      puts "    📎 Attachments (#{attachments.length}):"
+      
+      attachments.each do |attachment|
+        size_str = format_file_size(attachment['size'])
+        puts "       • #{attachment['filename']} (#{attachment['mime_type']}, #{size_str})"
+      end
+      
+      puts
+    end
+  end
+
+  def format_file_size(size_bytes)
+    return '0 B' if size_bytes.nil? || size_bytes == 0
+
+    units = %w[B KB MB GB TB]
+    size = size_bytes.to_f
+    unit_index = 0
+
+    while size >= 1024 && unit_index < units.length - 1
+      size /= 1024.0
+      unit_index += 1
+    end
+
+    if unit_index == 0
+      "#{size.to_i} #{units[unit_index]}"
+    else
+      "#{size.round(1)} #{units[unit_index]}"
+    end
   end
 
   private
@@ -380,6 +516,47 @@ class GmailInbox < InteractiveScriptBase
     end
   end
 
+  def extract_attachments(payload, message_id)
+    attachments = []
+    
+    # Helper method to recursively process parts
+    process_parts = lambda do |parts|
+      return unless parts
+
+      parts.each do |part|
+        # Check if this part has a filename (indicating an attachment)
+        if part.filename && !part.filename.empty?
+          attachments << {
+            id: "#{message_id}_#{part.part_id || SecureRandom.uuid}",
+            message_id: message_id,
+            filename: part.filename,
+            mime_type: part.mime_type,
+            size: part.body&.size || 0
+          }
+        end
+
+        # Recursively process nested parts
+        process_parts.call(part.parts) if part.parts
+      end
+    end
+
+    # Process the main payload
+    if payload.filename && !payload.filename.empty?
+      attachments << {
+        id: "#{message_id}_root",
+        message_id: message_id,
+        filename: payload.filename,
+        mime_type: payload.mime_type,
+        size: payload.body&.size || 0
+      }
+    end
+
+    # Process all parts
+    process_parts.call(payload.parts)
+
+    attachments
+  end
+
   # Database management methods
   def clear_cache
     db_cleared = false
@@ -542,6 +719,9 @@ class GmailInbox < InteractiveScriptBase
               date_received = date_header ? Time.parse(date_header).to_i : nil
               labels = msg.label_ids.join(',') if msg.label_ids
 
+              # Extract attachment information
+              attachments = extract_attachments(msg.payload, message.id)
+
               # Push result to queue
               results_queue << {
                 id: message.id,
@@ -552,7 +732,8 @@ class GmailInbox < InteractiveScriptBase
                 date_received: date_received,
                 snippet: msg.snippet,
                 body: msg.payload.parts&.find { |p| p.mime_type == 'text/plain' }&.body&.data,
-                labels: labels
+                labels: labels,
+                attachments: attachments
               }
             rescue Timeout::Error
               log_warning "Timeout processing message #{message.id} - skipping"
@@ -567,20 +748,31 @@ class GmailInbox < InteractiveScriptBase
 
       # Results processing thread
       results_processor = Thread.new do
+        batch_attachments = []
+        
         loop do
           result = results_queue.pop
           break if result == :done
 
+          # Separate attachments from message data
+          attachments = result.delete(:attachments) || []
           batch_messages << result
+          batch_attachments.concat(attachments) if attachments.any?
+          
           new_messages += 1
           total_messages += 1
           progress_mutex.synchronize { progress.advance(1) }
 
           if batch_messages.length >= 50
             gmail_db.store_messages(batch_messages)
+            gmail_db.store_attachments(batch_attachments) if batch_attachments.any?
             batch_messages.clear
+            batch_attachments.clear
           end
         end
+        
+        # Store any remaining attachments
+        gmail_db.store_attachments(batch_attachments) if batch_attachments.any?
       end
 
 
@@ -652,68 +844,60 @@ class GmailInbox < InteractiveScriptBase
         log_info '📦 Using cached data for sender selection'
       end
 
-      # Get top senders
-      top_senders = gmail_db.get_top_inbox_senders(limit: 20)
-
-      if top_senders.empty?
+      # Get all senders
+      all_senders = gmail_db.get_top_inbox_senders(limit: 200)
+      
+      if all_senders.empty?
         log_info 'No senders found in inbox'
         return
       end
 
       puts
-      log_info '📊 Top senders in your inbox:'
+      log_info "📊 Found #{all_senders.length} senders in your inbox"
       puts
 
-      # Display senders as selectable options
-      top_senders.each_with_index do |sender, index|
+      # Use the interactive selectable list
+      header = "📦 Archive Emails by Sender\n📊 Select senders to archive their messages"
+      
+      display_proc = proc do |sender|
         display_name = sender[:name] == sender[:email] ? sender[:email] : "#{sender[:name]} <#{sender[:email]}>"
-        display_text = "#{(index + 1).to_s.rjust(2)}. #{display_name} (#{sender[:count]} messages)"
-        puts "#{' ' * 2}#{display_text}"
+        main_line = "#{display_name} (#{sender[:count]} messages)"
+        
+        # Add email as second line if name is different from email
+        if sender[:name] != sender[:email]
+          main_line += "\n      📧 #{sender[:email]}"
+        end
+        
+        main_line
       end
 
-      puts
-      
-      # Get user selection
-      choice_str = ask_string("Select sender(s) to archive (e.g., 1, 3-5, or 'cancel'):", required: true)
-
-      if choice_str.casecmp('cancel').zero?
-        log_info 'Archive operation cancelled'
-        return
-      end
-
-      selected_indices = parse_selection(choice_str, top_senders.length)
-      
-      if selected_indices.empty?
-        log_warning 'Invalid selection'
-        return
-      end
-
-      selected_senders = selected_indices.map { |i| top_senders[i] }.compact
+      # Show interactive list
+      selected_senders = interactive_selectable_list(
+        all_senders,
+        display_proc: display_proc,
+        multi_select: true,
+        header: header
+      )
       
       if selected_senders.empty?
-        log_warning 'No valid senders selected.'
+        log_info 'No senders selected for archiving'
         return
       end
       
-      # Get message count for selected senders
+      # Show final selection summary
       total_to_archive = selected_senders.sum { |s| s[:count] }
       
-      if total_to_archive == 0
-        log_info "No messages found from selected senders in inbox"
-        return
-      end
-      
       puts
-      log_info '📋 Selected Senders:'
-      selected_senders.each do |sender|
-        puts "  • #{sender[:name]} (#{sender[:email]}) - #{sender[:count]} messages"
+      log_info '📋 Final Selection:'
+      selected_senders.each_with_index do |sender, index|
+        puts "  #{index + 1}. #{sender[:name]} (#{sender[:email]}) - #{sender[:count]} messages"
       end
       puts
-      log_info "📊 Total messages to archive: #{total_to_archive}"
+      log_info "📊 Total: #{selected_senders.length} senders, #{total_to_archive} messages"
       puts
       
-      # Confirm operation
-      unless confirm_action("⚠️  Archive ALL #{total_to_archive} messages from #{selected_senders.length} sender(s)?")
+      # Final confirmation
+      unless confirm_action("⚠️  Archive ALL #{total_to_archive} messages from #{selected_senders.length} selected sender(s)?")
         log_info 'Archive operation cancelled'
         return
       end
@@ -723,7 +907,7 @@ class GmailInbox < InteractiveScriptBase
         archive_messages_from_sender(service, user_id, sender[:email], sender[:count])
       end
       
-      log_complete "Archive operation for #{selected_senders.length} sender(s)"
+      log_complete "Archive operation completed for #{selected_senders.length} sender(s)"
 
     rescue StandardError => e
       log_error "Error during archive operation: #{e.message}"
@@ -749,6 +933,40 @@ class GmailInbox < InteractiveScriptBase
     end
 
     indices.to_a.sort
+  end
+
+  def parse_selection_for_infinite_scroll(input_str, current_display, end_display)
+    indices = []
+    parts = input_str.split(',').map(&:strip)
+
+    parts.each do |part|
+      if part.include?('-')
+        start_num, end_num = part.split('-').map(&:to_i)
+        raise "Invalid range format" if start_num.nil? || end_num.nil?
+        
+        # Convert to 0-based indices
+        start_idx = start_num - 1
+        end_idx = end_num - 1
+        
+        # Validate range is within current display or global range
+        (start_idx..end_idx).each do |idx|
+          if idx >= 0 && idx < 200 # Global limit we're using
+            indices << idx
+          end
+        end
+      else
+        num = part.to_i
+        raise "Invalid number format" if num.zero? && part != '0'
+        
+        idx = num - 1
+        if idx >= 0 && idx < 200 # Global limit we're using
+          indices << idx
+        end
+      end
+    end
+
+    raise "No valid selections found" if indices.empty?
+    indices.uniq.sort
   end
   def archive_messages_from_sender(service, user_id, sender_email, _expected_count)
     log_info "🔄 Archiving messages from #{sender_email}"
@@ -795,6 +1013,151 @@ class GmailInbox < InteractiveScriptBase
     puts
     log_success '✅ Archive operation completed'
     log_info "📦 Messages archived: #{archived_count}"
+    log_info "💾 Cache updated: #{cache_archived_count} messages marked as archived"
+
+    # Show updated inbox stats
+    updated_inbox_count = gmail_db.inbox_message_count
+    log_info "📊 Remaining inbox messages: #{updated_inbox_count}"
+
+    puts
+    log_info "💡 Archived messages can be found in Gmail's All Mail label"
+  end
+
+  def archive_by_domain(service, user_id)
+    log_info '🌐 Archive emails by domain'
+    puts
+
+    begin
+      # Ensure cache is up to date
+      cached_count = gmail_db.inbox_message_count
+      if cached_count == 0
+        log_info '🔄 Building cache for domain analysis'
+        update_message_cache(service, user_id)
+      else
+        log_info '📦 Using cached data for domain selection'
+      end
+
+      # Get all domains
+      all_domains = gmail_db.get_domain_stats(limit: 200)
+      
+      if all_domains.empty?
+        log_info 'No domains found in inbox'
+        return
+      end
+
+      puts
+      log_info "📊 Found #{all_domains.length} domains in your inbox"
+      puts
+
+      # Use the interactive selectable list
+      header = "🌐 Archive Emails by Domain\n📊 Select domains to archive their messages"
+      
+      display_proc = proc do |domain_info|
+        main_line = "#{domain_info[:domain]} (#{domain_info[:count]} messages)"
+        
+        # Add sample sender names as second line
+        if domain_info[:sample_names] && !domain_info[:sample_names].empty?
+          # Limit sample names to avoid overly long lines
+          sample_names = domain_info[:sample_names].split(', ').first(3).join(', ')
+          sample_names += '...' if domain_info[:sample_names].split(', ').length > 3
+          main_line += "\n      📧 #{sample_names}"
+        end
+        
+        main_line
+      end
+
+      # Show interactive list
+      selected_domains = interactive_selectable_list(
+        all_domains,
+        display_proc: display_proc,
+        multi_select: true,
+        header: header
+      )
+      
+      if selected_domains.empty?
+        log_info 'No domains selected for archiving'
+        return
+      end
+      
+      # Show final selection summary
+      total_to_archive = selected_domains.sum { |d| d[:count] }
+      
+      puts
+      log_info '📋 Final Selection:'
+      selected_domains.each_with_index do |domain_info, index|
+        puts "  #{index + 1}. #{domain_info[:domain]} - #{domain_info[:count]} messages"
+      end
+      puts
+      log_info "📊 Total: #{selected_domains.length} domains, #{total_to_archive} messages"
+      puts
+      
+      # Final confirmation
+      unless confirm_action("⚠️  Archive ALL #{total_to_archive} messages from #{selected_domains.length} selected domain(s)?")
+        log_info 'Archive operation cancelled'
+        return
+      end
+      
+      # Perform the archive operation for each domain
+      selected_domains.each do |domain_info|
+        archive_messages_from_domain(service, user_id, domain_info[:domain], domain_info[:count])
+      end
+      
+      log_complete "Archive operation completed for #{selected_domains.length} domain(s)"
+
+    rescue StandardError => e
+      log_error "Error during archive operation: #{e.message}"
+      if @options[:debug]
+        puts
+        e.backtrace.first(5).each { |line| puts "  #{line}" }
+      end
+    end
+  end
+
+  def archive_messages_from_domain(service, user_id, domain, _expected_count)
+    log_info "🔄 Archiving messages from #{domain}"
+    puts
+
+    # Get all message IDs from this domain in inbox
+    messages_to_archive = gmail_db.messages_by_domain(domain)
+    message_ids = messages_to_archive.map { |msg| msg['id'] }
+
+    if message_ids.empty?
+      log_info 'No messages to archive'
+      return
+    end
+
+    archived_count = 0
+
+    with_progress('🌐 Archiving messages', total: message_ids.length) do |progress|
+      # Archive messages in batches
+      message_ids.each_slice(100) do |batch_ids|
+        begin
+          # Create modify request to remove INBOX label (which archives the message)
+          modify_request = Google::Apis::GmailV1::BatchModifyMessagesRequest.new(
+            ids: batch_ids,
+            remove_label_ids: ['INBOX']
+          )
+
+          # Apply the modification via Gmail API
+          service.batch_modify_messages(user_id, modify_request)
+
+          archived_count += batch_ids.length
+          progress.advance(batch_ids.length)
+        rescue StandardError => e
+          log_warning "Failed to archive batch: #{e.message}"
+          # Continue with next batch
+          progress.advance(batch_ids.length)
+        end
+      end
+    end
+
+    # Update local cache
+    log_progress 'Updating local cache'
+    cache_archived_count = gmail_db.archive_domain_messages(domain)
+
+    puts
+    log_success '✅ Archive operation completed'
+    log_info "🌐 Messages archived: #{archived_count}"
     log_info "💾 Cache updated: #{cache_archived_count} messages marked as archived"
 
     # Show updated inbox stats

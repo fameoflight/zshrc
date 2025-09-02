@@ -37,7 +37,7 @@ PDF files or a directory containing PDF files (merged alphabetically).'
   end
 
   def show_examples
-    puts "Examples:"
+    puts 'Examples:'
     puts "  #{script_name} output.pdf file1.pdf file2.pdf    # Merge specific files"
     puts "  #{script_name} merged.pdf ~/Documents/pdfs/      # Merge all PDFs in directory"
     puts "  #{script_name} --recursive output.pdf ~/docs/   # Recursive directory merge"
@@ -46,7 +46,7 @@ PDF files or a directory containing PDF files (merged alphabetically).'
 
   def validate!
     if @args.length < 2
-      log_error("Insufficient arguments. Need output file and at least one input.")
+      log_error('Insufficient arguments. Need output file and at least one input.')
       show_help
       exit(1)
     end
@@ -68,11 +68,11 @@ PDF files or a directory containing PDF files (merged alphabetically).'
 
   def run
     log_banner(script_title)
-    
+
     pdf_files = collect_pdf_files
-    
+
     if pdf_files.empty?
-      log_error("No PDF files found to merge")
+      log_error('No PDF files found to merge')
       exit(1)
     end
 
@@ -82,7 +82,7 @@ PDF files or a directory containing PDF files (merged alphabetically).'
     return if @options[:dry_run]
 
     unless confirm_action("Merge #{pdf_files.length} PDF files into '#{@output_file}'?")
-      log_info("Operation cancelled")
+      log_info('Operation cancelled')
       exit(0)
     end
 
@@ -110,26 +110,26 @@ PDF files or a directory containing PDF files (merged alphabetically).'
 
   def find_pdfs_in_directory(directory)
     log_info("🔍 Scanning directory: #{directory}")
-    
+
     pattern = @options[:recursive] ? "#{directory}/**/*.pdf" : "#{directory}/*.pdf"
     pdf_files = Dir.glob(pattern)
-    
+
     log_info("Found #{pdf_files.length} PDF files in #{directory}")
     pdf_files
   end
 
   def merge_pdfs(pdf_files)
-    log_progress("📄 Merging PDF files...")
+    log_progress('📄 Merging PDF files...')
 
     combined_pdf = CombinePDF.new
 
     pdf_files.each_with_index do |file, index|
       log_info("Processing #{index + 1}/#{pdf_files.length}: #{File.basename(file)}")
-      
+
       begin
         pdf = CombinePDF.load(file)
         combined_pdf << pdf
-      rescue => e
+      rescue StandardError => e
         log_error("Failed to process '#{file}': #{e.message}")
         exit(1)
       end
@@ -137,7 +137,7 @@ PDF files or a directory containing PDF files (merged alphabetically).'
 
     log_progress("💾 Writing merged PDF to '#{@output_file}'...")
     combined_pdf.save(@output_file)
-    
+
     file_size = File.size(@output_file)
     log_success("Successfully created '#{@output_file}' (#{format_file_size(file_size)})")
   end

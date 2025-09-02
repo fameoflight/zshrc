@@ -2,6 +2,7 @@
 
 require_relative 'script_base'
 require 'tty-prompt'
+require 'set'
 
 # Base class for interactive Ruby scripts with menu systems
 class InteractiveScriptBase < ScriptBase
@@ -264,6 +265,35 @@ class InteractiveScriptBase < ScriptBase
     else
       log_info "📦 Using cached data"
     end
+  end
+
+  # Interactive selectable list with keyboard navigation
+  # items: Array of items to display
+  # display_proc: Proc that takes an item and returns display text
+  # multi_select: Boolean, allows multiple selections
+  # Returns: Array of selected items (even for single select)
+  def interactive_selectable_list(items, display_proc:, multi_select: true, header: nil)
+    return [] if items.empty?
+
+    # Use TTY::Prompt's multi_select for now - much more reliable
+    if header
+      puts header
+      puts
+    end
+
+    # Convert items to choices for TTY::Prompt
+    choices = items.map.with_index do |item, index|
+      display_text = display_proc.call(item)
+      { name: display_text, value: item }
+    end
+
+    if multi_select
+      selected = @prompt.multi_select("Select items:", choices, per_page: 15, cycle: true)
+    else
+      selected = [@prompt.select("Select item:", choices, per_page: 15, cycle: true)]
+    end
+
+    selected || []
   end
 end
 
