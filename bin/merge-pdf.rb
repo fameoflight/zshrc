@@ -2,12 +2,14 @@
 # frozen_string_literal: true
 
 require_relative '.common/script_base'
+require_relative '.common/format'
 require 'combine_pdf'
 require 'pathname'
 
 # Merge multiple PDF files into a single PDF document
 # Supports both individual file arguments and directory scanning
 class MergePdf < ScriptBase
+  include Format
   # Script metadata for standardized help text
   def script_emoji
     '📄'
@@ -140,16 +142,6 @@ PDF files or a directory containing PDF files (merged alphabetically).'
 
     file_size = File.size(@output_file)
     log_success("Successfully created '#{@output_file}' (#{format_file_size(file_size)})")
-  end
-
-  def format_file_size(bytes)
-    if bytes < 1024
-      "#{bytes} bytes"
-    elsif bytes < 1024 * 1024
-      "#{(bytes / 1024.0).round(1)} KB"
-    else
-      "#{(bytes / (1024.0 * 1024.0)).round(1)} MB"
-    end
   end
 
   def show_examples
