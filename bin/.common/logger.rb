@@ -37,23 +37,23 @@ class Logger
 
   def debug(message)
     return unless ENV['DEBUG'] == '1'
-    puts colorize("🐛 #{message}", :bright_black)
+    puts colorize("🐛 #{message}", :dim)
   end
 
   # Specialized logging methods
   def file_created(path)
     success("Created file: #{File.basename(path)}")
-    debug("Path: #{path}") if verbose?
+    debug("Path: #{path}")
   end
 
   def file_updated(path)
     info("📝 Updated: #{File.basename(path)}")
-    debug("Path: #{path}") if verbose?
+    debug("Path: #{path}")
   end
 
   def file_backed_up(path)
     info("💾 Backed up: #{File.basename(path)}")
-    debug("Path: #{path}") if verbose?
+    debug("Path: #{path}")
   end
 
   def install(package)

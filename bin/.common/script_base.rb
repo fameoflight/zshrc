@@ -69,7 +69,7 @@ class ScriptBase
       force: false,
       verbose: false,
       help: false,
-      debug: false
+      debug: ENV['DEBUG'] == '1' # Initialize from environment
     }
   end
 
@@ -100,6 +100,9 @@ class ScriptBase
         @options[:debug] = true
         ENV['DEBUG'] = '1'
       end
+
+      # Also check if DEBUG was set before script started
+      @options[:debug] = true if ENV['DEBUG'] == '1'
 
       # Allow subclasses to add custom options
       add_custom_options(opts) if respond_to?(:add_custom_options, true)

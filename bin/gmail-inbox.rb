@@ -2,12 +2,18 @@
 # frozen_string_literal: true
 
 require_relative '.common/interactive_script_base'
+require_relative '.common/logger'
 require_relative '.common/gmail_database'
+require_relative '.common/ui_helpers'
 require 'google/apis/gmail_v1'
 require 'googleauth'
 require 'googleauth/stores/file_token_store'
 require 'fileutils'
 require 'tty-progressbar'
+require 'tty-table'
+require 'tty-box'
+require 'tty-font'
+require 'pastel'
 require 'timeout'
 require 'thread'
 require 'securerandom'
@@ -16,6 +22,7 @@ require 'io/console'
 
 # Description: Fetches and manages Gmail inbox.
 class GmailInbox < InteractiveScriptBase
+  include UIHelpers
   OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
   APPLICATION_NAME = 'Gmail Inbox Fetcher'
   CREDENTIALS_PATH = File.expand_path('../credentials/gmail.json', __dir__)
@@ -28,6 +35,7 @@ class GmailInbox < InteractiveScriptBase
   def initialize
     super
     @account_name = @options[:account]
+    @pastel = Pastel.new
   end
 
 
@@ -277,7 +285,7 @@ class GmailInbox < InteractiveScriptBase
       rescue StandardError => e
         log_error "Could not retrieve messages with attachments: #{e.message}"
         log_info 'Try running "Refresh cache" to rebuild the database with attachment support'
-        puts e.backtrace.first(3) if @options[:debug]
+        log_debug("Full error: #{e.backtrace.join("\n")}")
         return
       end
       
@@ -290,32 +298,152 @@ class GmailInbox < InteractiveScriptBase
 
     rescue StandardError => e
       log_error "Error finding messages with attachments: #{e.message}"
-      puts e.backtrace.first(3) if @options[:debug]
+      log_debug("Full error: #{e.backtrace.join("\n")}")
     end
   end
 
   def display_messages_with_attachments(messages)
-    log_success "📎 Messages with attachments (#{messages.length} found):"
-    puts
-
-    messages.each_with_index do |msg, index|
-      attachments = msg['attachments'] || []
-      next if attachments.empty?
-
-      date_str = Time.at(msg['date_received']).strftime('%m/%d %I:%M%p')
-      from_name = msg['from_name'] || msg['from_email'] || 'Unknown'
-      
-      puts "#{(index + 1).to_s.rjust(2)}. 📨 #{msg['subject']}"
-      puts "    👤 #{from_name}"
-      puts "    📅 #{date_str}"
-      puts "    📎 Attachments (#{attachments.length}):"
-      
-      attachments.each do |attachment|
-        size_str = format_file_size(attachment['size'])
-        puts "       • #{attachment['filename']} (#{attachment['mime_type']}, #{size_str})"
+    begin
+      # Safety check for pastel initialization
+      unless @pastel
+        @pastel = Pastel.new
       end
-      
+      log_debug("Pastel initialized for attachments display")
+
+      # Create header with large font
+      begin
+        puts create_header("ATTACHMENTS", color: :magenta)
+        log_debug("Header created successfully")
+      rescue StandardError => font_error
+        log_error("Header creation error: #{font_error.message}")
+        log_debug("Full error: #{font_error.backtrace.join("\n")}")
+        
+        # Fallback header box
+        header_box = TTY::Box.frame(
+          padding: 1,
+          title: { top_center: "📎 Messages with Attachments" },
+          border: :thick,
+          style: { border: { fg: :magenta } }
+        ) do
+          "#{messages.length} messages found"
+        end
+        puts header_box
+      end
       puts
+
+      # Create table data for messages
+      table_data = []
+      messages.each_with_index do |msg, index|
+        attachments = msg['attachments'] || []
+        next if attachments.empty?
+
+        begin
+          date_str = Time.at(msg['date_received']).strftime('%m/%d %I:%M%p')
+          from_name = msg['from_name'] || msg['from_email'] || 'Unknown'
+          
+          # Truncate subject for table
+          subject = msg['subject'].length > 40 ? "#{msg['subject'][0..37]}..." : msg['subject']
+          
+          # Get attachment summary
+          total_size = attachments.sum { |a| a['size'] || 0 }
+          attachment_summary = "#{attachments.length} files (#{format_file_size(total_size)})"
+          
+          log_debug("Processing attachment message #{index + 1}: #{subject[0..20]}...")
+          log_debug("From: #{from_name}, Date: #{date_str}, Summary: #{attachment_summary}")
+          
+          # Use safe decoration methods
+          col1 = safe_decorate("#{index + 1}", :yellow)
+          col2 = safe_decorate(subject, :white)
+          col3 = safe_decorate(from_name, :green)
+          col4 = safe_decorate(date_str, :cyan)
+          col5 = safe_decorate(attachment_summary, :magenta)
+          
+          table_data << [col1, col2, col3, col4, col5]
+          log_debug("Message #{index + 1} processed successfully")
+        rescue StandardError => msg_error
+          log_error("Error processing attachment message #{index + 1}: #{msg_error.message}")
+          log_debug("Subject: #{msg['subject']}")
+          log_debug("From: #{msg['from_name']} / #{msg['from_email']}")
+          log_debug("Full backtrace: #{msg_error.backtrace.join("\n")}")
+          
+          # Fallback without colors
+          table_data << [
+            "#{index + 1}",
+            subject || "Unknown Subject",
+            from_name,
+            date_str || "Unknown Date",
+            attachment_summary || "Unknown Size"
+          ]
+        end
+      end
+
+      # Display main table
+      if table_data.any?
+        log_debug("Creating table with #{table_data.length} rows")
+        
+        begin
+          headers = ['#', 'Subject', 'From', 'Date', 'Attachments']
+          puts create_table(headers, table_data)
+          log_debug("Table rendered successfully")
+        rescue StandardError => table_error
+          log_error("Table creation/rendering failed: #{table_error.message}")
+          log_debug("Full error: #{table_error.backtrace.join("\n")}")
+          
+          # Fallback to simple display
+          log_info("Using simple display format...")
+          table_data.each_with_index do |row, idx|
+            puts "#{idx + 1}. #{row[1]} - #{row[2]} - #{row[3]} - #{row[4]}"
+          end
+        end
+        puts
+
+      # Show detailed attachment info in a separate section
+      messages.each_with_index do |msg, index|
+        attachments = msg['attachments'] || []
+        next if attachments.empty?
+
+        puts @pastel.decorate("#{index + 1}. #{msg['subject']}", :yellow)
+        
+        # Create attachment details table
+        attachment_data = attachments.map do |attachment|
+          [
+            @pastel.decorate("📄", :cyan),
+            @pastel.decorate(attachment['filename'], :white),
+            @pastel.decorate(attachment['mime_type'], :green),
+            @pastel.decorate(format_file_size(attachment['size']), :yellow)
+          ]
+        end
+
+        attachment_table = TTY::Table.new(
+          [@pastel.decorate('', :dim), @pastel.decorate('File', :dim), @pastel.decorate('Type', :dim), @pastel.decorate('Size', :dim)],
+          attachment_data
+        )
+
+        puts attachment_table.render(:unicode, padding: [0, 1])
+        puts
+      end
+
+        # Summary box
+        total_files = messages.sum { |m| (m['attachments'] || []).length }
+        summary_box = TTY::Box.frame(
+          padding: 1,
+          border: :thick,
+          style: { border: { fg: :green } }
+        ) do
+          @pastel.decorate("📊 Found #{total_files} attachments across #{messages.length} messages", :green)
+        end
+        puts summary_box
+      end
+    rescue StandardError => e
+      log_error "Error in display_messages_with_attachments: #{e.message}"
+      log_error "Full backtrace:"
+      e.backtrace.each { |line| log_error "  #{line}" }
+      
+      # Fallback simple display
+      puts "Messages with Attachments (#{messages.length} found):"
+      messages.each_with_index do |msg, i|
+        puts "#{i + 1}. #{msg['subject']} - #{msg['from_name'] || msg['from_email']}"
+      end
     end
   end
 
@@ -384,17 +512,39 @@ class GmailInbox < InteractiveScriptBase
   end
 
   def show_recent_messages(service, user_id, limit = 10)
-    log_info "📧 Fetching #{limit} most recent inbox messages"
-    puts
+    begin
+      # Safety check for pastel initialization
+      unless @pastel
+        @pastel = Pastel.new
+      end
+
+      # Create a beautiful header box
+      header_box = TTY::Box.frame(
+        padding: 1,
+        title: { top_center: "📧 Recent Messages" },
+        border: :thick,
+        style: { border: { fg: :cyan } }
+      ) do
+        "Fetching #{limit} most recent inbox messages..."
+      end
+      puts header_box
+      puts
 
     result = service.list_user_messages(user_id, max_results: limit, label_ids: ['INBOX'])
 
     if result.messages.nil? || result.messages.empty?
-      log_info '📭 No messages found in your inbox'
+      empty_box = TTY::Box.frame(
+        padding: 1,
+        border: :thick,
+        style: { border: { fg: :yellow } }
+      ) do
+        @pastel.decorate("📭 No messages found in your inbox", :yellow)
+      end
+      puts empty_box
       return
     end
 
-    messages = []
+    messages_data = []
 
     with_progress('📧 Loading messages', total: result.messages.count) do |progress|
       result.messages.each do |message|
@@ -410,11 +560,26 @@ class GmailInbox < InteractiveScriptBase
         # Format date
         date_str = date ? Time.parse(date).strftime('%m/%d %I:%M%p') : 'unknown date'
 
-        messages << {
-          subject: "📨 #{subject}",
-          from: "👤 #{from_clean}",
-          date: "📅 #{date_str}"
-        }
+        # Truncate long subjects for table display
+        display_subject = subject.length > 50 ? "#{subject[0..47]}..." : subject
+
+        begin
+          log_debug("Processing message #{message.id}: #{subject[0..20]}...")
+          messages_data << [
+            safe_decorate("📨", :cyan),
+            safe_decorate(display_subject, :white),
+            safe_decorate("👤 #{from_clean}", :green),
+            safe_decorate("📅 #{date_str}", :yellow)
+          ]
+          log_debug("Message processed successfully")
+        rescue StandardError => pastel_error
+          log_error("UI error in message processing: #{pastel_error.message}")
+          log_debug("Subject: #{subject}")
+          log_debug("From: #{from_clean}")
+          log_debug("Date: #{date_str}")
+          # Fallback without colors
+          messages_data << ["📨", display_subject, "👤 #{from_clean}", "📅 #{date_str}"]
+        end
 
         progress.advance(1)
       rescue StandardError => e
@@ -423,7 +588,31 @@ class GmailInbox < InteractiveScriptBase
       end
     end
 
-    show_list('Recent Messages', messages)
+      # Create a beautiful table
+      log_debug("Creating table with #{messages_data.length} messages")
+      headers = ['', 'Subject', 'From', 'Date']
+      puts create_table(headers, messages_data)
+      puts
+
+      # Summary box
+      summary_box = TTY::Box.frame(
+        padding: 1,
+        border: :thick,
+        style: { border: { fg: :green } }
+      ) do
+        @pastel.decorate("✅ Displayed #{messages_data.length} recent messages", :green)
+      end
+      puts summary_box
+    rescue StandardError => e
+      log_error("Error in show_recent_messages: #{e.message}")
+      log_debug("Full backtrace: #{e.backtrace.join("\n")}")
+      
+      # Fallback simple display
+      puts "Recent Messages (#{messages_data&.length || 0} found):"
+      messages_data&.each_with_index do |msg, i|
+        puts "#{i + 1}. #{msg[1]} - #{msg[2]} - #{msg[3]}"
+      end
+    end
   end
 
   def show_top_senders(service, user_id, limit = 10)
@@ -451,7 +640,7 @@ class GmailInbox < InteractiveScriptBase
       total_cached = gmail_db.execute_scalar('SELECT COUNT(*) FROM messages')
       inbox_cached = gmail_db.inbox_message_count
 
-      log_debug "📊 Cache status: #{total_cached} total messages, #{inbox_cached} in inbox"
+      log_debug("📊 Cache status: #{total_cached} total messages, #{inbox_cached} in inbox")
 
       sender_stats = gmail_db.sender_stats(limit: limit * 2) # Get extra for processing
 
@@ -471,29 +660,60 @@ class GmailInbox < InteractiveScriptBase
         log_warning '   Consider refreshing cache for accurate counts'
       end
 
-      puts
-      log_success "📊 Top #{limit} senders analysis (#{total_messages} messages analyzed):"
-      puts
-
       # Sort senders by count and take top N
       top_senders = sender_stats.sort_by { |_email, stats| -stats[:count] }.first(limit)
 
-      # Display results in a nice table format
-      max_name_width = [top_senders.map { |_email, stats| stats[:name].length }.max || 20, 30].min
+      # Create beautiful header with large font
+      begin
+        font = TTY::Font.new(:doom)
+        puts @pastel.decorate(font.write("TOP SENDERS"), :cyan)
+      rescue StandardError
+        # Fallback if font not available
+        header_box = TTY::Box.frame(
+          padding: 1,
+          title: { top_center: "👥 Top Senders Analysis" },
+          border: :thick,
+          style: { border: { fg: :cyan } }
+        ) do
+          "#{total_messages} messages analyzed"
+        end
+        puts header_box
+      end
+      puts
 
-      top_senders.each_with_index do |(email, stats), index|
+      # Create table data
+      table_data = top_senders.map.with_index do |(email, stats), index|
         name = stats[:name]
         count = stats[:count]
-        name = name.length > max_name_width ? "#{name[0..max_name_width - 3]}..." : name
         percentage = ((count.to_f / total_messages) * 100).round(1)
-
-        puts "#{' ' * 2}#{(index + 1).to_s.rjust(2)}. #{name.ljust(max_name_width)} │ #{count.to_s.rjust(4)} messages (#{percentage}%)"
-        puts "#{' ' * 6}📧 #{email}" if name != email && name != stats[:name]
-        puts
+        
+        # Truncate long names for display
+        display_name = name.length > 25 ? "#{name[0..22]}..." : name
+        
+        [
+          @pastel.decorate("#{index + 1}", :yellow),
+          @pastel.decorate(display_name, :white),
+          @pastel.decorate("#{count} msgs", :green),
+          @pastel.decorate("#{percentage}%", :cyan),
+          @pastel.decorate(email, :dim)
+        ]
       end
 
+      # Create and display the table
+      headers = ['#', 'Sender', 'Messages', '%', 'Email']
+      puts create_table(headers, table_data)
       puts
-      log_info '💡 Analysis completed in seconds using cached data!'
+
+      # Summary box
+      summary_box = TTY::Box.frame(
+        padding: 1,
+        border: :thick,
+        style: { border: { fg: :green } }
+      ) do
+        @pastel.decorate("💡 Analysis completed in seconds using cached data!\n", :green) +
+        @pastel.decorate("📊 Top #{limit} senders from #{total_messages} total messages", :white)
+      end
+      puts summary_box
     rescue StandardError => e
       log_warning "Error analyzing top senders: #{e.message}"
     end
@@ -1218,6 +1438,13 @@ class GmailInbox < InteractiveScriptBase
     log_info '📊 Inbox Summary'
     puts
 
+    # Safety check for pastel initialization
+    unless @pastel
+      log_debug "Pastel not initialized, creating new instance"
+      @pastel = Pastel.new
+    end
+    log_debug "Pastel instance: #{@pastel.class}"
+
     begin
       # Check if we need to update cache first
       cached_count = gmail_db.inbox_message_count
@@ -1282,21 +1509,86 @@ class GmailInbox < InteractiveScriptBase
       # Calculate read messages
       read_messages = total_messages - unread_messages
 
-      # Use the new show_status helper
-      status_items = {
-        '📬 Total Messages' => "#{total_messages} (from cache)",
-        '📩 Unread Messages' => "#{unread_messages} (live count)",
-        '📖 Read Messages' => read_messages.to_s
-      }
+      # Create beautiful inbox summary with tty-font header
+      begin
+        font = TTY::Font.new(:block)
+        puts @pastel.decorate(font.write("INBOX"), :green)
+      rescue StandardError => e
+        # Fallback header
+        log_debug "Font error: #{e.message}"
+        puts @pastel.decorate("📊 INBOX SUMMARY", :bold, :green)
+        puts "=" * 50
+      end
+      puts
 
-      if total_messages > 0
-        unread_percentage = ((unread_messages.to_f / total_messages) * 100).round(1)
-        status_items['📈 Unread Percentage'] = "#{unread_percentage}%"
+      # Create stats table
+      log_debug "Creating stats table..."
+      begin
+        stats_data = [
+          [@pastel.decorate("📬", :cyan), @pastel.decorate("Total Messages", :white), @pastel.decorate("#{total_messages}", :yellow), @pastel.decorate("(from cache)", :dim)],
+          [@pastel.decorate("📩", :blue), @pastel.decorate("Unread Messages", :white), @pastel.decorate("#{unread_messages}", :red), @pastel.decorate("(live count)", :dim)],
+          [@pastel.decorate("📖", :green), @pastel.decorate("Read Messages", :white), @pastel.decorate("#{read_messages}", :green), @pastel.decorate("", :dim)]
+        ]
+        log_debug "Basic stats data created"
+
+        if total_messages > 0
+          unread_percentage = ((unread_messages.to_f / total_messages) * 100).round(1)
+          color = unread_percentage > 50 ? :red : unread_percentage > 25 ? :yellow : :green
+          log_debug "Adding percentage row with color: #{color}"
+          stats_data << [
+            @pastel.decorate("📈", :magenta), @pastel.decorate("Unread Percentage", :white), @pastel.decorate("#{unread_percentage}%", color), @pastel.decorate("", :dim)
+          ]
+        end
+        log_debug "Stats data complete"
+
+        # Create and display stats table
+        log_debug "Creating table headers..."
+        stats_table = TTY::Table.new(
+          [@pastel.decorate('', :cyan, :bold), @pastel.decorate('Metric', :cyan, :bold), @pastel.decorate('Count', :cyan, :bold), @pastel.decorate('Source', :cyan, :bold)],
+          stats_data
+        )
+        log_debug "Table created successfully"
+      rescue StandardError => e
+        log_error "Error in stats table creation: #{e.message}"
+        log_error "Backtrace: #{e.backtrace.first(5).join(', ')}"
+        raise e
       end
 
-      show_status('📊 Inbox Statistics', status_items)
+      puts stats_table.render(:unicode, padding: [0, 1])
+      puts
+
+      # Status box based on inbox health
+      if unread_messages == 0
+        status_box = TTY::Box.frame(
+          padding: 1,
+          border: :thick,
+          style: { border: { fg: :green } }
+        ) do
+          @pastel.decorate("🎉 Inbox Zero achieved! Great job!", :green)
+        end
+      elsif unread_percentage > 75
+        status_box = TTY::Box.frame(
+          padding: 1,
+          border: :thick,
+          style: { border: { fg: :red } }
+        ) do
+          @pastel.decorate("⚠️  High unread rate (#{unread_percentage}%) - consider email management", :red)
+        end
+      else
+        status_box = TTY::Box.frame(
+          padding: 1,
+          border: :thick,
+          style: { border: { fg: :yellow } }
+        ) do
+          @pastel.decorate("📊 #{unread_messages} messages awaiting attention", :yellow)
+        end
+      end
+
+      puts status_box
     rescue StandardError => e
-      log_warning "Could not fetch inbox summary: #{e.message}"
+      log_error "Could not fetch inbox summary: #{e.message}"
+      log_error "Backtrace:"
+      e.backtrace.first(10).each { |line| log_error "  #{line}" }
     end
   end
 

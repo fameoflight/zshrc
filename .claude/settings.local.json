@@ -30,7 +30,9 @@
       "WebFetch(domain:ai.google.dev)",
       "Bash(osascript:*)",
       "Bash(plutil:*)",
-      "Bash(bundle install)"
+      "Bash(bundle install)",
+      "Bash(DEBUG=1 BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile ruby bin/gmail-inbox.rb --help)",
+      "Bash(DEBUG=1 bundle exec ruby bin/gmail-inbox.rb --help)"
     ],
     "deny": [],
     "additionalDirectories": [
