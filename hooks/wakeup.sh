@@ -12,6 +12,7 @@ fi
 log_hook "wakeup" "System waking up, triggering monitor setup."
 
 # Run the stack-monitors command
+sleep 3
 stack-monitors
 
 # Debug logging
