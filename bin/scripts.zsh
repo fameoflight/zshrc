@@ -24,8 +24,11 @@ _execute_ruby_script() {
     chmod +x "$script_path"
   fi
   
-  # Set BUNDLE_GEMFILE to use project gems and execute
-  BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+  # Change to the script's directory and use bundle exec
+  (
+    cd "$ZSH_CONFIG" || return
+    bundle exec ruby "bin/$script_name" "$@"
+  )
 }
 
 # =============================================================================
@@ -118,6 +121,11 @@ claude-gemini() {
   bash "$script_path" "$@"
 }
 
+# Gmail inbox fetcher
+gmail-inbox() {
+  _execute_ruby_script "gmail-inbox.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -141,6 +149,7 @@ list-scripts() {
   echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
   echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
+  echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   

@@ -26,15 +26,8 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
     ''
   end
 
-  def add_custom_options(opts)
-    opts.on('--debug', 'Enable debug output with current setup analysis') do
-      @options[:debug] = true
-      ENV['DEBUG'] = '1'
-    end
-  end
-
   def show_examples
-    puts "Examples:"
+    puts 'Examples:'
     puts "  #{script_name}                    # Configure stacked monitors"
     puts "  #{script_name} --debug           # Show current setup and debug info"
     puts "  #{script_name} --dry-run         # Preview what would be configured"
@@ -52,22 +45,22 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
 
   def run
     log_banner(script_title)
-    
+
     displays_info = get_display_info
     show_current_setup(displays_info) if debug_mode?
-    
+
     validate_display_count(displays_info)
     primary_display, monitor_1, monitor_2 = identify_displays(displays_info)
     configure_positions(primary_display, monitor_1, monitor_2)
-    
+
     command = build_command([primary_display, monitor_1, monitor_2])
-    
+
     if dry_run?
       show_dry_run(command, primary_display, monitor_1, monitor_2)
     else
       execute_monitor_setup(command, primary_display, monitor_1, monitor_2)
     end
-    
+
     show_completion(script_title)
   end
 
@@ -79,7 +72,7 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
 
   def validate_display_dependency
     return if System.command?('displayplacer')
-    
+
     log_error('displayplacer is not installed')
     log_info('Install with: brew install jakehilborn/jakehilborn/displayplacer')
     exit(1)
@@ -87,7 +80,7 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
 
   def get_display_info
     log_debug('Getting display information...')
-    
+
     display_list = execute_cmd('displayplacer list', description: 'Getting display information')
     unless display_list
       log_error('Failed to get display list')
@@ -121,7 +114,7 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
 
   def validate_display_count(displays_info)
     return if displays_info.length == 3
-    
+
     log_error("Found #{displays_info.length} displays, expected 3")
     log_info('Available displays:')
     displays_info.each_with_index do |display, i|
@@ -318,7 +311,6 @@ centered between stack) and two 16" monitors stacked vertically on the right.'
 
     log_progress('🔄 Executing monitor setup...')
     log_debug("Command: #{command}")
-
 
     success = execute_cmd?(command, description: 'Applying monitor configuration')
     if success

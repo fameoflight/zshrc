@@ -19,3 +19,7 @@ grayscale/bin/*
 /Settings/Claude/projects
 *.log
 /vendor
+credentials/gmail-token.yaml
+credentials/gmail_cache.db
+/credentials/cache
+/credentials/tokens

@@ -29,7 +29,8 @@
       "Bash(kill:*)",
       "WebFetch(domain:ai.google.dev)",
       "Bash(osascript:*)",
-      "Bash(plutil:*)"
+      "Bash(plutil:*)",
+      "Bash(bundle install)"
     ],
     "deny": [],
     "additionalDirectories": [

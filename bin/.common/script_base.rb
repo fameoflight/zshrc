@@ -68,7 +68,8 @@ class ScriptBase
       dry_run: false,
       force: false,
       verbose: false,
-      help: false
+      help: false,
+      debug: false
     }
   end
 
@@ -93,6 +94,11 @@ class ScriptBase
       opts.on('-v', '--verbose', 'Verbose output') do
         @options[:verbose] = true
         ENV['VERBOSE'] = '1'
+      end
+
+      opts.on('--debug', 'Enable debug output') do
+        @options[:debug] = true
+        ENV['DEBUG'] = '1'
       end
 
       # Allow subclasses to add custom options
@@ -232,6 +238,10 @@ class ScriptBase
 
   def verbose?
     @options[:verbose]
+  end
+
+  def debug?
+    @options[:debug]
   end
 
   def confirm_action(message)

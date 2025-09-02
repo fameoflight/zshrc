@@ -41,6 +41,10 @@ gem 'rexml', '~> 3.2'
 gem 'pdf-reader', '~> 2.11'
 gem 'combine_pdf', '~> 1.0'
 
+# Google API for Gmail integration
+gem 'google-api-client', '~> 0.53'
+gem 'googleauth', '~> 1.2'
+
 group :development, :test do
   gem 'rspec', '~> 3.12'
   gem 'rubocop', '~> 1.56'
