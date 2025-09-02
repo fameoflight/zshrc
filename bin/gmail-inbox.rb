@@ -150,6 +150,8 @@ class GmailInbox < InteractiveScriptBase
       menu_option('👥', 'Top senders analysis', :top_senders),
       menu_option('📦', 'Archive emails by sender', :archive_by_sender),
       menu_option('🌐', 'Archive emails by domain', :archive_by_domain),
+      menu_option('⏰', 'Archive emails by date (oldest first)', :archive_chronological_old),
+      menu_option('🕒', 'Archive emails by date (newest first)', :archive_chronological_new),
       menu_option('🔍', 'Search emails', :search_emails),
       menu_option('🗑️', 'Find unsubscribe emails', :find_unsubscribe),
       refresh_option(:refresh_cache),
@@ -182,6 +184,10 @@ class GmailInbox < InteractiveScriptBase
         @archive_handler.archive_by_sender(@user_id, self)
       when :archive_by_domain
         @archive_handler.archive_by_domain(@user_id, self)
+      when :archive_chronological_old
+        @archive_handler.archive_chronologically(@user_id, self, order: :oldest_first)
+      when :archive_chronological_new
+        @archive_handler.archive_chronologically(@user_id, self, order: :newest_first)
       when :search_emails
         search_emails
       when :find_unsubscribe
@@ -767,6 +773,33 @@ class GmailInbox < InteractiveScriptBase
         @gmail_service.update_message_cache(user_id, @gmail_db, force_update: false)
       end
 
+      # Show conversation vs message breakdown
+      begin
+        total_messages = gmail_db.inbox_message_count
+        conversation_count = gmail_db.inbox_conversation_count
+        
+        puts
+        
+        log_info "💾 Individual messages: #{total_messages}"
+        log_info "💬 Conversations/threads: #{conversation_count}"
+        
+        if conversation_count > 0
+          avg_msgs_per_conversation = (total_messages.to_f / conversation_count).round(1)
+          log_info "📊 Average messages per conversation: #{avg_msgs_per_conversation}"
+        end
+        
+        live_result = service.list_user_messages(user_id, label_ids: ['INBOX'], max_results: 1)
+        live_estimate = live_result.result_size_estimate || 0
+        log_info "🔍 Gmail API estimate: #{live_estimate} inbox messages"
+        
+        if live_estimate != total_messages
+          log_info "💡 Gmail web groups messages into conversations"
+          log_info "   Web view shows ~#{conversation_count} items, script counts #{total_messages} individual messages"
+        end
+      rescue StandardError => e
+        log_error "Could not get conversation comparison: #{e.message}"
+      end
+
       puts
 
       # Get counts from cache and live API
@@ -774,10 +807,6 @@ class GmailInbox < InteractiveScriptBase
 
       # Get total from cache (much faster)
       total_messages = gmail_db.inbox_message_count
-
-      # Debug: Check cache completeness
-      total_in_cache = gmail_db.execute_scalar('SELECT COUNT(*) FROM messages')
-      log_debug "📊 Cache contains #{total_in_cache} total messages (#{total_messages} in inbox)"
 
       # Get unread count from live API (need current status)
       unread_result = service.list_user_messages(user_id, label_ids: %w[INBOX UNREAD], max_results: 1)

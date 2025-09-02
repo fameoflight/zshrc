@@ -11,7 +11,7 @@ class Logger
   end
 
   # Core logging methods with emoji indicators
-  def info(message)
+  def log_message(message)
     puts colorize("ℹ️  #{message}", :blue)
   end
 
@@ -47,12 +47,12 @@ class Logger
   end
 
   def file_updated(path)
-    info("📝 Updated: #{File.basename(path)}")
+    log_message("📝 Updated: #{File.basename(path)}")
     debug("Path: #{path}")
   end
 
   def file_backed_up(path)
-    info("💾 Backed up: #{File.basename(path)}")
+    log_message("💾 Backed up: #{File.basename(path)}")
     debug("Path: #{path}")
   end
 
@@ -61,36 +61,36 @@ class Logger
   end
 
   def clean(item)
-    info("🧹 Cleaned: #{item}")
+    log_message("🧹 Cleaned: #{item}")
   end
 
   def update(item)
-    info("🔄 Updated: #{item}")
+    log_message("🔄 Updated: #{item}")
   end
 
   # Platform-specific logging
   def brew(message)
-    info("🍺 #{message}")
+    log_message("🍺 #{message}")
   end
 
   def git(message)
-    info("🐙 #{message}")
+    log_message("🐙 #{message}")
   end
 
   def python(message)
-    info("🐍 #{message}")
+    log_message("🐍 #{message}")
   end
 
   def ruby(message)
-    info("💎 #{message}")
+    log_message("💎 #{message}")
   end
 
   def macos(message)
-    info("🍎 #{message}")
+    log_message("🍎 #{message}")
   end
 
   def linux(message)
-    info("🐧 #{message}")
+    log_message("🐧 #{message}")
   end
 
   # Utility methods
@@ -127,7 +127,12 @@ class Logger
 
   def colorize(text, color)
     return text unless @color_enabled
-    @pastel.send(color, text)
+    begin
+      @pastel.send(color, text)
+    rescue StandardError => e
+      # Fallback if Pastel fails
+      text
+    end
   end
 end
 
@@ -136,7 +141,7 @@ $logger = Logger.new
 
 # Convenience methods for global access
 def log_info(message)
-  $logger.info(message)
+  $logger.log_message(message)
 end
 
 def log_success(message)

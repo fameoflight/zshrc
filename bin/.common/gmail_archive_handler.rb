@@ -54,12 +54,26 @@ class GmailArchiveHandler
       
       return unless confirm_archive_operation(interactive_script, total_to_archive, selected_senders.length, 'sender(s)')
       
+      progress_bar = TTY::ProgressBar.new(
+        "Archiving messages [:bar] :current/:total",
+        total: total_to_archive,
+        width: 30
+      )
+
+      total_archived = 0
+      total_cache_updated = 0
       # Perform the archive operation for each sender
       selected_senders.each do |sender|
-        archive_messages_from_sender(user_id, sender[:email], sender[:count])
+        archived_count_for_sender = archive_messages_from_sender(user_id, sender[:email], progress_bar)
+        total_archived += archived_count_for_sender
+        # Cache update already handled in archive_messages_from_sender method
+        total_cache_updated += sender[:count] # Use expected count since cache should be updated
       end
-      
+      progress_bar.finish
+
+      show_archive_completion(total_archived, total_cache_updated, "#{selected_senders.length} sender(s)")
       log_complete("Archive operation completed for #{selected_senders.length} sender(s)")
+
 
     rescue StandardError => e
       log_error("Error during archive operation: #{e.message}")
@@ -108,11 +122,24 @@ class GmailArchiveHandler
       
       return unless confirm_archive_operation(interactive_script, total_to_archive, selected_domains.length, 'domain(s)')
       
+      progress_bar = TTY::ProgressBar.new(
+        "Archiving messages [:bar] :current/:total",
+        total: total_to_archive,
+        width: 30
+      )
+
+      total_archived = 0
+      total_cache_updated = 0
       # Perform the archive operation for each domain
       selected_domains.each do |domain_info|
-        archive_messages_from_domain(user_id, domain_info[:domain], domain_info[:count])
+        archived_count_for_domain = archive_messages_from_domain(user_id, domain_info[:domain], progress_bar)
+        total_archived += archived_count_for_domain
+        # Cache update already handled in archive_messages_from_domain method
+        total_cache_updated += domain_info[:count] # Use expected count since cache should be updated
       end
-      
+      progress_bar.finish
+
+      show_archive_completion(total_archived, total_cache_updated, "#{selected_domains.length} domain(s)")
       log_complete("Archive operation completed for #{selected_domains.length} domain(s)")
 
     rescue StandardError => e
@@ -121,51 +148,108 @@ class GmailArchiveHandler
     end
   end
 
-  def archive_messages_from_sender(user_id, sender_email, _expected_count)
-    log_info("🔄 Archiving messages from #{sender_email}")
+  def archive_chronologically(user_id, interactive_script, order: :oldest_first)
+    order_text = order == :oldest_first ? 'oldest first' : 'newest first'
+    emoji = order == :oldest_first ? '⏰' : '🕒'
+    
+    log_info("#{emoji} Archive emails chronologically (#{order_text})")
     puts
 
-    # Get all message IDs from this sender in inbox
-    messages_to_archive = @gmail_db.messages_by_sender(sender_email)
-    message_ids = messages_to_archive.map { |msg| msg['id'] }
+    begin
+      # Ensure cache is up to date
+      ensure_cache_ready(user_id)
 
-    if message_ids.empty?
-      log_info('No messages to archive')
-      return
+      # Get messages chronologically
+      all_messages = @gmail_db.messages_chronologically(order: order, limit: 200)
+      log_debug("Retrieved #{all_messages.length} messages for chronological display")
+      
+      if all_messages.empty?
+        log_info('No messages found in inbox')
+        log_debug('Checking if there are any inbox messages at all...')
+        inbox_count = @gmail_db.inbox_message_count
+        log_debug("Total inbox messages in cache: #{inbox_count}")
+        return
+      end
+
+      puts
+      log_info("📊 Found #{all_messages.length} messages in your inbox (#{order_text})")
+      puts
+
+      # Use the interactive selectable list
+      header = "#{emoji} Archive Emails by Date (#{order_text.capitalize})\n📊 Select messages to archive"
+      
+      display_proc = create_chronological_display_proc
+
+      # Show interactive list
+      selected_messages = interactive_script.interactive_selectable_list(
+        all_messages,
+        display_proc: display_proc,
+        multi_select: true,
+        header: header
+      )
+      
+      return if selected_messages.empty?
+
+      # Show final selection and confirm
+      total_to_archive = selected_messages.length
+      show_chronological_selection_summary(selected_messages, order_text)
+      
+      return unless confirm_archive_operation(interactive_script, total_to_archive, total_to_archive, 'message(s)')
+      
+      progress_bar = TTY::ProgressBar.new(
+        "Archiving messages [:bar] :current/:total",
+        total: total_to_archive,
+        width: 30
+      )
+
+      # Get message IDs and archive them via Gmail API
+      message_ids = selected_messages.map { |msg| msg['id'] }
+      archived_count = archive_message_ids(user_id, message_ids, progress_bar)
+      
+      # Update cache to mark messages as archived (only if API calls succeeded)
+      cache_updated = 0
+      if archived_count > 0
+        selected_messages.each do |msg|
+          @gmail_db.archive_message_by_id(msg['id'])
+          cache_updated += 1
+        end
+      end
+
+      progress_bar.finish
+
+      show_archive_completion(archived_count, cache_updated, "#{total_to_archive} message(s)")
+      log_complete("Chronological archive operation completed")
+
+    rescue StandardError => e
+      log_error("Error during chronological archive operation: #{e.message}")
+      log_debug("Full error: #{e.backtrace.join("\n")}")
     end
-
-    archived_count = archive_message_ids(user_id, message_ids, '📦 Archiving messages')
-
-    # Update local cache
-    log_progress('Updating local cache')
-    cache_archived_count = @gmail_db.archive_sender_messages(sender_email)
-
-    show_archive_completion(archived_count, cache_archived_count, sender_email)
   end
 
-  def archive_messages_from_domain(user_id, domain, _expected_count)
-    log_info("🔄 Archiving messages from #{domain}")
-    puts
 
-    # Get all message IDs from this domain in inbox
+
+  def archive_messages_from_sender(user_id, sender_email, progress_bar)
+    messages_to_archive = @gmail_db.messages_by_sender(sender_email)
+    message_ids = messages_to_archive.map { |msg| msg['id'] }
+    return 0 if message_ids.empty?
+
+    archived_count = archive_message_ids(user_id, message_ids, progress_bar)
+    # Always update cache regardless of API response - messages may have been archived already
+    cache_updated = @gmail_db.archive_sender_messages(sender_email)
+    log_debug("Cache updated: #{cache_updated} messages marked as archived for sender #{sender_email}")
+    archived_count
+  end
+
+  def archive_messages_from_domain(user_id, domain, progress_bar)
     messages_to_archive = @gmail_db.messages_by_domain(domain)
     message_ids = messages_to_archive.map { |msg| msg['id'] }
+    return 0 if message_ids.empty?
 
-    log_debug("Found #{messages_to_archive.length} messages for domain #{domain}")
-    log_debug("Message IDs: #{message_ids.first(5).join(', ')}#{'...' if message_ids.length > 5}")
-
-    if message_ids.empty?
-      log_info('No messages to archive')
-      return
-    end
-
-    archived_count = archive_message_ids(user_id, message_ids, '🌐 Archiving messages')
-
-    # Update local cache
-    log_progress('Updating local cache')
-    cache_archived_count = @gmail_db.archive_domain_messages(domain)
-
-    show_archive_completion(archived_count, cache_archived_count, domain)
+    archived_count = archive_message_ids(user_id, message_ids, progress_bar)
+    # Always update cache regardless of API response - messages may have been archived already
+    cache_updated = @gmail_db.archive_domain_messages(domain)
+    log_debug("Cache updated: #{cache_updated} messages marked as archived for domain #{domain}")
+    archived_count
   end
 
   def parse_selection(input_str, max_value)
@@ -256,6 +340,34 @@ class GmailArchiveHandler
     end
   end
 
+  def create_chronological_display_proc
+    proc do |message|
+      begin
+        log_debug("Processing message for display: #{message.class} - Keys: #{message.keys rescue 'N/A'}")
+        
+        # Format date nicely
+        date_received = message['date_received']
+        log_debug("Date received: #{date_received} (#{date_received.class})")
+        
+        date = Time.at(date_received).strftime('%Y-%m-%d %H:%M')
+        from_name = message['from_name'] || message['from_email'] || 'Unknown'
+        subject = message['subject'] || '(no subject)'
+        
+        # Truncate long subjects
+        display_subject = subject.length > 50 ? "#{subject[0..47]}..." : subject
+        
+        main_line = "#{date} | #{display_subject}"
+        main_line += "\n      📧 #{from_name}"
+        
+        main_line
+      rescue StandardError => e
+        log_debug("Error in display proc: #{e.message}")
+        log_debug("Message data: #{message.inspect}")
+        "Error displaying message: #{e.message}"
+      end
+    end
+  end
+
   def show_selection_summary(selected_items, total_to_archive, item_type)
     puts
     log_info('📋 Final Selection:')
@@ -282,6 +394,25 @@ class GmailArchiveHandler
     puts
   end
 
+  def show_chronological_selection_summary(selected_messages, order_text)
+    puts
+    log_info('📋 Final Selection:')
+    selected_messages.first(5).each_with_index do |message, index|
+      date = Time.at(message['date_received']).strftime('%Y-%m-%d')
+      subject = message['subject'] || '(no subject)'
+      subject = subject.length > 40 ? "#{subject[0..37]}..." : subject
+      puts "  #{index + 1}. #{date} - #{subject}"
+    end
+    
+    if selected_messages.length > 5
+      puts "  ... and #{selected_messages.length - 5} more messages"
+    end
+    
+    puts
+    log_info("📊 Total: #{selected_messages.length} messages (#{order_text})")
+    puts
+  end
+
   def confirm_archive_operation(interactive_script, total_messages, item_count, item_type)
     if interactive_script.respond_to?(:confirm_action)
       interactive_script.confirm_action("⚠️  Archive ALL #{total_messages} messages from #{item_count} selected #{item_type}?")
@@ -293,46 +424,31 @@ class GmailArchiveHandler
     end
   end
 
-  def archive_message_ids(user_id, message_ids, progress_label)
+  def archive_message_ids(user_id, message_ids, progress_bar)
     archived_count = 0
-
     log_debug("Starting to archive #{message_ids.length} messages")
 
-    # Create progress bar
-    require 'tty-progressbar'
-    progress = TTY::ProgressBar.new(
-      "#{progress_label} [:bar] :current/:total",
-      total: message_ids.length,
-      width: 30,
-      bar_format: :block
-    )
-
-    # Archive messages in batches
     message_ids.each_slice(100) do |batch_ids|
       begin
         log_debug("Archiving batch of #{batch_ids.length} messages")
         
-        # Create modify request to remove INBOX label (which archives the message)
         modify_request = Google::Apis::GmailV1::BatchModifyMessagesRequest.new(
           ids: batch_ids,
           remove_label_ids: ['INBOX']
         )
 
-        # Apply the modification via Gmail API
         @gmail_service.batch_modify_messages(user_id, modify_request)
 
         archived_count += batch_ids.length
-        progress.advance(batch_ids.length)
+        progress_bar.advance(batch_ids.length)
         log_debug("Successfully archived batch of #{batch_ids.length} messages")
       rescue StandardError => e
         log_warning("Failed to archive batch: #{e.message}")
         log_debug("Batch error details: #{e.class}: #{e.message}")
-        # Continue with next batch
-        progress.advance(batch_ids.length)
+        progress_bar.advance(batch_ids.length)
       end
     end
 
-    progress.finish
     log_debug("Total archived count: #{archived_count}")
     archived_count
   end

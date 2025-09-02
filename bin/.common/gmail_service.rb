@@ -364,6 +364,19 @@ class GmailService
 
       # Check if message already exists in cache
       if !force_update && gmail_db.message_exists?(message.id)
+        # Still need to check if labels have changed (e.g., archived)
+        # Get minimal message info to check current labels
+        begin
+          current_msg = thread_service.get_user_message(user_id, message.id, format: 'minimal')
+          current_labels = current_msg.label_ids || []
+          
+          # Update labels in cache if they've changed
+          gmail_db.update_message_labels(message.id, current_labels.join(','))
+        rescue StandardError => e
+          # If we can't get current labels, skip this optimization
+          log_debug("Couldn't check labels for existing message #{message.id}: #{e.message}")
+        end
+        
         progress_mutex.synchronize { progress.advance(1) }
         next
       end

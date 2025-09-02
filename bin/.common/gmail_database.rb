@@ -66,6 +66,11 @@ class GmailDatabase < Database
     count('messages', where: "labels LIKE '%INBOX%'")
   end
 
+  def inbox_conversation_count
+    # Count unique thread_ids (conversations) in inbox
+    execute_scalar("SELECT COUNT(DISTINCT thread_id) FROM messages WHERE labels LIKE '%INBOX%'")
+  end
+
   def sender_stats(limit: nil)
     results = group_count(
       'messages',
@@ -209,23 +214,34 @@ class GmailDatabase < Database
   end
 
   def messages_by_domain(domain)
-    # Match messages where the top-level domain matches
-    # For linkedin.com, this should match both @a.linkedin.com and @b.linkedin.com
+    # Match messages where the domain matches exactly or as subdomain
+    # For linkedin.com, this should match both @linkedin.com and @sub.linkedin.com
     select(
       'messages',
-      where: "from_email LIKE ? AND labels LIKE '%INBOX%'",
-      params: ["%@%.#{domain}"],
+      where: "(from_email LIKE ? OR from_email LIKE ?) AND labels LIKE '%INBOX%'",
+      params: ["%@#{domain}", "%@%.#{domain}"],
       order: 'date_received DESC'
+    )
+  end
+
+  def messages_chronologically(order: :oldest_first, limit: 200)
+    # Get all inbox messages ordered chronologically
+    sort_order = order == :oldest_first ? 'ASC' : 'DESC'
+    select(
+      'messages',
+      where: "labels LIKE '%INBOX%'",
+      order: "date_received #{sort_order}",
+      limit: limit
     )
   end
 
   def archive_domain_messages(domain)
     # Update labels to remove INBOX for all messages from domain
     with_connection do |db|
-      # Find all inbox messages from this domain (including subdomains)
+      # Find all inbox messages from this domain (exact match and subdomains)
       messages = db.execute(
-        "SELECT id, labels FROM messages WHERE from_email LIKE ? AND labels LIKE '%INBOX%'",
-        ["%@%.#{domain}"]
+        "SELECT id, labels FROM messages WHERE (from_email LIKE ? OR from_email LIKE ?) AND labels LIKE '%INBOX%'",
+        ["%@#{domain}", "%@%.#{domain}"]
       )
       
       messages.each do |message|
@@ -240,6 +256,29 @@ class GmailDatabase < Database
       end
       
       messages.length
+    end
+  end
+
+  def archive_message_by_id(message_id)
+    # Update labels to remove INBOX for specific message
+    with_connection do |db|
+      message = db.execute(
+        "SELECT labels FROM messages WHERE id = ? AND labels LIKE '%INBOX%'",
+        [message_id]
+      ).first
+      
+      return 0 unless message
+      
+      current_labels = message['labels'] || ''
+      # Remove INBOX from labels
+      new_labels = current_labels.split(',').reject { |label| label.strip == 'INBOX' }.join(',')
+      
+      db.execute(
+        "UPDATE messages SET labels = ? WHERE id = ?",
+        [new_labels, message_id]
+      )
+      
+      1 # Return 1 to indicate one message was updated
     end
   end
 
