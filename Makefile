@@ -256,6 +256,11 @@ ruby: brew ruby-gems
 		echo "Installing RVM..."; \
 		\curl -sSL https://get.rvm.io | bash -s stable; \
 	fi
+	@echo "⚙️  Configuring RVM settings..."
+	@if command -v rvm >/dev/null 2>&1; then \
+		rvm rvmrc warning ignore /Users/hemantv/zshrc/Gemfile; \
+		echo "✅ RVM rvmrc warning ignored for Gemfile"; \
+	fi
 	@echo "Setting up Ruby configuration files..."
 	@if [ -f "${SETTINGS}/irbrc" ]; then \
 		ln -sf ${SETTINGS}/irbrc ${HOME}/.irbrc; \
