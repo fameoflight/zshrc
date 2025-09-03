@@ -164,6 +164,11 @@ list-scripts() {
   echo "  💾 make iterm-backup   - Backup iTerm2 essential settings"
   echo "  ⚙️  make iterm-setup    - Restore iTerm2 settings from backup"
   echo ""
+
+  # Show repository maintenance scripts available via Makefile only
+  echo "🧹 Repository Maintenance (Makefile targets only):"
+  echo "  🔍 make find-orphans   - Find and report orphaned Makefile targets"
+  echo ""
   
   # Show all script files for reference
   echo "📂 All Script Files in $scripts_dir:"

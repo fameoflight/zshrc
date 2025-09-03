@@ -35,7 +35,8 @@
       "Bash(DEBUG=1 bundle exec ruby bin/gmail-inbox.rb --help)",
       "Bash(bundle exec ruby:*)",
       "Bash(sed:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "additionalDirectories": [

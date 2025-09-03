@@ -249,12 +249,12 @@ start_proxy_server() {
     
     # Wait for server to start
     local attempts=0
-    while [[ $attempts -lt 10 ]]; do
+    while [[ $attempts -lt 15 ]]; do
         if is_server_running; then
             log_success "Proxy server started (PID: $server_pid)"
             return 0
         fi
-        sleep 0.5
+        sleep 1
         ((attempts++))
     done
     

@@ -220,7 +220,7 @@ This ensures all script wrapper functions are available immediately when startin
 
 ### Available Scripts and Functions
 
-The scripts system is organized into two distinct categories:
+The scripts system is organized into three distinct categories:
 
 #### 🛠️ Setup/Backup Scripts (Makefile Targets Only)
 
@@ -269,6 +269,11 @@ These scripts handle system configuration, application setup, and backup operati
   - Restores iTerm2 configuration from backup files
   - **Script**: `bin/iterm-setup.sh`
 
+#### 🧹 Repository Maintenance (Makefile Targets Only)
+
+- **`make find-orphans`** - Find and report orphaned Makefile targets
+  - **Script**: `bin/internal-find-orphaned-targets.rb`
+
 #### 🐚 Utility Scripts (ZSH Functions)
 
 These scripts provide general utilities and are available as interactive ZSH functions:
@@ -308,11 +313,11 @@ These scripts provide general utilities and are available as interactive ZSH fun
 #### Discovery and Help
 
 - **`list-scripts`** - Display all available custom scripts and functions
-  - Shows both ZSH utility functions and Makefile-only setup/backup scripts
-  - Provides clear organization of the two-tier system
+  - Shows ZSH utility functions, Makefile-only setup/backup scripts, and repository maintenance scripts.
+  - Provides clear organization of the three-tier system
   - Quick overview of all available functionality
 
-### Two-Tier Script Organization
+### Three-Tier Script Organization
 
 #### ZSH Utility Functions Pattern
 
@@ -345,7 +350,7 @@ setup-script:
  @bash "${ZSH_CONFIG}/bin/setup-script.sh"
 ```
 
-This two-tier approach provides:
+This three-tier approach provides:
 
 - **Clear separation** - Utilities vs setup/backup operations
 - **Controlled access** - Setup scripts require intentional `make` invocation
@@ -609,6 +614,12 @@ echo "  🛠️  make my-setup-script - Description of what this setup does"
 - One-time or infrequent setup tasks
 - Operations that modify system settings
 
+**Repository Maintenance Scripts (Makefile-only)** should be used for:
+
+- Internal repository maintenance tasks
+- Scripts that are not intended for daily use
+- Scripts that analyze or modify the repository itself
+
 **Utility Scripts (ZSH functions)** should be used for:
 
 - General-purpose utilities
@@ -713,7 +724,7 @@ fi
 
 ### Integration Benefits
 
-This two-tier scripts system provides several key advantages:
+This three-tier scripts system provides several key advantages:
 
 1. **Clear Separation** - Utility vs setup/backup operations have distinct access patterns
 2. **Controlled Access** - Setup scripts require intentional Makefile invocation

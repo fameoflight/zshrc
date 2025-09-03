@@ -102,7 +102,8 @@ help:
 	@echo "  restore-dock    - 🔵 Restore macOS Dock settings"
 	@echo "  restore-ruby-config - 💎 Restore Ruby configuration (IRB, Gem, ctags)"
 	@echo "  restore-claude  - 🤖 Setup Claude Code"
-	@echo "  restore-gemini  - 🤖 Setup Gemini CLI"
+	@echo "  gemini-setup    - 🤖 Setup Gemini CLI settings via symlinks"
+	@echo "  restore-gemini  - 🤖 Setup Gemini CLI (alias for gemini-setup)"
 	@echo ""
 	@echo "💾 Backup targets:"
 	@echo "  xcode-backup    - 📋 Backup current Xcode settings"
@@ -137,12 +138,24 @@ endif
 # PLATFORM-SPECIFIC TARGETS
 # =============================================================================
 
-.PHONY: mac linux common mac-settings macos-optimize oled-optimize
-mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook
+.PHONY: mac linux common mac-settings macos-optimize oled-optimize post-mac-setup-message
+mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook post-mac-setup-message find-orphans
 
 linux: common linux-packages linux-settings
 
 common: install github-setup
+
+post-mac-setup-message:
+	@echo -e "$(BOLD)$(GREEN)✅ Complete macOS setup finished successfully!$(NC)"
+	@echo ""
+	@echo -e "$(BOLD)$(CYAN)🎉 Your development environment is now fully configured.$(NC)"
+	@echo ""
+	@echo -e "$(BOLD)$(YELLOW)💡 Suggested next steps:$(NC)"
+	@echo -e "  - $(GREEN)Restart your terminal$(NC) to apply all changes."
+	@echo -e "  - Run $(CYAN)make help$(NC) to see all available commands."
+	@echo -e "  - Customize your setup further by editing $(YELLOW)private.zsh$(NC)."
+	@echo -e "  - If you use an OLED display, consider running $(CYAN)make oled-optimize$(NC)."
+	@echo ""
 
 # =============================================================================
 # REQUIREMENTS & VALIDATION
@@ -539,15 +552,21 @@ restore-claude:
 		echo -e "$(YELLOW)⚠️  Claude setup script not found$(NC)"; \
 	fi
 
-.PHONY: restore-gemini
-restore-gemini:
+.PHONY: restore-gemini gemini-setup
+restore-gemini: gemini-setup
+
+gemini-setup:
 	@echo -e "$(CYAN)🤖 Setting up Gemini CLI...$(NC)"
+	@echo -e "$(BLUE)📁 Creating ~/.gemini directory...$(NC)"
+	@mkdir -p ~/.gemini
+	@echo -e "$(BLUE)🔗 Creating symlink for settings.json...$(NC)"
+	@ln -sf "${SETTINGS}/Gemini/settings.json" ~/.gemini/settings.json
+	@echo -e "$(GREEN)✅ Gemini CLI settings symlinked from Settings/Gemini/$(NC)"
 	@if [ -f "bin/gemini-setup.sh" ]; then \
+		echo -e "$(BLUE)🚀 Running additional Gemini setup script...$(NC)"; \
 		bash "bin/gemini-setup.sh"; \
-		echo -e "$(GREEN)✅ Gemini CLI setup complete$(NC)"; \
-	else \
-		echo -e "$(YELLOW)⚠️  Gemini setup script not found$(NC)"; \
 	fi
+	@echo -e "$(GREEN)✅ Gemini CLI setup complete$(NC)"
 
 .PHONY: claude-gemini-setup
 claude-gemini-setup:
@@ -705,6 +724,15 @@ clean:
 	@find . -name ".DS_Store" -delete
 	@echo "🍺 Cleaning Homebrew cache..."
 	@if command -v brew >/dev/null 2>&1; then brew cleanup; fi
+
+# =============================================================================
+# REPOSITORY MAINTENANCE
+# =============================================================================
+
+.PHONY: find-orphans
+find-orphans:
+	@echo "🔍 Finding orphaned targets in Makefile..."
+	@bundle exec ruby bin/internal-find-orphaned-targets.rb
 
 # =============================================================================
 # TROUBLESHOOTING

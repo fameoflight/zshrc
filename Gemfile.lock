@@ -98,7 +98,6 @@ GEM
       racc
     pastel (0.8.0)
       tty-color (~> 0.5)
-    pathname (0.4.0)
     pdf-reader (2.15.0)
       Ascii85 (>= 1.0, < 3.0, != 2.0.0)
       afm (>= 0.2.1, < 2)
@@ -248,7 +247,6 @@ DEPENDENCIES
   open3 (~> 0.2)
   optparse (~> 0.4)
   pastel (~> 0.8)
-  pathname (~> 0.3)
   pdf-reader (~> 2.11)
   rexml (~> 3.2)
   rspec (~> 3.12)

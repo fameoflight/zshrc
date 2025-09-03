@@ -7,8 +7,6 @@ ruby '3.2.4'
 # Core utilities for scripts
 gem 'fileutils', '~> 1.7'
 gem 'optparse', '~> 0.4'
-gem 'pathname', '~> 0.3'
-
 # System interaction and process management
 gem 'etc', '~> 1.4'
 gem 'open3', '~> 0.2'
