@@ -243,6 +243,8 @@ modern-cli:
 		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
+	claude config set -g autoUpdates false
+
 # Install text editors and IDEs
 editors:
 	@echo "📝 Installing editors and IDEs..."
