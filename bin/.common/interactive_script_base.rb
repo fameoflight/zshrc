@@ -275,7 +275,6 @@ class InteractiveScriptBase < ScriptBase
   def interactive_selectable_list(items, display_proc:, multi_select: true, header: nil)
     return [] if items.empty?
 
-    # Use TTY::Prompt's multi_select for now - much more reliable
     if header
       puts header
       puts
@@ -287,13 +286,38 @@ class InteractiveScriptBase < ScriptBase
       { name: display_text, value: item }
     end
 
-    if multi_select
-      selected = @prompt.multi_select("Select items:", choices, per_page: 15, cycle: true)
-    else
-      selected = [@prompt.select("Select item:", choices, per_page: 15, cycle: true)]
-    end
+    # Add exit option to choices
+    exit_choice = { name: "🚪 Exit (ESC)", value: :__exit__ }
+    choices_with_exit = choices + [exit_choice]
 
-    selected || []
+    # Create a custom prompt with ESC handling
+    begin
+      if multi_select
+        selected = @prompt.multi_select("Select items:", choices_with_exit, per_page: 15, cycle: true)
+        
+        # Check if exit was selected and remove it from results
+        if selected && selected.include?(:__exit__)
+          log_info "Selection cancelled by user"
+          return []
+        end
+        
+        selected || []
+      else
+        selected = @prompt.select("Select item:", choices_with_exit, per_page: 15, cycle: true)
+        
+        # Check if exit was selected
+        if selected == :__exit__
+          log_info "Selection cancelled by user"
+          return []
+        end
+        
+        [selected] # Return as array for consistency
+      end
+    rescue TTY::Reader::InputInterrupt
+      # User pressed Ctrl+C to exit
+      log_info "Selection cancelled by user"
+      return []
+    end
   end
 end
 

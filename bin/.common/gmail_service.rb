@@ -3,6 +3,7 @@
 require 'google/apis/gmail_v1'
 require 'googleauth'
 require 'googleauth/stores/file_token_store'
+require 'fileutils'
 require 'timeout'
 require 'securerandom'
 require 'tty-progressbar'
@@ -24,6 +25,7 @@ class GmailService
     @token_dir = token_dir
     @interrupted = false
     @original_int_handler = nil
+    ensure_directories
     setup_service
   end
 
@@ -31,6 +33,18 @@ class GmailService
     @service = Google::Apis::GmailV1::GmailService.new
     @service.client_options.application_name = APPLICATION_NAME
     @service.authorization = authorize
+  end
+
+  def ensure_directories
+    dirs = [
+      File.dirname(@credentials_path),
+      @token_dir,
+      File.dirname(@token_dir) # Ensure parent directory exists
+    ]
+    
+    dirs.each do |dir|
+      FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+    end
   end
 
   def token_path

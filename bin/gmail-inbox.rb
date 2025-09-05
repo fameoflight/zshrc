@@ -30,11 +30,25 @@ class GmailInbox < InteractiveScriptBase
   CREDENTIALS_PATH = File.expand_path('../credentials/gmail.json', __dir__)
   TOKEN_DIR = File.expand_path('../credentials/tokens', __dir__)
   CACHE_DIR = File.expand_path('../credentials/cache', __dir__)
+  
+  # Ensure required directories exist
+  def self.ensure_directories
+    dirs = [
+      File.dirname(CREDENTIALS_PATH),
+      TOKEN_DIR,
+      CACHE_DIR
+    ]
+    
+    dirs.each do |dir|
+      FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
+    end
+  end
 
   attr_reader :account_name, :gmail_service, :gmail_db, :archive_handler
 
   def initialize
     super
+    self.class.ensure_directories
     @account_name = @options[:account]
     @pastel = Pastel.new
   end
@@ -58,6 +72,7 @@ class GmailInbox < InteractiveScriptBase
         • 📊 Inbox summary with statistics
         • 📧 Recent messages viewer
         • 👥 Top senders analysis
+        • 📭 Archive unread emails
         • 🔄 Real-time data refresh
     BANNER
   end
@@ -150,6 +165,7 @@ class GmailInbox < InteractiveScriptBase
       menu_option('👥', 'Top senders analysis', :top_senders),
       menu_option('📦', 'Archive emails by sender', :archive_by_sender),
       menu_option('🌐', 'Archive emails by domain', :archive_by_domain),
+      menu_option('📭', 'Archive unread emails', :archive_unread),
       menu_option('⏰', 'Archive emails by date (oldest first)', :archive_chronological_old),
       menu_option('🕒', 'Archive emails by date (newest first)', :archive_chronological_new),
       menu_option('🔍', 'Search emails', :search_emails),
@@ -184,6 +200,8 @@ class GmailInbox < InteractiveScriptBase
         @archive_handler.archive_by_sender(@user_id, self)
       when :archive_by_domain
         @archive_handler.archive_by_domain(@user_id, self)
+      when :archive_unread
+        @archive_handler.archive_unread(@user_id, self)
       when :archive_chronological_old
         @archive_handler.archive_chronologically(@user_id, self, order: :oldest_first)
       when :archive_chronological_new

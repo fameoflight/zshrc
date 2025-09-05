@@ -226,6 +226,81 @@ class GmailArchiveHandler
     end
   end
 
+  def archive_unread(user_id, interactive_script)
+    log_info('📭 Archive unread emails')
+    puts
+
+    begin
+      # Ensure cache is up to date
+      ensure_cache_ready(user_id)
+
+      # Get unread messages
+      unread_messages = @gmail_db.unread_messages(limit: 200)
+      log_debug("Retrieved #{unread_messages.length} unread messages")
+      
+      if unread_messages.empty?
+        log_info('No unread messages found in inbox')
+        log_debug('Checking if there are any inbox messages at all...')
+        inbox_count = @gmail_db.inbox_message_count
+        log_debug("Total inbox messages in cache: #{inbox_count}")
+        return
+      end
+
+      puts
+      log_info("📊 Found #{unread_messages.length} unread messages in your inbox")
+      puts
+
+      # Use the interactive selectable list
+      header = "📭 Archive Unread Emails\n📊 Select unread messages to archive"
+      
+      display_proc = create_unread_display_proc
+
+      # Show interactive list
+      selected_messages = interactive_script.interactive_selectable_list(
+        unread_messages,
+        display_proc: display_proc,
+        multi_select: true,
+        header: header
+      )
+      
+      return if selected_messages.empty?
+
+      # Show final selection and confirm
+      total_to_archive = selected_messages.length
+      show_unread_selection_summary(selected_messages)
+      
+      return unless confirm_archive_operation(interactive_script, total_to_archive, total_to_archive, 'unread message(s)')
+      
+      progress_bar = TTY::ProgressBar.new(
+        "Archiving unread messages [:bar] :current/:total",
+        total: total_to_archive,
+        width: 30
+      )
+
+      # Get message IDs and archive them via Gmail API
+      message_ids = selected_messages.map { |msg| msg['id'] }
+      archived_count = archive_message_ids(user_id, message_ids, progress_bar)
+      
+      # Update cache to mark messages as archived (only if API calls succeeded)
+      cache_updated = 0
+      if archived_count > 0
+        selected_messages.each do |msg|
+          @gmail_db.archive_message_by_id(msg['id'])
+          cache_updated += 1
+        end
+      end
+
+      progress_bar.finish
+
+      show_archive_completion(archived_count, cache_updated, "#{total_to_archive} unread message(s)")
+      log_complete("Unread archive operation completed")
+
+    rescue StandardError => e
+      log_error("Error during unread archive operation: #{e.message}")
+      log_debug("Full error: #{e.backtrace.join("\n")}")
+    end
+  end
+
 
 
   def archive_messages_from_sender(user_id, sender_email, progress_bar)
@@ -368,6 +443,34 @@ class GmailArchiveHandler
     end
   end
 
+  def create_unread_display_proc
+    proc do |message|
+      begin
+        log_debug("Processing unread message for display: #{message.class} - Keys: #{message.keys rescue 'N/A'}")
+        
+        # Format date nicely
+        date_received = message['date_received']
+        log_debug("Date received: #{date_received} (#{date_received.class})")
+        
+        date = Time.at(date_received).strftime('%Y-%m-%d %H:%M')
+        from_name = message['from_name'] || message['from_email'] || 'Unknown'
+        subject = message['subject'] || '(no subject)'
+        
+        # Truncate long subjects
+        display_subject = subject.length > 50 ? "#{subject[0..47]}..." : subject
+        
+        main_line = "📭 #{date} | #{display_subject}"
+        main_line += "\n      📧 #{from_name}"
+        
+        main_line
+      rescue StandardError => e
+        log_debug("Error in unread display proc: #{e.message}")
+        log_debug("Message data: #{message.inspect}")
+        "Error displaying unread message: #{e.message}"
+      end
+    end
+  end
+
   def show_selection_summary(selected_items, total_to_archive, item_type)
     puts
     log_info('📋 Final Selection:')
@@ -410,6 +513,26 @@ class GmailArchiveHandler
     
     puts
     log_info("📊 Total: #{selected_messages.length} messages (#{order_text})")
+    puts
+  end
+
+  def show_unread_selection_summary(selected_messages)
+    puts
+    log_info('📋 Final Selection:')
+    selected_messages.first(5).each_with_index do |message, index|
+      date = Time.at(message['date_received']).strftime('%Y-%m-%d')
+      subject = message['subject'] || '(no subject)'
+      from_name = message['from_name'] || message['from_email'] || 'Unknown'
+      subject = subject.length > 40 ? "#{subject[0..37]}..." : subject
+      puts "  #{index + 1}. #{date} - #{subject} (from #{from_name})"
+    end
+    
+    if selected_messages.length > 5
+      puts "  ... and #{selected_messages.length - 5} more unread messages"
+    end
+    
+    puts
+    log_info("📊 Total: #{selected_messages.length} unread messages")
     puts
   end
 

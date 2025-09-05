@@ -80,7 +80,7 @@ module View
   end
 
   # Create a table with safe rendering and auto-decoration
-  def create_table(headers, data, style: :unicode, padding: [0, 1], auto_color: true)
+  def create_table(headers, data, style: :unicode, padding: [0, 1], auto_color: true, width: nil)
     log_debug("Creating table with #{headers.length} headers and #{data.length} rows") if respond_to?(:log_debug)
     begin
       # Process headers - decorate if auto_color is enabled and not already decorated
@@ -104,8 +104,22 @@ module View
       
       log_debug("Creating TTY::Table instance") if respond_to?(:log_debug)
       table = TTY::Table.new(safe_headers, safe_data)
-      log_debug("Rendering table with style: #{style}") if respond_to?(:log_debug)
-      table.render(style, padding: padding)
+      
+      # Set up render options with width handling
+      render_options = { padding: padding }
+      
+      # Set width if provided, otherwise use terminal width with some margin
+      if width
+        render_options[:width] = width
+      else
+        # Get terminal width, cap at reasonable maximum
+        terminal_width = [IO.console.winsize[1] - 10, 120].min
+        render_options[:width] = terminal_width
+        render_options[:resize] = true # Enable auto-resize
+      end
+      
+      log_debug("Rendering table with style: #{style}, width: #{render_options[:width]}") if respond_to?(:log_debug)
+      table.render(style, render_options)
     rescue StandardError => e
       log_debug("Table creation failed: #{e.message}, using fallback") if respond_to?(:log_debug)
       fallback_table(headers, data)
@@ -236,25 +250,48 @@ module View
     log_debug("Using fallback table rendering") if respond_to?(:log_debug)
     lines = []
     
-    # Calculate column widths
+    # Get terminal width for fallback
+    terminal_width = begin
+      IO.console.winsize[1] - 10
+    rescue StandardError
+      80 # Fallback width
+    end
+    
+    # Calculate column widths with terminal constraint
     col_widths = []
     headers.each_with_index do |header, idx|
-      max_width = [header.to_s.length, 20].max
+      max_width = [header.to_s.length, 10].min # Minimum width
       data.each do |row|
         cell_width = row[idx]&.to_s&.length || 0
         max_width = [max_width, cell_width].max
       end
-      col_widths << [max_width, 50].min # Cap at 50 chars
+      col_widths << [max_width, 30].min # Cap at 30 chars per column
+    end
+    
+    # Adjust column widths to fit terminal
+    total_width = col_widths.sum + (col_widths.length - 1) * 3 # +3 for " | " separators
+    if total_width > terminal_width
+      # Scale down columns proportionally
+      scale_factor = terminal_width.to_f / total_width
+      col_widths = col_widths.map { |w| [w * scale_factor, 8].max.to_i }
     end
     
     # Header row
-    header_line = headers.map.with_index { |h, idx| h.to_s.ljust(col_widths[idx]) }.join(' | ')
+    header_line = headers.map.with_index do |h, idx|
+      content = h.to_s
+      max_len = col_widths[idx]
+      content.length > max_len ? "#{content[0..max_len-3]}..." : content.ljust(max_len)
+    end.join(' | ')
     lines << header_line
-    lines << '-' * header_line.length
+    lines << '-' * [header_line.length, terminal_width].min
     
     # Data rows
     data.each do |row|
-      data_line = row.map.with_index { |cell, idx| cell.to_s.ljust(col_widths[idx]) }.join(' | ')
+      data_line = row.map.with_index do |cell, idx|
+        content = cell.to_s
+        max_len = col_widths[idx]
+        content.length > max_len ? "#{content[0..max_len-3]}..." : content.ljust(max_len)
+      end.join(' | ')
       lines << data_line
     end
     

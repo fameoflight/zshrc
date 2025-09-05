@@ -235,6 +235,16 @@ class GmailDatabase < Database
     )
   end
 
+  def unread_messages(limit: 200)
+    # Get unread messages (messages with UNREAD label and INBOX label)
+    select(
+      'messages',
+      where: "labels LIKE '%UNREAD%' AND labels LIKE '%INBOX%'",
+      order: 'date_received DESC',
+      limit: limit
+    )
+  end
+
   def archive_domain_messages(domain)
     # Update labels to remove INBOX for all messages from domain
     with_connection do |db|
