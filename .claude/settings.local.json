@@ -47,6 +47,7 @@
       "Bash(xcrun:*)",
       "Bash(xcodebuild:*)",
       "Bash(flutter run:*)",
+<<<<<<< HEAD
       "Bash(defaults write:*)",
       "Bash(sqlite3:*)",
       "Bash(defaults find DSDesktopPrefPane)",
@@ -57,7 +58,9 @@
       "Bash(xargs kill:*)",
       "Bash(scripts:*)",
       "Bash(lms ps:*)",
-      "Bash(defaults delete:*)"
+      "Bash(defaults delete:*)",
+      "Bash(rvm use:*)",
+      "Bash(rvm list:*)"
     ],
     "deny": [],
     "additionalDirectories": [
