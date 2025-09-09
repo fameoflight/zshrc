@@ -11,6 +11,7 @@ set -euo pipefail
 # Configuration
 readonly SCRIPT_NAME="OLED Monitor Optimizer"
 readonly MIN_MACOS_VERSION=10
+readonly WALLPAPER_CHANGE_INTERVAL=300  # seconds (5 minutes)
 
 # Source centralized logging functions
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -76,16 +77,10 @@ request_sudo() {
 # Show confirmation before making changes
 confirm_changes() {
     echo ""
-    log_warning "This script will optimize your macOS settings for OLED displays."
-    log_warning "It focuses on burn-in prevention and display protection."
-    log_warning "Some changes require a restart to take effect."
+    log_info "This script will optimize your macOS settings for OLED displays."
+    log_info "It focuses on burn-in prevention and display protection."
+    log_info "Some changes require a restart to take effect."
     echo ""
-    read -p "Do you want to continue? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Operation cancelled by user"
-        exit 0
-    fi
 }
 
 # Dark mode and appearance optimizations
@@ -101,30 +96,68 @@ configure_dark_mode() {
     log_info "Disabling menu bar transparency to reduce static elements"
     defaults write NSGlobalDomain AppleEnableMenuBarTransparency -bool false
     
-    log_info "Auto-hiding menu bar to prevent burn-in"
-    defaults write NSGlobalDomain _HIHideMenuBar -bool true
+    log_info "Disabling menu bar auto-hide (user preference)"
+    defaults write NSGlobalDomain _HIHideMenuBar -bool false
     
-    log_info "Setting wallpaper with your current hardcoded configuration:"
-    echo "  • Wallpaper rotation: disabled (your current setting)"
-    echo "  • Current wallpaper: DefaultDesktop.heic (your current setting)"
-    echo "  • Multiple displays: using same wallpaper across all displays"
+    log_info "Setting wallpaper with continuous shuffle across all spaces:"
+    echo "  • Wallpaper rotation: enabled (shuffle continuously)"
+    echo "  • Change interval: every $((WALLPAPER_CHANGE_INTERVAL / 60)) minutes"
+    echo "  • Random order: enabled"
+    echo "  • Multiple displays: same wallpaper across all displays"
+    echo "  • Show in all spaces: enabled"
     
-    # Hardcode your current wallpaper settings (rotation disabled, DefaultDesktop.heic)
-    defaults write com.apple.desktop Background -dict Change -bool false
+    # Enable wallpaper rotation with shuffle
+    osascript -e 'tell application "System Events"
+        tell every desktop
+            set picture rotation to 1  -- (0=off, 1=interval, 2=login, 3=sleep)
+            set change interval to '"$WALLPAPER_CHANGE_INTERVAL"'.0  -- '$((WALLPAPER_CHANGE_INTERVAL / 60))' minutes in seconds
+            set random order to true
+            set pictures folder to (POSIX file "/System/Library/Desktop Pictures")
+        end tell
+    end tell' 2>/dev/null || true
     
-    log_info "Preserving your current DefaultDesktop.heic wallpaper"
-    log_info "Note: DefaultDesktop.heic adapts to dark mode automatically (OLED-friendly)"
+    # Enable "Show on all Spaces" via separate AppleScript
+    log_info "Enabling 'Show on all Spaces' for wallpaper across all desktops"
+    local applescript_path="$ZSH_CONFIG/bin/enable-wallpaper-all-spaces.applescript"
     
-    # Optional: Offer to switch to pure black for maximum OLED protection
-    echo ""
-    read -p "Switch to solid black background for maximum OLED protection? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Setting solid black background for maximum OLED protection"
-        osascript -e 'tell application "System Events" to tell every desktop to set picture to "/System/Library/Desktop Pictures/Solid Colors/Black.png"' 2>/dev/null || true
+    if [[ -f "$applescript_path" ]]; then
+        log_info "Executing AppleScript to enable 'Show on all Spaces'..."
+        osascript "$applescript_path" 2>/dev/null || log_warning "Could not automatically enable 'Show on all Spaces' - please enable manually in System Settings > Wallpaper"
     else
-        log_info "Keeping your current DefaultDesktop.heic (dark mode adaptive)"
+        log_warning "AppleScript not found at $applescript_path - please enable 'Show on all Spaces' manually"
     fi
+    
+    log_info "Wallpaper will now shuffle every $((WALLPAPER_CHANGE_INTERVAL / 60)) minutes across all displays and spaces"
+    log_info "Using System Desktop Pictures folder for variety"
+    
+    # Automatically set up dark wallpapers for OLED protection
+    log_info "Setting up dark wallpapers folder for maximum OLED protection"
+    
+    # Create a dark wallpapers directory if it doesn't exist
+    mkdir -p ~/Pictures/DarkWallpapers
+    
+    # Copy dark system wallpapers
+    if [[ -d "/System/Library/Desktop Pictures" ]]; then
+        log_info "Copying dark system wallpapers..."
+        find "/System/Library/Desktop Pictures" -name "*[Dd]ark*" -o -name "*[Bb]lack*" -o -name "*[Nn]ight*" | head -5 | while read -r wallpaper; do
+            cp "$wallpaper" ~/Pictures/DarkWallpapers/ 2>/dev/null || true
+        done
+    fi
+    
+    # Set to use dark wallpapers folder
+    osascript -e 'tell application "System Events"
+        tell every desktop
+            set picture rotation to 1  -- Enable interval rotation
+            set change interval to '"$WALLPAPER_CHANGE_INTERVAL"'.0  -- '$((WALLPAPER_CHANGE_INTERVAL / 60))' minutes in seconds  
+            set random order to true
+            set pictures folder to (POSIX file ((path to home folder as string) & "Pictures/DarkWallpapers"))
+        end tell
+    end tell' 2>/dev/null || true
+    
+    # Ensure "Show on all Spaces" remains enabled for dark wallpapers
+    log_info "Ensuring 'Show on all Spaces' is enabled for dark wallpaper rotation"
+    
+    log_success "Dark wallpapers setup complete - shuffling from ~/Pictures/DarkWallpapers for OLED protection"
     
     log_success "Dark mode optimizations complete"
 }
@@ -313,20 +346,20 @@ configure_notifications() {
 configure_hot_corners() {
     log_section "Hot Corners for Display Protection (Using Your Current Setup)"
     
-    log_info "Applying your updated hot corner configuration:"
-    echo "  • Top-left: Lock Screen (updated for OLED protection)"
-    echo "  • Top-right: Mission Control (updated setting)"
-    echo "  • Bottom-left: Application Windows (keeping current)"
-    echo "  • Bottom-right: Screen Saver (keeping current for OLED)"
+    log_info "Applying your custom hot corner configuration:"
+    echo "  • Top-left: Disabled (user preference)"
+    echo "  • Top-right: Disabled (user preference)"
+    echo "  • Bottom-left: Lock Screen (user preference)"
+    echo "  • Bottom-right: Mission Control (user preference)"
     
-    # Apply your updated hot corner settings
-    defaults write com.apple.dock wvous-tl-corner -int 13  # Lock Screen
+    # Apply your custom hot corner settings
+    defaults write com.apple.dock wvous-tl-corner -int 0   # Disabled
     defaults write com.apple.dock wvous-tl-modifier -int 0
-    defaults write com.apple.dock wvous-tr-corner -int 2   # Mission Control
+    defaults write com.apple.dock wvous-tr-corner -int 0   # Disabled
     defaults write com.apple.dock wvous-tr-modifier -int 0
-    defaults write com.apple.dock wvous-bl-corner -int 3   # Application Windows
+    defaults write com.apple.dock wvous-bl-corner -int 13  # Lock Screen
     defaults write com.apple.dock wvous-bl-modifier -int 0
-    defaults write com.apple.dock wvous-br-corner -int 5   # Screen Saver
+    defaults write com.apple.dock wvous-br-corner -int 2   # Mission Control
     defaults write com.apple.dock wvous-br-modifier -int 0
     
     log_success "Hot corners set with your hardcoded OLED-optimized configuration"
@@ -370,17 +403,8 @@ show_completion() {
     echo ""
     log_warning "⚠️  Remember: OLED burn-in is permanent - these settings help prevent it!"
     echo ""
-    log_info "Some changes may require a system restart to take full effect."
-    echo ""
-    read -p "Would you like to restart now? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Restarting system in 5 seconds..."
-        sleep 5
-        sudo shutdown -r now
-    else
-        log_info "Remember to restart your system later to apply all changes."
-    fi
+    log_warning "⚠️  A system restart is required for all changes to take full effect."
+    log_info "Please restart your system when convenient to complete the OLED optimization."
 }
 
 # Show help

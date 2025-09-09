@@ -46,7 +46,10 @@
       "Bash(sudo gem install:*)",
       "Bash(xcrun:*)",
       "Bash(xcodebuild:*)",
-      "Bash(flutter run:*)"
+      "Bash(flutter run:*)",
+      "Bash(defaults write:*)",
+      "Bash(sqlite3:*)",
+      "Bash(defaults find DSDesktopPrefPane)"
     ],
     "deny": [],
     "additionalDirectories": [
