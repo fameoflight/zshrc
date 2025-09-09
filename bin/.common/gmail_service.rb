@@ -153,19 +153,85 @@ class GmailService
 
   def list_messages(user_id, max_results: 10, label_ids: ['INBOX'])
     @service.list_user_messages(user_id, max_results: max_results, label_ids: label_ids)
+  rescue Google::Apis::AuthorizationError, Google::Apis::ClientError => e
+    result = handle_auth_failure(e)
+    retry if result == :retry
   end
 
   def get_message(user_id, message_id, format: 'full')
     @service.get_user_message(user_id, message_id, format: format)
+  rescue Google::Apis::AuthorizationError, Google::Apis::ClientError => e
+    result = handle_auth_failure(e)
+    retry if result == :retry
   end
 
   def batch_modify_messages(user_id, modify_request)
     @service.batch_modify_messages(user_id, modify_request)
+  rescue Google::Apis::AuthorizationError, Google::Apis::ClientError => e
+    result = handle_auth_failure(e)
+    retry if result == :retry
   end
 
   # Utility method for file size formatting
 
   private
+
+  def handle_auth_failure(error)
+    # Only handle authentication errors
+    if error.is_a?(Google::Apis::AuthorizationError) || 
+       (error.is_a?(Google::Apis::ClientError) && (error.status_code == 401 || error.status_code == 403))
+      
+      log_warning("🔒 Authentication failed: #{error.message}")
+      
+      # Try to refresh the token first
+      if try_token_refresh
+        log_info("✅ Token refreshed successfully, retrying operation")
+        return :retry
+      end
+      
+      # If refresh failed, clear everything
+      log_error("❌ Token refresh failed")
+      log_info("🧹 Clearing invalid token and cache...")
+      
+      # Clear token file
+      File.delete(token_path) if File.exist?(token_path)
+      
+      # Clear cache if we have access to it
+      cache_file = File.join(File.dirname(@token_dir), 'cache', "#{@account_name}.db")
+      File.delete(cache_file) if File.exist?(cache_file)
+      
+      log_error("❌ Please run the command again to re-authenticate")
+      exit 1
+    else
+      # Re-raise other errors
+      raise error
+    end
+  end
+
+  def try_token_refresh
+    log_debug("🔄 Attempting to refresh token...")
+    
+    # Get fresh credentials from the authorizer
+    client_id = Google::Auth::ClientId.from_file(@credentials_path)
+    token_store = Google::Auth::Stores::FileTokenStore.new(file: token_path)
+    authorizer = Google::Auth::UserAuthorizer.new(client_id, SCOPE, token_store)
+    
+    # Try to get credentials (this should trigger refresh if possible)
+    fresh_credentials = authorizer.get_credentials(@account_name)
+    
+    if fresh_credentials
+      # Update the service with fresh credentials
+      @service.authorization = fresh_credentials
+      log_debug("✅ Successfully refreshed credentials")
+      true
+    else
+      log_debug("❌ Could not get fresh credentials")
+      false
+    end
+  rescue StandardError => e
+    log_debug("❌ Token refresh failed: #{e.message}")
+    false
+  end
 
   def handle_first_time_auth(authorizer)
     url = authorizer.get_authorization_url(base_url: OOB_URI)

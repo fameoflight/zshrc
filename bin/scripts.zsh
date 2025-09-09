@@ -126,6 +126,11 @@ gmail-inbox() {
   _execute_ruby_script "gmail-inbox.rb" "$@"
 }
 
+# Camera & microphone usage checker
+check-camera-mic() {
+  _execute_ruby_script "check-camera-mic.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -150,6 +155,7 @@ list-scripts() {
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
   echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
+  echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   

@@ -49,7 +49,8 @@
       "Bash(flutter run:*)",
       "Bash(defaults write:*)",
       "Bash(sqlite3:*)",
-      "Bash(defaults find DSDesktopPrefPane)"
+      "Bash(defaults find DSDesktopPrefPane)",
+      "Bash(check-camera-mic:*)"
     ],
     "deny": [],
     "additionalDirectories": [
