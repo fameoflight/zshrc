@@ -94,6 +94,7 @@ _load_zai_env() {
     if [[ -z "${ZAI_API_KEY:-}" ]]; then
       log_error "ZAI_API_KEY not found - please set up your Z.AI API key"
       log_info "Run 'setup-zai-key \"your-api-key-here\"' to configure"
+      log_info "You can get your API Key from https://z.ai/manage-apikey/apikey-list"
       return 1
     fi
   fi
