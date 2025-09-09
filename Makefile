@@ -81,6 +81,7 @@ help:
 	@echo "🐍 Language environments:"
 	@echo "  python          - 🐍 Install Python and Poetry"
 	@echo "  ruby            - 💎 Install Ruby via RVM"
+	@echo "  flutter         - 🦋 Install Flutter SDK with Android and iOS support"
 	@echo ""
 	@echo "⚙️  Application setup:"
 	@echo "  xcode-setup     - 🎨 Setup Xcode themes and bindings"
@@ -315,6 +316,40 @@ postgres: brew
 	@echo "🐘 Installing PostgreSQL..."
 	-@brew install postgresql@15
 	-@brew services start postgresql@15
+
+.PHONY: flutter
+flutter: brew xcode-update
+	@echo "🦋 Setting up Flutter development environment..."
+	@echo "📦 Installing Flutter SDK..."
+	-@brew install flutter
+	@echo "🤖 Setting up Android development..."
+	-@brew install --cask android-studio
+	-@brew install android-sdk
+	@echo "🔧 Configuring Android SDK paths..."
+	@mkdir -p "$$HOME/Library/Android/sdk"
+	@if [ -d "/opt/homebrew/share/android-sdk" ]; then \
+		echo "Linking Android SDK..."; \
+		ln -sf "/opt/homebrew/share/android-sdk" "$$HOME/Library/Android/sdk"; \
+	fi
+	@echo "📱 Installing Android SDK components..."
+	-@sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.1"
+	@echo "🍎 Setting up iOS development tools..."
+	-@brew install cocoapods
+	@echo "📦 Setting up CocoaPods with RVM..."
+	-@gem install cocoapods
+	@echo "🔧 Accepting Android licenses..."
+	-@yes | flutter doctor --android-licenses
+	@echo "🔍 Running Flutter doctor..."
+	-@flutter doctor
+	@echo ""
+	@echo "✅ Flutter development environment setup complete!"
+	@echo ""
+	@echo "📋 Next steps:"
+	@echo "  1. Open Android Studio and complete the setup wizard"
+	@echo "  2. Create an Android Virtual Device (AVD) or connect a physical device"
+	@echo "  3. Run 'flutter doctor' again to verify setup"
+	@echo "  4. For iOS development, run 'xcodebuild -downloadPlatform iOS' (requires Xcode)"
+	@echo "  5. Test with: flutter run -d chrome (web) or flutter run -d macos (desktop)"
 
 .PHONY: github-tools
 github-tools: brew

@@ -36,7 +36,17 @@
       "Bash(bundle exec ruby:*)",
       "Bash(sed:*)",
       "Bash(find:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(pmset:*)",
+      "Bash(./bin/oled-optimize.sh:*)",
+      "Read(//Users/hemantv/workspace/inbox/**)",
+      "Bash(flutter doctor:*)",
+      "Bash(sudo gem uninstall:*)",
+      "Bash(pod:*)",
+      "Bash(sudo gem install:*)",
+      "Bash(xcrun:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(flutter run:*)"
     ],
     "deny": [],
     "additionalDirectories": [

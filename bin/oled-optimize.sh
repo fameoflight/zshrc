@@ -52,6 +52,18 @@ check_platform() {
     fi
 }
 
+# Detect if this is a laptop or desktop
+detect_device_type() {
+    # Check if device has a battery (laptop) or not (desktop)
+    if system_profiler SPPowerDataType | grep -q "Battery Information"; then
+        DEVICE_TYPE="laptop"
+        log_info "🔋 Laptop detected - using laptop-optimized power settings"
+    else
+        DEVICE_TYPE="desktop"
+        log_info "🖥️  Desktop detected - using desktop-optimized power settings"
+    fi
+}
+
 # Request administrator access
 request_sudo() {
     log_info "Requesting administrator access..."
@@ -121,9 +133,32 @@ configure_dark_mode() {
 configure_display_energy() {
     log_section "Display & Energy Management"
     
-    log_info "Setting aggressive display sleep (2 minutes on battery, 5 minutes on power)"
-    sudo pmset -b displaysleep 2 disksleep 5
-    sudo pmset -c displaysleep 5 disksleep 10
+    if [[ "$DEVICE_TYPE" == "laptop" ]]; then
+        log_info "🔋 Laptop power settings for OLED protection"
+        log_info "Setting display sleep (3 minutes on battery, 5 minutes on power)"
+        sudo pmset -b displaysleep 3 disksleep 10
+        sudo pmset -c displaysleep 5 disksleep 15
+        
+        log_info "Configuring laptop power management for OLED protection"
+        sudo pmset -a standbydelay 7200  # 2 hours standby (laptop-friendly)
+        sudo pmset -a hibernatemode 3    # Safe sleep (not deep sleep)
+        sudo pmset -a autopoweroffdelay 14400  # 4 hours auto power off
+        
+        log_info "Enabling powernap for background updates while protecting display"
+        sudo pmset -a powernap 1
+    else
+        log_info "🖥️  Desktop power settings for OLED protection"
+        log_info "Setting conservative display sleep (5 minutes)"
+        sudo pmset -c displaysleep 5 disksleep 20
+        
+        log_info "Configuring desktop power management for OLED protection"
+        sudo pmset -a standbydelay 300   # 5 minutes standby (desktop)
+        sudo pmset -a hibernatemode 0    # No hibernation needed for desktop
+        sudo pmset -a autopoweroff 0     # No auto power off for desktop
+        
+        log_info "Disabling powernap on desktop (reduces unnecessary display activity)"
+        sudo pmset -a powernap 0
+    fi
     
     log_info "Setting aggressive screen saver activation (3 minutes)"
     defaults write com.apple.screensaver idleTime -int 180
@@ -135,17 +170,13 @@ configure_display_energy() {
     log_info "Disabling automatic brightness to maintain consistent OLED levels"
     sudo defaults write /Library/Preferences/com.apple.iokit.AmbientLightSensor "Automatic Display Enabled" -bool false
     
-    log_info "Configuring power management for OLED protection"
-    sudo pmset -a standbydelay 300  # Quick standby for OLED protection
-    sudo pmset -a hibernatemode 25  # Hibernate to protect display
-    
     log_info "Disabling wake for network access (keeps display off)"
     sudo pmset -a womp 0
     
     log_info "Reducing display brightness to OLED-safe levels (75%)"
     osascript -e 'tell application "System Events" to set brightness of (first display process) to 0.75' 2>/dev/null || true
     
-    log_success "Display and energy optimizations complete"
+    log_success "Display and energy optimizations complete for $DEVICE_TYPE"
 }
 
 # Screen saver optimizations
@@ -428,16 +459,31 @@ dry_run() {
     log_info "The following OLED optimizations would be applied:"
     echo ""
     echo "• Enable system-wide dark mode and themes"
-    echo "• Configure aggressive display sleep (2-5 minutes)"
     echo "• Set screen saver to activate after 3 minutes"
     echo "• Auto-hide menu bar and dock to prevent burn-in"
     echo "• Set up hot corners for quick screen protection"
     echo "• Configure dark desktop backgrounds"
-    echo "• Optimize power management for OLED protection"
     echo "• Set application-specific dark themes"
     echo "• Configure True Tone and Night Shift"
     echo "• Reduce notification banner time"
     echo "• Set OLED-safe brightness levels"
+    echo ""
+    
+    # Detect device type for dry run info
+    if system_profiler SPPowerDataType | grep -q "Battery Information"; then
+        echo "🔋 Laptop power management:"
+        echo "  • Display sleep: 3 min (battery) / 5 min (power)"
+        echo "  • Standby delay: 2 hours"
+        echo "  • Hibernate mode: Safe sleep (mode 3)"
+        echo "  • Powernap: Enabled for background updates"
+    else
+        echo "🖥️  Desktop power management:"
+        echo "  • Display sleep: 5 minutes"
+        echo "  • Standby delay: 5 minutes"
+        echo "  • Hibernate mode: Disabled (mode 0)"
+        echo "  • Powernap: Disabled to reduce display activity"
+    fi
+    
     echo ""
     log_warning "⚠️  These settings prioritize OLED protection over convenience"
     echo ""
@@ -450,6 +496,7 @@ main() {
     echo "═══════════════════════════════════════════════════════════"
     
     check_platform
+    detect_device_type
     
     if [[ "$DRY_RUN" == true ]]; then
         dry_run
