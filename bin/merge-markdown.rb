@@ -1,40 +1,29 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '.common/script_base'
+require_relative '.common/file_merger_base'
 require 'pathname'
 
 # Merge markdown files with their references into a single file
-class MergeMarkdown < ScriptBase
-  def banner_text
-    <<~BANNER
-      📝 Merge Markdown Files
+class MergeMarkdown < FileMergerBase
+  def script_title
+    'Merge Markdown Files'
+  end
 
-      Reads a markdown file, finds all referenced files, and creates a single
-      merged markdown file with all content. Each file is included only once.
+  def script_description
+    'Merges markdown files into a single document.'
+  end
 
-      Usage: #{script_name} [OPTIONS] <input_file> [output_file]
+  def script_arguments
+    '<input_file> [output_file]'
+  end
 
-      Arguments:
-        input_file    The main markdown file to start from
-        output_file   Output file (default: merged_[input_filename].md)
-
-      Examples:
-        #{script_name} README.md
-        #{script_name} docs/main.md merged_docs.md
-        #{script_name} --dry-run project.md
-    BANNER
+  def file_extension
+    'md'
   end
 
   def add_custom_options(opts)
-    opts.on('-r', '--recursive', 'Follow references recursively (default: true)') do
-      @options[:recursive] = true
-    end
-
-    opts.on('--no-recursive', 'Only include direct references') do
-      @options[:recursive] = false
-    end
-
+    super
     opts.on('-p', '--preserve-structure', 'Preserve directory structure in headers') do
       @options[:preserve_structure] = true
     end
@@ -42,12 +31,6 @@ class MergeMarkdown < ScriptBase
 
   def validate!
     super
-
-    if @args.empty?
-      log_error('Input file is required')
-      show_help
-      exit 1
-    end
 
     @input_file = File.expand_path(@args[0])
     unless File.exist?(@input_file)
@@ -61,17 +44,7 @@ class MergeMarkdown < ScriptBase
     end
 
     # Set default options
-    @options[:recursive] = true if @options[:recursive].nil?
     @options[:preserve_structure] ||= false
-
-    # Determine output file
-    @output_file = if @args[1]
-                     File.expand_path(@args[1])
-                   else
-                     dir = File.dirname(@input_file)
-                     basename = File.basename(@input_file, '.md')
-                     File.join(dir, "#{basename} (Merged).md")
-                   end
 
     @base_dir = File.dirname(@input_file)
     @processed_files = Set.new
@@ -79,26 +52,34 @@ class MergeMarkdown < ScriptBase
     @file_contents = {}
   end
 
-  def run
-    log_banner('Merge Markdown Files')
+  def merge_files(files)
+    log_progress('Creating merged file...')
 
-    log_info("Input file: #{@input_file}")
-    log_info("Output file: #{@output_file}")
-    log_info("Recursive: #{@options[:recursive]}")
-    log_info("Preserve structure: #{@options[:preserve_structure]}")
+    File.open(@output_file, 'w') do |output|
+      # Write header
+      output.puts '# Merged Documentation'
+      output.puts
+      output.puts "Generated on: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+      output.puts "Source file: #{relative_path(@input_file)}"
+      output.puts "Files merged: #{files.size}"
+      output.puts
+      output.puts '---'
+      output.puts
 
-    log_progress('Scanning for referenced files...')
-    scan_file(@input_file)
-
-    log_info("Found #{@processed_files.size} unique files to merge")
-
-    if @options[:dry_run]
-      show_dry_run_results
-    else
-      create_merged_file
+      # Write files in discovery order
+      files.each do |file_path|
+        write_file_section(output, file_path)
+      end
     end
 
-    show_completion('Markdown merge')
+    log_file_created(@output_file)
+    log_success("Merged #{files.size} files into #{relative_path(@output_file)}")
+  end
+
+  def collect_files
+    log_progress('Scanning for referenced files...')
+    scan_file(@args[0])
+    @file_order
   end
 
   private
@@ -152,42 +133,6 @@ class MergeMarkdown < ScriptBase
     end
 
     references.uniq
-  end
-
-  def show_dry_run_results
-    log_section('Files to be merged (in discovery order):')
-
-    @file_order.each_with_index do |file_path, index|
-      main_indicator = file_path == @input_file ? ' (main file)' : ''
-      puts "  #{index + 1}. 📄 #{relative_path(file_path)}#{main_indicator}"
-    end
-
-    log_info("Output would be written to: #{@output_file}")
-    log_info("Total files: #{@processed_files.size}")
-  end
-
-  def create_merged_file
-    log_progress('Creating merged file...')
-
-    File.open(@output_file, 'w') do |output|
-      # Write header
-      output.puts '# Merged Documentation'
-      output.puts
-      output.puts "Generated on: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-      output.puts "Source file: #{relative_path(@input_file)}"
-      output.puts "Files merged: #{@processed_files.size}"
-      output.puts
-      output.puts '---'
-      output.puts
-
-      # Write files in discovery order
-      @file_order.each do |file_path|
-        write_file_section(output, file_path)
-      end
-    end
-
-    log_file_created(@output_file)
-    log_success("Merged #{@processed_files.size} files into #{relative_path(@output_file)}")
   end
 
   def write_file_section(output, file_path)

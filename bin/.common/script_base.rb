@@ -53,6 +53,7 @@ require_relative 'system'
 #
 # ============================================================================
 class ScriptBase
+  PROJECT_ROOT = ENV['ZSH_CONFIG'] || File.expand_path('../..', __dir__)
   attr_reader :options, :args
 
   def initialize

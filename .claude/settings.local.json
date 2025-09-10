@@ -52,7 +52,7 @@
       "Bash(defaults find DSDesktopPrefPane)",
       "Bash(check-camera-mic:*)",
       "Bash(stack-monitors:*)",
-      "Read(//Users/hemantv/Library/Application Support/iTerm2/DynamicProfiles/**)"
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "deny": [],
     "additionalDirectories": [

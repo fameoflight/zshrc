@@ -7,6 +7,7 @@ require 'fileutils'
 require 'timeout'
 require 'securerandom'
 require 'tty-progressbar'
+require_relative 'view'
 
 # Gmail API service wrapper
 # Handles authentication, message fetching, and caching operations
