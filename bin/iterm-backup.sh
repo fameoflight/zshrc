@@ -138,8 +138,10 @@ backup_iterm_settings() {
     
     if [[ -d "$dynamic_profiles_source" ]]; then
         if [[ "$DRY_RUN" == false ]]; then
-            mkdir -p "$dynamic_profiles_dest"
-            cp -r "$dynamic_profiles_source"/* "$dynamic_profiles_dest/" 2>/dev/null || true
+            # Remove existing backup directory to avoid nested structure
+            rm -rf "$dynamic_profiles_dest" 2>/dev/null || true
+            # Copy the directory properly
+            cp -R "$dynamic_profiles_source" "$dynamic_profiles_dest"
             log_success "Backed up: DynamicProfiles directory"
         else
             log_info "[DRY RUN] Would backup: DynamicProfiles directory"

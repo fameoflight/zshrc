@@ -223,6 +223,14 @@ restore_iterm_settings() {
                 rm -rf "$dynamic_profiles_dest"
             fi
             cp -R "$dynamic_profiles_source" "$dynamic_profiles_dest"
+            
+            # Fix nested directory structure if it exists
+            if [[ -d "$dynamic_profiles_dest/DynamicProfiles" ]]; then
+                log_warning "Fixing nested DynamicProfiles directory structure..."
+                mv "$dynamic_profiles_dest/DynamicProfiles"/* "$dynamic_profiles_dest/" 2>/dev/null || true
+                rmdir "$dynamic_profiles_dest/DynamicProfiles" 2>/dev/null || true
+            fi
+            
             log_success "Restored Dynamic Profiles"
             ((files_restored++))
         else

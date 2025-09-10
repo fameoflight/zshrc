@@ -51,7 +51,8 @@
       "Bash(sqlite3:*)",
       "Bash(defaults find DSDesktopPrefPane)",
       "Bash(check-camera-mic:*)",
-      "Bash(stack-monitors:*)"
+      "Bash(stack-monitors:*)",
+      "Read(//Users/hemantv/Library/Application Support/iTerm2/DynamicProfiles/**)"
     ],
     "deny": [],
     "additionalDirectories": [
