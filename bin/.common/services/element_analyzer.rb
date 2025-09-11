@@ -1,21 +1,44 @@
 # frozen_string_literal: true
 
+require_relative 'element_detector_service'
+
 # Element finder and analyzer utility for browser automation
 class ElementAnalyzer
-  def initialize(browser)
+  def initialize(browser, options = {})
     @browser = browser
+    @use_llm = options[:use_llm] || false
+    @logger = options[:logger]
+    @debug = options[:debug] || false
+    
+    # Initialize LLM detector service if requested
+    if @use_llm
+      @llm_detector = ElementDetectorService.new(logger: @logger, debug: @debug)
+      if @llm_detector.available?
+        puts "🤖 LLM element detection enabled"
+      else
+        puts "⚠️  LLM not available, falling back to traditional detection"
+        @use_llm = false
+      end
+    end
   end
 
   def find_read_more_elements
-    # Strategy 1: PRIORITIZE text-based detection (most reliable)
+    # Strategy 1: LLM-enhanced detection (if available and enabled)
+    llm_elements = []
+    if @use_llm && @llm_detector&.available?
+      llm_elements = find_elements_with_llm
+      puts "🤖 LLM found #{llm_elements.size} potential elements"
+    end
+    
+    # Strategy 2: PRIORITIZE text-based detection (most reliable)
     text_elements = find_elements_with_text(['next', 'more', 'read more', 'load more', 'show more', 'previous', 'prev'])
     
-    # Strategy 2: Look for specific patterns and classes (fallback)
+    # Strategy 3: Look for specific patterns and classes (fallback)
     specific_elements = find_load_more_elements
     pattern_elements = find_elements_with_patterns
     
-    # Prioritize text-based elements first, then add others
-    all_elements = text_elements + (specific_elements + pattern_elements).reject { |el| text_elements.include?(el) }
+    # Combine all strategies, prioritizing LLM findings first
+    all_elements = llm_elements + text_elements + (specific_elements + pattern_elements).reject { |el| (llm_elements + text_elements).include?(el) }
     
     all_elements.uniq
   end
@@ -225,6 +248,55 @@ class ElementAnalyzer
   end
 
   private
+
+  def find_elements_with_llm
+    return [] unless @llm_detector&.available?
+    
+    begin
+      # Get page HTML for LLM analysis
+      page_html = @browser.evaluate("document.documentElement.outerHTML")
+      current_url = @browser.evaluate("window.location.href")
+      
+      puts "🤖 Analyzing page with LLM for next buttons..."
+      
+      # Get LLM suggestions
+      llm_buttons = @llm_detector.find_next_buttons(page_html, current_url)
+      
+      # Convert LLM suggestions to actual browser elements
+      found_elements = []
+      
+      llm_buttons.each_with_index do |button_info, index|
+        selector = button_info['selector']
+        confidence = button_info['confidence']
+        
+        puts "   🎯 LLM suggestion #{index + 1}: '#{selector}' (confidence: #{confidence.round(2)})"
+        
+        begin
+          elements = @browser.css(selector)
+          if elements.any?
+            # Add the first matching element
+            element = elements.first
+            puts "      ✅ Found element: '#{element.text.strip[0..30]}'"
+            found_elements << element
+            
+            # Store LLM metadata on the element for later use
+            element.instance_variable_set(:@llm_metadata, button_info)
+          else
+            puts "      ❌ No elements found with selector"
+          end
+        rescue => e
+          puts "      ❌ Selector error: #{e.message}"
+        end
+      end
+      
+      puts "🤖 LLM detection complete: #{found_elements.size} elements found"
+      found_elements
+      
+    rescue => e
+      puts "❌ LLM detection failed: #{e.class.name} - #{e.message}"
+      []
+    end
+  end
 
   def find_load_more_elements
     # Try multiple selectors for load more buttons

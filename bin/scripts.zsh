@@ -40,6 +40,11 @@ stack-monitors() {
   _execute_ruby_script "stacked-monitor.rb" "$@"
 }
 
+# Test LLM element detection functionality
+test-llm-detection() {
+  _execute_ruby_script "test-llm-detection.rb" "$@"
+}
+
 # Calibre e-book manager updater
 calibre-update() {
   local script_path="$ZSH_CONFIG/bin/calibre-update.sh"
@@ -136,6 +141,23 @@ website-epub() {
   _execute_ruby_script "website-epub.rb" "$@"
 }
 
+# Agent documentation setup - convert CLAUDE.md to AGENT.md with symlinks
+agent-setup() {
+  local script_path="$ZSH_CONFIG/bin/agent-setup.sh"
+  
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Agent setup script not found at $script_path"
+    return 1
+  fi
+  
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making agent-setup.sh executable..."
+    chmod +x "$script_path"
+  fi
+  
+  bash "$script_path" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -162,6 +184,7 @@ list-scripts() {
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
   echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+  echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
@@ -170,7 +193,6 @@ list-scripts() {
   echo "  🛠️  make macos-optimize - Optimize macOS system settings"
   echo "  🤖 make claude-setup   - Setup Claude Code settings via symlinks"
   echo "  🤖 make gemini-setup   - Setup Gemini settings via symlinks"
-  echo "  🤖 make agent-setup    - Convert CLAUDE.md to AGENT.md with symlinks"
   echo "  💾 make vscode-backup  - Backup VS Code essential settings"
   echo "  💾 make xcode-backup   - Backup Xcode essential settings"
   echo "  💾 make iterm-backup   - Backup iTerm2 essential settings"

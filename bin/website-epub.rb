@@ -69,6 +69,10 @@ class WebsiteEpub < ScriptBase
     opts.on('--[no-]save-to-icloud', 'Save EPUB to iCloud Drive (default: true)') do |save|
       @options[:save_to_icloud] = save
     end
+
+    opts.on('--[no-]use-llm', 'Use local LLM for intelligent button detection (default: false)') do |llm|
+      @options[:use_llm] = llm
+    end
   end
 
   def default_options
@@ -81,7 +85,8 @@ class WebsiteEpub < ScriptBase
                   cache_enabled: true,
                   articles_only: false,
                   create_epub: false,
-                  save_to_icloud: true
+                  save_to_icloud: true,
+                  use_llm: false
                 })
   end
 
@@ -108,9 +113,11 @@ class WebsiteEpub < ScriptBase
     puts "  #{script_name} https://blog.com --javascript     # Use JavaScript for fetching"
     puts "  #{script_name} https://site.com --no-cache       # Disable caching"
     puts "  #{script_name} https://nav.al --max-clicks 10    # More aggressive clicking"
+    puts "  #{script_name} https://nav.al --use-llm          # Use AI for smart button detection"
     puts "  #{script_name} https://nav.al --create-epub      # Create EPUB from articles"
     puts "  #{script_name} https://nav.al --create-epub --epub-title 'Naval Essays' # Custom title"
     puts "  #{script_name} https://nav.al --create-epub --no-save-to-icloud # Don't save to iCloud"
+    puts "  #{script_name} https://blog.com --use-llm --create-epub # AI detection + EPUB creation"
   end
 
   def run
@@ -123,13 +130,14 @@ class WebsiteEpub < ScriptBase
     log_info("  • JavaScript mode: #{@options[:use_javascript]}")
     log_info("  • Cache enabled: #{@options[:cache_enabled]}")
     log_info("  • Articles only: #{@options[:articles_only]}")
+    log_info("  • LLM detection: #{@options[:use_llm]}")
 
     browser_service = nil
     page_fetcher = nil
 
     begin
       # Step 1: Collect URLs using browser automation
-      browser_service = BrowserService.new(url, @options)
+      browser_service = BrowserService.new(url, @options.merge(logger: self, debug: debug?))
       all_urls = browser_service.collect_urls_with_read_more
 
       if all_urls.empty?

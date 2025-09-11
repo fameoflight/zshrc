@@ -18,8 +18,12 @@ class BrowserService
     @url_collector.load_page
     @url_collector.collect_and_dedupe_urls
     
-    # Set up element analyzer
-    @element_analyzer = ElementAnalyzer.new(@url_collector.browser)
+    # Set up element analyzer with LLM support if requested
+    @element_analyzer = ElementAnalyzer.new(@url_collector.browser, {
+      use_llm: @options[:use_llm],
+      logger: @options[:logger], 
+      debug: @options[:debug]
+    })
     
     # Track all URLs found (starting with initial collection)
     initial_count = @url_collector.urls.size
