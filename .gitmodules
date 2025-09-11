@@ -7,3 +7,6 @@
 [submodule "gemini-claude-proxy"]
 	path = gemini-claude-proxy
 	url = https://github.com/coffeegrind123/gemini-for-claude-code.git
+[submodule "claude-code-proxy"]
+	path = claude-code-proxy
+	url = https://github.com/fuergaosi233/claude-code-proxy.git

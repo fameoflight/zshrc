@@ -52,7 +52,9 @@
       "Bash(defaults find DSDesktopPrefPane)",
       "Bash(check-camera-mic:*)",
       "Bash(stack-monitors:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(python3:*)",
+      "Bash(xargs kill:*)"
     ],
     "deny": [],
     "additionalDirectories": [
