@@ -131,6 +131,11 @@ check-camera-mic() {
   _execute_ruby_script "check-camera-mic.rb" "$@"
 }
 
+# Website URL extractor and EPUB creator
+website-epub() {
+  _execute_ruby_script "website-epub.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -156,6 +161,7 @@ list-scripts() {
   echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   

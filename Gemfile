@@ -47,6 +47,13 @@ gem 'rexml', '~> 3.2'
 gem 'combine_pdf', '~> 1.0'
 gem 'pdf-reader', '~> 2.11'
 
+# Web scraping and EPUB creation
+gem 'nokogiri', '~> 1.15'        # HTML/XML parsing
+gem 'gepub', '~> 1.0'            # EPUB creation
+gem 'httparty', '~> 0.21'        # HTTP requests with retries
+gem 'ruby-readability', '~> 0.7' # Content extraction (reader view)
+gem 'ferrum', '~> 0.14'          # Chrome headless browser for JavaScript rendering
+
 # Google API for Gmail integration
 gem 'google-api-client', '~> 0.53'
 gem 'googleauth', '~> 1.2'
@@ -57,3 +64,4 @@ group :development, :test do
   gem 'rubocop-rails', '~> 2.21'
   gem 'rubocop-rspec', '~> 2.24'
 end
+
