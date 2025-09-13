@@ -12,7 +12,7 @@ class LLMService
   def initialize(options = {})
     @endpoint = options[:endpoint] || DEFAULT_ENDPOINT
     @model = options[:model] || DEFAULT_MODEL
-    @timeout = options[:timeout] || 30
+    @timeout = options[:timeout] || 120
     @temperature = options[:temperature] || 0.1
     @max_tokens = options[:max_tokens] || 1000
     @logger = options[:logger]
@@ -24,6 +24,108 @@ class LLMService
     @available ||= test_connection
   end
 
+  # Check if model needs to be reloaded with larger context for the given content
+  def ensure_sufficient_context(content_length, min_context_needed = nil, auto_reload = true)
+    return true unless available?
+
+    # Estimate tokens needed (rough approximation: 4 chars per token)
+    estimated_tokens = (content_length / 4.0).ceil
+    min_context_needed ||= [estimated_tokens * 1.5, 8192].max.to_i # Add 50% buffer, minimum 8K
+
+    current_context = get_current_context_length
+
+    if current_context && current_context < min_context_needed
+      log_info("Current context (#{current_context}) insufficient for content (#{estimated_tokens} tokens)")
+
+      if auto_reload
+        log_info("Attempting to reload model with larger context (#{min_context_needed})")
+        return reload_model_with_context(min_context_needed)
+      else
+        log_warning("Auto-reload disabled. Current context may be insufficient for content.")
+        log_info("To enable auto-reload, use --auto-reload flag")
+        return false
+      end
+    end
+
+    true
+  end
+
+  # Get the current model's context length
+  def get_current_context_length
+    if command_exists?('lms')
+      output = `#{lms_command} ps 2>/dev/null`
+      if $?.success?
+        lines = output.split("\n")
+        # Find the line with our current model
+        model_line = lines.find { |line| line.include?(@model) }
+        if model_line
+          # Parse context from the line (format: IDENTIFIER MODEL STATUS SIZE CONTEXT TTL)
+          parts = model_line.split(/\s+/)
+          context = parts[4]&.to_i
+          return context if context && context > 0
+        end
+      end
+    end
+    nil
+  end
+
+  # Reload the current model with a larger context length
+  def reload_model_with_context(context_length)
+    return false unless command_exists?('lms')
+
+    begin
+      log_info("Unloading current model...")
+      unload_result = system("#{lms_command} unload #{@model} >/dev/null 2>&1")
+
+      unless unload_result
+        log_warning("Failed to unload model, continuing anyway...")
+      end
+
+      log_info("Reloading model with #{context_length} context length...")
+      load_result = system("#{lms_command} load #{@model} --context-length #{context_length} >/dev/null 2>&1")
+
+      if load_result
+        log_success("Model reloaded successfully with larger context")
+        # Reset connection test to recheck availability
+        @available = nil
+        return available?
+      else
+        log_error("Failed to reload model with larger context")
+        return false
+      end
+    rescue StandardError => e
+      log_error("Error reloading model: #{e.message}")
+      return false
+    end
+  end
+
+  # Get the lms command path
+  def lms_command
+    @lms_command ||= begin
+      # Try common locations for lms
+      candidates = [
+        '~/.lmstudio/bin/lms',
+        '/usr/local/bin/lms',
+        'lms'
+      ]
+
+      candidates.each do |cmd|
+        expanded = File.expand_path(cmd)
+        if File.exist?(expanded) && File.executable?(expanded)
+          return expanded
+        end
+      end
+
+      # Fallback to system PATH
+      'lms'
+    end
+  end
+
+  # Check if a command exists
+  def command_exists?(command)
+    system("which #{command} > /dev/null 2>&1")
+  end
+
   # Send a simple completion request
   def complete(prompt, options = {})
     return nil unless available?
@@ -32,6 +134,16 @@ class LLMService
     temp = options[:temperature] || @temperature
     max_tokens = options[:max_tokens] || @max_tokens
     stream = options[:stream] || false
+
+    # Check if we need larger context and auto-reload if necessary
+    total_content = "#{system_message}\n#{prompt}"
+    auto_reload = options[:auto_reload].nil? ? true : options[:auto_reload]
+    min_context = options[:min_context]
+
+    unless ensure_sufficient_context(total_content.length, min_context, auto_reload)
+      log_error("Unable to ensure sufficient context for request")
+      return nil
+    end
 
     messages = [
       { role: 'system', content: system_message },
@@ -51,6 +163,16 @@ class LLMService
 
     temp = options[:temperature] || @temperature
     max_tokens = options[:max_tokens] || @max_tokens
+
+    # Check if we need larger context for all messages combined
+    total_content = messages.map { |msg| msg[:content] || msg['content'] }.join("\n")
+    auto_reload = options[:auto_reload].nil? ? true : options[:auto_reload]
+    min_context = options[:min_context]
+
+    unless ensure_sufficient_context(total_content.length, min_context, auto_reload)
+      log_error("Unable to ensure sufficient context for chat request")
+      return nil
+    end
 
     send_chat_request(messages, temperature: temp, max_tokens: max_tokens)
   end

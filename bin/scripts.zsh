@@ -45,6 +45,16 @@ test-llm-detection() {
   _execute_ruby_script "test-llm-detection.rb" "$@"
 }
 
+# YouTube transcript chat - Download transcripts and chat with video content
+youtube-transcript-chat() {
+  _execute_ruby_script "youtube-transcript-chat.rb" "$@"
+}
+
+# Alias for easier access
+yt-chat() {
+  youtube-transcript-chat "$@"
+}
+
 # Calibre e-book manager updater
 calibre-update() {
   local script_path="$ZSH_CONFIG/bin/calibre-update.sh"
@@ -190,6 +200,8 @@ list-scripts() {
   echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
   echo "  📄 merge-pdf             - Merge multiple PDF files"
   echo "  📝 merge-md              - Merge markdown files with their references into a single file"
+  echo "  🎥 youtube-transcript-chat - Download YouTube transcripts and chat with video content using local LLM"
+  echo "  🎬 yt-chat               - Alias for youtube-transcript-chat"
   echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
   echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
   echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"

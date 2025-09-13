@@ -28,6 +28,7 @@ gem 'tty-spinner', '~> 0.9'
 gem 'tty-table', '~> 0.12' # Beautiful tables
 gem 'tty-tree', '~> 0.4' # Directory trees
 gem 'tty-which', '~> 0.5'
+gem 'tty-markdown', '~> 0.7'   # Beautiful markdown rendering in terminal
 gem 'fastimage'
 
 # File operations and utilities

@@ -38,7 +38,7 @@ UNAME := $(shell uname)
 # Package Lists for Homebrew
 CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq
 DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash sleepwatcher pkgconf dockutil
-MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli
+MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli yt-dlp
 EDITORS_CASK := visual-studio-code zed lm-studio
 MAC_APPS_CASK := iterm2 rectangle raycast docker postman tableplus the-unarchiver keka slack zoom
 
