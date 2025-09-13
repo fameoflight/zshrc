@@ -54,7 +54,8 @@
       "Bash(stack-monitors:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(python3:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(scripts:*)"
     ],
     "deny": [],
     "additionalDirectories": [

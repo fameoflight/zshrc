@@ -232,3 +232,134 @@ list-scripts() {
     echo "  ❌ Scripts directory not found"
   fi
 }
+
+# =============================================================================
+# UNIFIED SCRIPTS INTERFACE
+# =============================================================================
+
+# Unified scripts function - provides clean interface to all scripts
+scripts() {
+  local script_name="$1"
+  shift  # Remove script name from arguments
+  
+  # Show help if no arguments or --help
+  if [[ -z "$script_name" ]] || [[ "$script_name" == "--help" ]] || [[ "$script_name" == "-h" ]]; then
+    echo -e "\033[1m\033[0;36m📜 Scripts Interface\033[0m"
+    echo ""
+    echo -e "\033[1mUSAGE:\033[0m"
+    echo "  scripts --help              Show this help"
+    echo "  scripts --list              Show all available scripts"
+    echo "  scripts make                Show Makefile help (make targets)"
+    echo "  scripts <script> [args...]  Run a script with arguments"
+    echo ""
+    echo -e "\033[1m🐚 Available ZSH Utility Functions:\033[0m"
+    echo "  📚 calibre-update        - Update Calibre to the latest version"
+    echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
+    echo "  📄 merge-pdf             - Merge multiple PDF files"
+    echo "  📝 merge-md              - Merge markdown files with their references"
+    echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
+    echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
+    echo "  🔍 comment-only-changes  - Detect files with only comment changes"
+    echo "  🔄 git-commit-renames    - Commit only pure renames after confirmation"
+    echo "  🗑️  git-commit-deletes    - Commit only deletions after confirmation"
+    echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
+    echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
+    echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
+    echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+    echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
+    echo ""
+    echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
+    echo "  🛠️  macos-optimize       - Optimize macOS system settings"
+    echo "  🖥️  macos-oled-optimize  - Optimize macOS for OLED displays"
+    echo "  🤖 claude-setup         - Setup Claude Code settings"
+    echo "  🤖 gemini-setup         - Setup Gemini CLI settings"
+    echo "  💾 vscode-backup        - Backup VS Code settings"
+    echo "  💾 xcode-backup         - Backup Xcode settings"
+    echo "  💾 iterm-backup         - Backup iTerm2 settings"
+    echo "  ⚙️  iterm-setup          - Restore iTerm2 settings"
+    echo ""
+    echo -e "\033[1mEXAMPLES:\033[0m"
+    echo "  scripts make                          # Show all Makefile targets"
+    echo "  scripts merge-pdf output.pdf *.pdf    # Merge PDF files"
+    echo "  scripts stack-monitors --dry-run      # Test monitor setup"
+    echo "  scripts uninstall-app Docker          # Uninstall application"
+    echo "  scripts macos-optimize --dry-run      # Preview macOS optimizations"
+    echo ""
+    return 0
+  fi
+  
+  # Show list if --list
+  if [[ "$script_name" == "--list" ]] || [[ "$script_name" == "-l" ]]; then
+    list-scripts
+    return 0
+  fi
+  
+  # Show Makefile help if make
+  if [[ "$script_name" == "make" ]]; then
+    echo -e "\033[0;34mℹ️  Running: make help from $ZSH_CONFIG\033[0m"
+    cd "$ZSH_CONFIG" && make help
+    return $?
+  fi
+  
+  # First, check if it's a ZSH utility function
+  local utility_functions=(
+    "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
+    "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
+    "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "agent-setup"
+  )
+  
+  for func in "${utility_functions[@]}"; do
+    if [[ "$script_name" == "$func" ]]; then
+      # Call the function directly with all arguments
+      "$script_name" "$@"
+      return $?
+    fi
+  done
+  
+  # Check if it's a setup/backup script (run via Makefile)
+  local makefile_scripts=(
+    "macos-optimize" "macos-oled-optimize" "claude-setup" "gemini-setup"
+    "vscode-backup" "xcode-backup" "iterm-backup" "iterm-setup" "find-orphans"
+  )
+  
+  for script in "${makefile_scripts[@]}"; do
+    if [[ "$script_name" == "$script" ]]; then
+      echo -e "\033[0;34mℹ️  Running Makefile target: make $script_name $*\033[0m"
+      cd "$ZSH_CONFIG" && make "$script_name" "$@"
+      return $?
+    fi
+  done
+  
+  # Check if it's a raw script file in bin/
+  local script_path="$ZSH_CONFIG/bin/$script_name"
+  if [[ -f "$script_path" ]] && [[ -x "$script_path" ]]; then
+    echo -e "\033[0;34mℹ️  Running script: $script_path $*\033[0m"
+    
+    # Determine how to execute based on file extension
+    case "$script_path" in
+      *.rb)
+        BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
+        ;;
+      *.py)
+        python3 "$script_path" "$@"
+        ;;
+      *.sh)
+        bash "$script_path" "$@"
+        ;;
+      *.applescript)
+        osascript "$script_path" "$@"
+        ;;
+      *)
+        "$script_path" "$@"
+        ;;
+    esac
+    return $?
+  fi
+  
+  # If we get here, script wasn't found
+  echo -e "\033[0;31m❌ Script '$script_name' not found\033[0m"
+  echo ""
+  echo "Available scripts:"
+  scripts --help | grep -E "^  [🔧🛠️💾⚙️📚🖥️📄📝☁️🗑️🔍🔄🤖📥📹🎤🌐]"
+  return 1
+}

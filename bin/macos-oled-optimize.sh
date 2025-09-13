@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# OLED Monitor Optimization Script
+# macOS OLED Monitor Optimization Script
 # Configures macOS settings specifically for OLED displays
 # Focuses on burn-in prevention and optimal display performance
 #
@@ -9,79 +9,12 @@
 set -euo pipefail
 
 # Configuration
-readonly SCRIPT_NAME="OLED Monitor Optimizer"
-readonly MIN_MACOS_VERSION=10
+readonly SCRIPT_NAME="macOS OLED Monitor Optimizer"
 readonly WALLPAPER_CHANGE_INTERVAL=300  # seconds (5 minutes)
 
-# Source centralized logging functions
+# Source common macOS utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ZSH_CONFIG="$(dirname "$SCRIPT_DIR")"
-
-if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
-    source "$ZSH_CONFIG/logging.zsh"
-else
-    # Fallback definitions if logging.zsh not available
-    log_info() { echo -e "\033[0;34mℹ️  $1\033[0m"; }
-    log_success() { echo -e "\033[0;32m✅ $1\033[0m"; }
-    log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
-    log_warning() { echo -e "\033[1;33m⚠️  $1\033[0m"; }
-    log_warn() { log_warning "$1"; }  # Backward compatibility alias
-    log_section() {
-        echo ""
-        echo -e "\033[1m🖥️  $1\033[0m"
-        echo "═══════════════════════════════════════════════════════════"
-    }
-fi
-
-# Check if running on macOS
-check_platform() {
-    if [[ "$(uname)" != "Darwin" ]]; then
-        log_error "This script only works on macOS"
-        exit 1
-    fi
-    
-    local macos_version
-    macos_version=$(sw_vers -productVersion | cut -d. -f1)
-    
-    if [[ $macos_version -lt $MIN_MACOS_VERSION ]]; then
-        log_warn "This script is optimized for macOS 10.0+. Your version: $(sw_vers -productVersion)"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
-    fi
-}
-
-# Detect if this is a laptop or desktop
-detect_device_type() {
-    # Check if device has a battery (laptop) or not (desktop)
-    if system_profiler SPPowerDataType | grep -q "Battery Information"; then
-        DEVICE_TYPE="laptop"
-        log_info "🔋 Laptop detected - using laptop-optimized power settings"
-    else
-        DEVICE_TYPE="desktop"
-        log_info "🖥️  Desktop detected - using desktop-optimized power settings"
-    fi
-}
-
-# Request administrator access
-request_sudo() {
-    log_info "Requesting administrator access..."
-    sudo -v
-    
-    # Keep-alive: update existing sudo time stamp until script has finished
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-}
-
-# Show confirmation before making changes
-confirm_changes() {
-    echo ""
-    log_info "This script will optimize your macOS settings for OLED displays."
-    log_info "It focuses on burn-in prevention and display protection."
-    log_info "Some changes require a restart to take effect."
-    echo ""
-}
+source "$SCRIPT_DIR/.common/mac.zsh"
 
 # Dark mode and appearance optimizations
 configure_dark_mode() {
@@ -116,20 +49,6 @@ configure_dark_mode() {
         end tell
     end tell' 2>/dev/null || true
     
-    # Enable "Show on all Spaces" via separate AppleScript
-    log_info "Enabling 'Show on all Spaces' for wallpaper across all desktops"
-    local applescript_path="$ZSH_CONFIG/bin/enable-wallpaper-all-spaces.applescript"
-    
-    if [[ -f "$applescript_path" ]]; then
-        log_info "Executing AppleScript to enable 'Show on all Spaces'..."
-        osascript "$applescript_path" 2>/dev/null || log_warning "Could not automatically enable 'Show on all Spaces' - please enable manually in System Settings > Wallpaper"
-    else
-        log_warning "AppleScript not found at $applescript_path - please enable 'Show on all Spaces' manually"
-    fi
-    
-    log_info "Wallpaper will now shuffle every $((WALLPAPER_CHANGE_INTERVAL / 60)) minutes across all displays and spaces"
-    log_info "Using System Desktop Pictures folder for variety"
-    
     # Automatically set up dark wallpapers for OLED protection
     log_info "Setting up dark wallpapers folder for maximum OLED protection"
     
@@ -154,43 +73,33 @@ configure_dark_mode() {
         end tell
     end tell' 2>/dev/null || true
     
-    # Ensure "Show on all Spaces" remains enabled for dark wallpapers
-    log_info "Ensuring 'Show on all Spaces' is enabled for dark wallpaper rotation"
-    
     log_success "Dark wallpapers setup complete - shuffling from ~/Pictures/DarkWallpapers for OLED protection"
-    
     log_success "Dark mode optimizations complete"
 }
 
-# Display and energy optimizations
-configure_display_energy() {
-    log_section "Display & Energy Management"
+# Display and energy optimizations for OLED
+configure_oled_display() {
+    log_section "OLED Display & Energy Management"
     
-    if [[ "$DEVICE_TYPE" == "laptop" ]]; then
-        log_info "🔋 Laptop power settings for OLED protection"
-        log_info "Setting display sleep (3 minutes on battery, 5 minutes on power)"
-        sudo pmset -b displaysleep 3 disksleep 10
-        sudo pmset -c displaysleep 5 disksleep 15
-        
-        log_info "Configuring laptop power management for OLED protection"
-        sudo pmset -a standbydelay 7200  # 2 hours standby (laptop-friendly)
-        sudo pmset -a hibernatemode 3    # Safe sleep (not deep sleep)
-        sudo pmset -a autopoweroffdelay 14400  # 4 hours auto power off
-        
-        log_info "Enabling powernap for background updates while protecting display"
-        sudo pmset -a powernap 1
+    # Use common power management with OLED-specific tweaks
+    mac_configure_desktop_power "OLED protection"
+    
+    # OLED-specific display sleep settings (more aggressive)
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        case "$DEVICE_MODEL" in
+            *"Mac Pro"*|*"Mac Studio"*)
+                log_info "High-performance desktop: Aggressive OLED protection (3 min display sleep)"
+                sudo pmset -c displaysleep 3
+                ;;
+            *)
+                log_info "Desktop: OLED-protective display sleep (5 minutes)"
+                sudo pmset -c displaysleep 5
+                ;;
+        esac
     else
-        log_info "🖥️  Desktop power settings for OLED protection"
-        log_info "Setting conservative display sleep (5 minutes)"
-        sudo pmset -c displaysleep 5 disksleep 20
-        
-        log_info "Configuring desktop power management for OLED protection"
-        sudo pmset -a standbydelay 300   # 5 minutes standby (desktop)
-        sudo pmset -a hibernatemode 0    # No hibernation needed for desktop
-        sudo pmset -a autopoweroff 0     # No auto power off for desktop
-        
-        log_info "Disabling powernap on desktop (reduces unnecessary display activity)"
-        sudo pmset -a powernap 0
+        log_info "Laptop: OLED-protective display sleep (3 min battery, 5 min power)"
+        sudo pmset -b displaysleep 3
+        sudo pmset -c displaysleep 5
     fi
     
     log_info "Setting aggressive screen saver activation (3 minutes)"
@@ -201,15 +110,12 @@ configure_display_energy() {
     defaults write com.apple.screensaver askForPasswordDelay -int 0
     
     log_info "Disabling automatic brightness to maintain consistent OLED levels"
-    sudo defaults write /Library/Preferences/com.apple.iokit.AmbientLightSensor "Automatic Display Enabled" -bool false
-    
-    log_info "Disabling wake for network access (keeps display off)"
-    sudo pmset -a womp 0
+    sudo defaults write /Library/Preferences/com.apple.iokit.AmbientLightSensor "Automatic Display Enabled" -bool false 2>/dev/null || true
     
     log_info "Reducing display brightness to OLED-safe levels (75%)"
     osascript -e 'tell application "System Events" to set brightness of (first display process) to 0.75' 2>/dev/null || true
     
-    log_success "Display and energy optimizations complete for $DEVICE_TYPE"
+    log_success "OLED display optimizations complete for $DEVICE_TYPE"
 }
 
 # Screen saver optimizations
@@ -219,30 +125,26 @@ configure_screensaver() {
     log_info "Setting screen saver to 'Flurry' (dark, moving content)"
     defaults write com.apple.screensaver moduleDict -dict moduleName -string "Flurry" path -string "/System/Library/Screen Savers/Flurry.saver" type -int 0
     
-    log_info "Enabling screen saver hot corners (bottom-right corner)"
-    defaults write com.apple.dock wvous-br-corner -int 5
-    defaults write com.apple.dock wvous-br-modifier -int 0
-    
     log_info "Configuring aggressive idle time for screen protection"
     defaults write com.apple.screensaver idleTime -int 180  # 3 minutes
     
     log_success "Screen saver optimizations complete"
 }
 
-# Dock and UI optimizations for OLED (hardcoded current values)
-configure_dock_ui() {
-    log_section "Dock & UI for OLED (Using Hardcoded Values)"
+# Dock and UI optimizations for OLED
+configure_oled_dock() {
+    log_section "Dock & UI for OLED Protection"
     
-    log_info "Setting dock with your current optimized configuration:"
-    echo "  • Tile size: 83 (your current setting)"
-    echo "  • Large size: 128 (your current setting)" 
-    echo "  • Auto-hide: enabled (your current setting)"
-    echo "  • Auto-hide delay: 0.1s (your current setting)"
-    echo "  • Auto-hide time modifier: 0.2s (your current setting)"
-    echo "  • Orientation: bottom (your current setting)"
-    echo "  • Magnification: enabled (your current setting)"
+    log_info "Setting dock with OLED-optimized configuration:"
+    echo "  • Tile size: 83 (optimized for visibility)"
+    echo "  • Large size: 128 (magnification enabled)" 
+    echo "  • Auto-hide: enabled (reduces static elements)"
+    echo "  • Auto-hide delay: 0.1s (quick response)"
+    echo "  • Auto-hide time modifier: 0.2s (smooth animation)"
+    echo "  • Orientation: bottom"
+    echo "  • Magnification: enabled"
     
-    # Apply your exact current dock settings
+    # Apply OLED-optimized dock settings
     defaults write com.apple.dock tilesize -int 83
     defaults write com.apple.dock largesize -int 128
     defaults write com.apple.dock autohide -bool true
@@ -255,11 +157,11 @@ configure_dock_ui() {
     log_info "Setting Dock to dark theme for OLED protection"
     defaults write com.apple.dock theme -string "dark"
     
-    log_success "Dock optimized with your hardcoded settings for OLED protection"
+    log_success "Dock optimized with OLED-protective settings"
 }
 
 # Application-specific OLED optimizations
-configure_applications() {
+configure_oled_applications() {
     log_section "Application Settings for OLED"
     
     # Terminal
@@ -270,14 +172,12 @@ configure_applications() {
     # Safari (sandboxed - limited configuration)
     if [[ -d "/Applications/Safari.app" ]]; then
         log_info "Safari detected - enable dark mode manually in Safari > Settings > General"
-        # Note: Safari preferences are sandboxed and cannot be modified via defaults
     fi
     
     # Chrome
     if [[ -d "/Applications/Google Chrome.app" ]]; then
         log_info "Configuring Chrome for OLED optimization"
         defaults write com.google.Chrome DefaultSearchProviderEnabled -bool true
-        # Note: Dark mode must be enabled manually in Chrome settings
     fi
     
     # TextEdit
@@ -296,16 +196,13 @@ configure_color_management() {
     log_section "Color Management & True Tone"
     
     log_info "Configuring True Tone for OLED displays"
-    # True Tone settings (if supported)
     defaults write com.apple.CoreBrightness TrueTone -bool true 2>/dev/null || log_warning "True Tone not supported on this system"
     
     log_info "Setting color temperature for evening use"
-    # Night Shift settings
     defaults write com.apple.CoreBrightness BlueReductionEnabled -bool true
     defaults write com.apple.CoreBrightness BlueReductionMode -int 2  # Custom schedule
     
-    log_info "Optimizing display color profile"
-    # Note: Specific color profile selection may require manual adjustment
+    log_info "Optimizing display color profile for OLED"
     
     log_success "Color management optimizations complete"
 }
@@ -342,63 +239,25 @@ configure_notifications() {
     log_success "Notification optimizations complete"
 }
 
-# Hot corners for OLED protection (hardcoded current values)
-configure_hot_corners() {
-    log_section "Hot Corners for Display Protection (Using Your Current Setup)"
-    
-    # Apply your custom hot corner settings
-    defaults write com.apple.dock wvous-tl-corner -int 2   # Mission Control
-    defaults write com.apple.dock wvous-tl-modifier -int 0
-    defaults write com.apple.dock wvous-tr-corner -int 0   # Disabled
-    defaults write com.apple.dock wvous-tr-modifier -int 0
-    defaults write com.apple.dock wvous-bl-corner -int 13  # Lock Screen
-    defaults write com.apple.dock wvous-bl-modifier -int 0
-    defaults write com.apple.dock wvous-br-corner -int 0   # Disabled
-    defaults write com.apple.dock wvous-br-modifier -int 0
-    
-    log_success "Hot corners set with your hardcoded OLED-optimized configuration"
-}
-
-# Restart required applications
-restart_apps() {
-    log_section "Restarting Applications"
-    
-    local apps_to_restart=(
-        "Dock"
-        "Finder"
-        "SystemUIServer"
-        "NotificationCenter"
-        "ControlStrip"
-        "cfprefsd"
-    )
-    
-    for app in "${apps_to_restart[@]}"; do
-        if pgrep -f "$app" >/dev/null; then
-            log_info "Restarting $app..."
-            killall "$app" 2>/dev/null || true
-        fi
-    done
-    
-    log_success "Applications restarted"
-}
-
 # Show completion message with OLED-specific advice
-show_completion() {
+show_oled_completion() {
     echo ""
     log_success "🎉 OLED monitor optimization complete!"
+    echo ""
+    mac_show_system_info
     echo ""
     log_info "📱 Additional OLED protection recommendations:"
     echo "  • Manually enable dark mode in browsers (Chrome: chrome://settings/appearance)"
     echo "  • Consider using dark themes in development tools (VS Code, Terminal apps)"
     echo "  • If using wallpaper rotation, ensure all images are dark/black"
     echo "  • Adjust individual app brightness settings where available"
-    echo "  • Use bottom-right hot corner to quickly activate screen saver"
+    echo "  • Use hot corners to quickly activate screen saver or lock screen"
     echo "  • Dock settings applied: 83px tile size, 128px magnification, 0.1s auto-hide delay"
     echo ""
     log_warning "⚠️  Remember: OLED burn-in is permanent - these settings help prevent it!"
     echo ""
-    log_warning "⚠️  A system restart is required for all changes to take full effect."
-    log_info "Please restart your system when convenient to complete the OLED optimization."
+    
+    mac_show_completion "OLED monitor optimization" "true"
 }
 
 # Show help
@@ -417,6 +276,7 @@ OPTIONS:
     -h, --help      Show this help message
     -f, --force     Skip confirmation prompts
     --dry-run       Show what would be changed without making changes
+    -v, --verbose   Enable verbose output
 
 EXAMPLES:
     $0              Run interactively with confirmations
@@ -424,82 +284,66 @@ EXAMPLES:
     $0 --dry-run    Preview changes without applying them
 
 OLED OPTIMIZATIONS:
-    • Enable system-wide dark mode
+    • Enable system-wide dark mode and themes
     • Aggressive screen saver and display sleep settings
     • Auto-hide menu bar and dock to prevent burn-in
     • Configure hot corners for quick screen protection
-    • Set dark desktop backgrounds and themes
+    • Set dark desktop backgrounds and wallpaper rotation
     • Optimize power management for display protection
     • Configure applications for dark themes
     • Set up True Tone and Night Shift
+    • Device-specific optimizations (desktop vs laptop)
 
 BURN-IN PREVENTION:
     • Quick screen saver activation (3 minutes)
     • Auto-hide static UI elements
     • Dark themes throughout system
-    • Reduced brightness levels
+    • Reduced brightness levels (75%)
     • Hot corner screen saver activation
+    • Wallpaper rotation with dark images
 
 EOF
-}
-
-# Parse command line arguments
-parse_args() {
-    FORCE_MODE=false
-    DRY_RUN=false
-    
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            -f|--force)
-                FORCE_MODE=true
-                ;;
-            --dry-run)
-                DRY_RUN=true
-                ;;
-            *)
-                log_error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-        shift
-    done
 }
 
 # Dry run mode - show what would be changed
 dry_run() {
     echo -e "\033[1m🔍 DRY RUN MODE - No changes will be made\033[0m"
     echo ""
+    mac_show_system_info
+    echo ""
     log_info "The following OLED optimizations would be applied:"
     echo ""
     echo "• Enable system-wide dark mode and themes"
     echo "• Set screen saver to activate after 3 minutes"
     echo "• Auto-hide menu bar and dock to prevent burn-in"
-    echo "• Set up hot corners for quick screen protection"
-    echo "• Configure dark desktop backgrounds"
+    echo "• Set up OLED-protective hot corners"
+    echo "• Configure dark desktop backgrounds with rotation"
     echo "• Set application-specific dark themes"
     echo "• Configure True Tone and Night Shift"
     echo "• Reduce notification banner time"
-    echo "• Set OLED-safe brightness levels"
+    echo "• Set OLED-safe brightness levels (75%)"
+    echo "• Hide desktop icons to reduce static elements"
     echo ""
     
-    # Detect device type for dry run info
-    if system_profiler SPPowerDataType | grep -q "Battery Information"; then
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        echo "🖥️  Desktop power management:"
+        case "$DEVICE_MODEL" in
+            *"Mac Pro"*|*"Mac Studio"*)
+                echo "  • Display sleep: 3 minutes (aggressive OLED protection)"
+                ;;
+            *)
+                echo "  • Display sleep: 5 minutes (OLED protection)"
+                ;;
+        esac
+        echo "  • Standby delay: 5 minutes"
+        echo "  • Hibernate mode: Disabled"
+        echo "  • Powernap: Disabled to reduce display activity"
+    else
         echo "🔋 Laptop power management:"
         echo "  • Display sleep: 3 min (battery) / 5 min (power)"
         echo "  • Standby delay: 2 hours"
-        echo "  • Hibernate mode: Safe sleep (mode 3)"
+        echo "  • Hibernate mode: Safe sleep"
         echo "  • Powernap: Enabled for background updates"
-    else
-        echo "🖥️  Desktop power management:"
-        echo "  • Display sleep: 5 minutes"
-        echo "  • Standby delay: 5 minutes"
-        echo "  • Hibernate mode: Disabled (mode 0)"
-        echo "  • Powernap: Disabled to reduce display activity"
     fi
     
     echo ""
@@ -513,31 +357,45 @@ main() {
     echo -e "\033[1m🖥️  $SCRIPT_NAME\033[0m"
     echo "═══════════════════════════════════════════════════════════"
     
-    check_platform
-    detect_device_type
+    mac_check_platform
+    mac_detect_device
     
     if [[ "$DRY_RUN" == true ]]; then
         dry_run
         return 0
     fi
     
-    request_sudo
+    mac_request_sudo
     
     if [[ "$FORCE_MODE" == false ]]; then
-        confirm_changes
+        mac_confirm_changes "OLED display optimization" "This will configure settings to prevent OLED burn-in and optimize display performance."
     fi
     
     configure_dark_mode
-    configure_display_energy
+    configure_oled_display
     configure_screensaver
-    configure_dock_ui
-    configure_applications
+    configure_oled_dock
+    configure_oled_applications
     configure_color_management
     configure_finder_oled
     configure_notifications
-    configure_hot_corners
-    restart_apps
-    show_completion
+    mac_configure_hot_corners
+    mac_restart_apps
+    show_oled_completion
+}
+
+# Parse command line arguments
+parse_args() {
+    mac_parse_common_args "$@"
+    local result=$?
+    
+    if [[ $result -eq 2 ]]; then
+        show_help
+        exit 0
+    elif [[ $result -ne 0 ]]; then
+        show_help
+        exit 1
+    fi
 }
 
 # Run main function if script is executed directly

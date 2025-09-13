@@ -91,7 +91,7 @@ help:
 	@echo "  github-setup    - 🐙 Configure Git settings"
 	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
 	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
-	@echo "  oled-optimize   - 🖥️  Optimize macOS settings for OLED displays (burn-in prevention)"
+	@echo "  macos-oled-optimize - 🖥️  Optimize macOS settings for OLED displays (burn-in prevention)"
 	@echo ""
 	@echo "🔄 Settings restoration:"
 	@echo "  app-settings    - 📱 Restore all application settings (iTerm, VS Code, Xcode, Sublime, Dock, Ruby)"
@@ -139,7 +139,7 @@ endif
 # PLATFORM-SPECIFIC TARGETS
 # =============================================================================
 
-.PHONY: mac linux common mac-settings macos-optimize oled-optimize post-mac-setup-message
+.PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup-message
 mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook post-mac-setup-message find-orphans
 
 linux: common linux-packages linux-settings
@@ -155,7 +155,7 @@ post-mac-setup-message:
 	@echo -e "  - $(GREEN)Restart your terminal$(NC) to apply all changes."
 	@echo -e "  - Run $(CYAN)make help$(NC) to see all available commands."
 	@echo -e "  - Customize your setup further by editing $(YELLOW)private.zsh$(NC)."
-	@echo -e "  - If you use an OLED display, consider running $(CYAN)make oled-optimize$(NC)."
+	@echo -e "  - If you use an OLED display, consider running $(CYAN)make macos-oled-optimize$(NC)."
 	@echo ""
 
 # =============================================================================
@@ -465,15 +465,15 @@ macos-optimize:
 	fi
 
 # Optimize macOS settings specifically for OLED displays
-.PHONY: oled-optimize
-oled-optimize:
+.PHONY: macos-oled-optimize
+macos-oled-optimize:
 	@echo -e "$(MAGENTA)🖥️  Optimizing macOS for OLED displays...$(NC)"
-	@if [ -f "bin/oled-optimize.sh" ]; then \
+	@if [ -f "bin/macos-oled-optimize.sh" ]; then \
 		echo -e "$(CYAN)🚀 Running OLED optimization script...$(NC)"; \
-		bash bin/oled-optimize.sh; \
+		bash bin/macos-oled-optimize.sh; \
 		echo -e "$(BOLD)$(GREEN)✅ OLED optimization complete$(NC)"; \
 	else \
-		echo -e "$(RED)❌ OLED optimization script not found at bin/oled-optimize.sh$(NC)"; \
+		echo -e "$(RED)❌ OLED optimization script not found at bin/macos-oled-optimize.sh$(NC)"; \
 		return 1; \
 	fi
 

@@ -12,71 +12,11 @@
 set -euo pipefail
 
 # Configuration
-readonly SCRIPT_NAME="macOS Optimizer"
-readonly MIN_MACOS_VERSION=10
+readonly SCRIPT_NAME="macOS System Optimizer"
 
-# Source centralized logging functions
+# Source common macOS utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ZSH_CONFIG="$(dirname "$SCRIPT_DIR")"
-
-if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
-    source "$ZSH_CONFIG/logging.zsh"
-else
-    # Fallback definitions if logging.zsh not available
-    log_info() { echo -e "\033[0;34mℹ️  $1\033[0m"; }
-    log_success() { echo -e "\033[0;32m✅ $1\033[0m"; }
-    log_error() { echo -e "\033[0;31m❌ $1\033[0m" >&2; }
-    log_warning() { echo -e "\033[1;33m⚠️  $1\033[0m"; }
-    log_warn() { log_warning "$1"; }  # Backward compatibility alias
-    log_section() {
-        echo ""
-        echo -e "\033[1m🔧 $1\033[0m"
-        echo "═══════════════════════════════════════════════════════════"
-    }
-fi
-
-# Check if running on macOS
-check_platform() {
-    if [[ "$(uname)" != "Darwin" ]]; then
-        log_error "This script only works on macOS"
-        exit 1
-    fi
-    
-    local macos_version
-    macos_version=$(sw_vers -productVersion | cut -d. -f1)
-    
-    if [[ $macos_version -lt $MIN_MACOS_VERSION ]]; then
-        log_warn "This script is optimized for macOS 10.0+. Your version: $(sw_vers -productVersion)"
-        read -p "Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
-    fi
-}
-
-# Request administrator access
-request_sudo() {
-    log_info "Requesting administrator access..."
-    sudo -v
-    
-    # Keep-alive: update existing sudo time stamp until script has finished
-    while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
-}
-
-# Show confirmation before making changes
-confirm_changes() {
-    echo ""
-    log_warning "This script will modify your macOS system preferences."
-    log_warning "Some changes require a restart to take effect."
-    echo ""
-    read -p "Do you want to continue? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Operation cancelled by user"
-        exit 0
-    fi
-}
+source "$SCRIPT_DIR/.common/mac.zsh"
 
 # General UI/UX optimizations
 configure_ui_ux() {
@@ -223,8 +163,34 @@ configure_finder() {
 configure_dock() {
     log_section "Dock & Mission Control"
     
-    log_info "Setting Dock icon size"
-    defaults write com.apple.dock tilesize -int 48
+    # Use device-specific dock settings
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        case "$DEVICE_MODEL" in
+            *"Mac Pro"*|*"Mac Studio"*)
+                log_info "High-performance desktop: Larger dock size for better visibility"
+                defaults write com.apple.dock tilesize -int 64
+                ;;
+            *"iMac"*)
+                log_info "iMac: Medium dock size optimized for built-in display"
+                defaults write com.apple.dock tilesize -int 56
+                ;;
+            *)
+                log_info "Desktop: Standard dock size"
+                defaults write com.apple.dock tilesize -int 48
+                ;;
+        esac
+        
+        log_info "Desktop: Disabling auto-hide for productivity"
+        defaults write com.apple.dock autohide -bool false
+    else
+        log_info "Laptop: Smaller dock size for screen real estate"
+        defaults write com.apple.dock tilesize -int 42
+        
+        log_info "Laptop: Enabling auto-hide to save screen space"
+        defaults write com.apple.dock autohide -bool true
+        defaults write com.apple.dock autohide-delay -float 0
+        defaults write com.apple.dock autohide-time-modifier -float 0
+    fi
     
     log_info "Minimizing windows into their application's icon"
     defaults write com.apple.dock minimize-to-application -bool true
@@ -248,17 +214,10 @@ configure_dock() {
     log_info "Don't show Dashboard as a Space"
     defaults write com.apple.dock dashboard-in-overlay -bool true
     
-    log_info "Automatically hiding and showing Dock"
-    defaults write com.apple.dock autohide -bool true
-    
-    log_info "Removing auto-hiding Dock delay"
-    defaults write com.apple.dock autohide-delay -float 0
-    defaults write com.apple.dock autohide-time-modifier -float 0
-    
     log_info "Making Dock icons of hidden applications translucent"
     defaults write com.apple.dock showhidden -bool true
     
-    log_success "Dock optimizations complete"
+    log_success "Dock optimizations complete for $DEVICE_TYPE"
 }
 
 # Security and privacy optimizations
@@ -280,21 +239,31 @@ configure_security() {
     log_success "Security optimizations complete"
 }
 
-# Performance optimizations  
+# Performance optimizations with device-aware settings
 configure_performance() {
     log_section "Performance"
     
-    log_info "Disabling sudden motion sensor (not needed for SSDs)"
-    sudo pmset -a sms 0
-    
-    log_info "Increasing sleep delay to 24 hours"
-    sudo pmset -a standbydelay 86400
+    # Use common power management
+    mac_configure_desktop_power "performance"
     
     log_info "Disabling local Time Machine snapshots"
     sudo tmutil disablelocal 2>/dev/null || true
     
     log_info "Preventing Time Machine from prompting for new disks"
     defaults write com.apple.TimeMachine DoNotOfferNewDisksForBackup -bool true
+    
+    # Device-specific performance tweaks
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        case "$DEVICE_MODEL" in
+            *"Mac Pro"*|*"Mac Studio"*)
+                log_info "High-performance desktop: Extended sleep delays for heavy workloads"
+                sudo pmset -a standbydelay 86400  # 24 hours
+                ;;
+            *)
+                log_info "Desktop: Standard performance settings"
+                ;;
+        esac
+    fi
     
     log_success "Performance optimizations complete"
 }
@@ -340,44 +309,33 @@ configure_apps() {
     log_success "Application optimizations complete"
 }
 
-# Restart required applications
-restart_apps() {
-    log_section "Restarting Applications"
-    
-    local apps_to_restart=(
-        "Dock"
-        "Finder"
-        "SystemUIServer"
-        "cfprefsd"
-    )
-    
-    for app in "${apps_to_restart[@]}"; do
-        if pgrep -f "$app" >/dev/null; then
-            log_info "Restarting $app..."
-            killall "$app" 2>/dev/null || true
-        fi
-    done
-    
-    log_success "Applications restarted"
-}
-
 # Show completion message
-show_completion() {
+show_macos_completion() {
     echo ""
-    log_success "🎉 macOS optimization complete!"
+    log_success "🎉 macOS system optimization complete!"
     echo ""
-    log_info "Some changes may require a system restart to take full effect."
-    log_info "You can restart now or later at your convenience."
+    mac_show_system_info
     echo ""
-    read -p "Would you like to restart now? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "Restarting system in 5 seconds..."
-        sleep 5
-        sudo shutdown -r now
+    log_info "📋 Applied optimizations:"
+    echo "  • UI/UX improvements (faster animations, better defaults)"
+    echo "  • Keyboard and trackpad optimizations"
+    echo "  • Display and screen settings"
+    echo "  • Finder enhancements (show extensions, hidden files)"
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        echo "  • Desktop-optimized Dock settings (larger size, always visible)"
+        echo "  • Desktop-optimized power management"
     else
-        log_info "Remember to restart your system later to apply all changes."
+        echo "  • Laptop-optimized Dock settings (smaller size, auto-hide)"
+        echo "  • Laptop-optimized power management"
     fi
+    echo "  • Security improvements (firewall, disable remote access)"
+    echo "  • Performance tweaks (SSD optimization, power management)"
+    echo "  • Developer settings (hidden files, locate database)"
+    echo "  • Application-specific optimizations"
+    echo "  • Productivity-focused hot corners"
+    echo ""
+    
+    mac_show_completion "macOS system optimization" "true"
 }
 
 # Show help
@@ -396,6 +354,7 @@ OPTIONS:
     -h, --help      Show this help message
     -f, --force     Skip confirmation prompts
     --dry-run       Show what would be changed without making changes
+    -v, --verbose   Enable verbose output
 
 EXAMPLES:
     $0              Run interactively with confirmations
@@ -406,43 +365,32 @@ WHAT IT DOES:
     • Optimizes UI/UX settings (faster animations, better defaults)
     • Configures Finder for power users (show extensions, hidden files)
     • Sets up developer-friendly settings (fast key repeat, etc.)
-    • Improves performance (disables unnecessary features)
-    • Enhances security settings
-    • Optimizes Dock and Mission Control
+    • Improves performance (device-specific power management)
+    • Enhances security settings (firewall, disable remote access)
+    • Optimizes Dock and Mission Control (device-aware sizing)
+    • Device-specific optimizations (desktop vs laptop)
+
+DEVICE-SPECIFIC FEATURES:
+    Desktop optimizations:
+    • Larger Dock icons for better visibility
+    • Dock always visible for productivity
+    • Extended sleep delays for heavy workloads
+    • Optimized power management for always-on usage
+    
+    Laptop optimizations:
+    • Smaller Dock icons to save screen space
+    • Auto-hiding Dock for maximum screen real estate
+    • Battery-optimized power management
+    • Balanced performance and battery life
 
 EOF
 }
 
-# Parse command line arguments
-parse_args() {
-    FORCE_MODE=false
-    DRY_RUN=false
-    
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            -h|--help)
-                show_help
-                exit 0
-                ;;
-            -f|--force)
-                FORCE_MODE=true
-                ;;
-            --dry-run)
-                DRY_RUN=true
-                ;;
-            *)
-                log_error "Unknown option: $1"
-                show_help
-                exit 1
-                ;;
-        esac
-        shift
-    done
-}
-
 # Dry run mode - show what would be changed
 dry_run() {
-    echo -e "${BOLD}🔍 DRY RUN MODE - No changes will be made${NC}"
+    echo -e "\033[1m🔍 DRY RUN MODE - No changes will be made\033[0m"
+    echo ""
+    mac_show_system_info
     echo ""
     log_info "The following optimizations would be applied:"
     echo ""
@@ -450,31 +398,58 @@ dry_run() {
     echo "• Keyboard and trackpad optimizations (fast repeat, tap to click)"  
     echo "• Display settings (require password after sleep, better fonts)"
     echo "• Finder enhancements (show extensions, status bar, path bar)"
-    echo "• Dock optimizations (auto-hide, faster animations)"
     echo "• Security improvements (enable firewall, disable remote access)"
     echo "• Performance tweaks (disable motion sensor, optimize sleep)"
     echo "• Developer settings (show hidden files, enable locate database)"
     echo "• Application-specific optimizations (Chrome, TextEdit, etc.)"
+    echo ""
+    
+    if [[ "$DEVICE_TYPE" == "desktop" ]]; then
+        echo "🖥️  Desktop-specific optimizations:"
+        case "$DEVICE_MODEL" in
+            *"Mac Pro"*|*"Mac Studio"*)
+                echo "  • Large Dock icons (64px) for high-performance workstation"
+                echo "  • Extended sleep delays (24 hours) for heavy workloads"
+                ;;
+            *"iMac"*)
+                echo "  • Medium Dock icons (56px) optimized for built-in display"
+                ;;
+            *)
+                echo "  • Standard Dock icons (48px)"
+                ;;
+        esac
+        echo "  • Dock always visible for productivity"
+        echo "  • Desktop power management (no hibernation, extended standby)"
+        echo "  • Productivity-focused hot corners"
+    else
+        echo "🔋 Laptop-specific optimizations:"
+        echo "  • Smaller Dock icons (42px) to save screen space"
+        echo "  • Auto-hiding Dock for maximum screen real estate"
+        echo "  • Battery-optimized power management"
+        echo "  • Balanced performance and battery life"
+    fi
+    
     echo ""
     log_info "Run without --dry-run to apply these changes"
 }
 
 # Main execution
 main() {
-    echo -e "${BOLD}🍎 $SCRIPT_NAME${NC}"
+    echo -e "\033[1m🍎 $SCRIPT_NAME\033[0m"
     echo "═══════════════════════════════════════════════════════════"
     
-    check_platform
+    mac_check_platform
+    mac_detect_device
     
     if [[ "$DRY_RUN" == true ]]; then
         dry_run
         return 0
     fi
     
-    request_sudo
+    mac_request_sudo
     
     if [[ "$FORCE_MODE" == false ]]; then
-        confirm_changes
+        mac_confirm_changes "macOS system optimization" "This will apply developer and power user optimizations to your system."
     fi
     
     configure_ui_ux
@@ -486,8 +461,23 @@ main() {
     configure_performance
     configure_developer
     configure_apps
-    restart_apps
-    show_completion
+    mac_configure_hot_corners
+    mac_restart_apps
+    show_macos_completion
+}
+
+# Parse command line arguments
+parse_args() {
+    mac_parse_common_args "$@"
+    local result=$?
+    
+    if [[ $result -eq 2 ]]; then
+        show_help
+        exit 0
+    elif [[ $result -ne 0 ]]; then
+        show_help
+        exit 1
+    fi
 }
 
 # Run main function if script is executed directly
