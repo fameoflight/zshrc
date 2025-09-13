@@ -3,8 +3,11 @@
 require 'optparse'
 require 'pathname'
 require 'fileutils'
+require 'time'
 require_relative 'logger'
 require_relative 'system'
+require_relative 'services/settings_service'
+require_relative 'services/interactive_menu_service'
 
 # Base class for all ZSH configuration scripts
 # Provides common functionality, option parsing, and standardized structure
@@ -57,21 +60,30 @@ class ScriptBase
   attr_reader :options, :args
 
   def initialize
+    @settings_service = SettingsService.for_script(script_name)
+    @interactive_menu = InteractiveMenuService.for_script(self)
     @options = default_options
     @args = []
+    @session_log = []
     setup_bundler
+    setup_session_logging
     parse_arguments
   end
 
-  # Default options for all scripts
+  # Default options for all scripts - can be overridden with saved settings
   def default_options
-    {
+    base_defaults = {
       dry_run: false,
       force: false,
       verbose: false,
       help: false,
-      debug: ENV['DEBUG'] == '1' # Initialize from environment
+      debug: ENV['DEBUG'] == '1', # Initialize from environment
+      log_session: ENV['LOG_SESSIONS'] == '1' # Can be enabled globally
     }
+
+    # Load saved settings and merge with defaults
+    saved_settings = load_saved_settings
+    base_defaults.merge(saved_settings)
   end
 
   # Parse command line arguments
@@ -100,6 +112,10 @@ class ScriptBase
       opts.on('--debug', 'Enable debug output') do
         @options[:debug] = true
         ENV['DEBUG'] = '1'
+      end
+
+      opts.on('--log-session', 'Log session to file') do
+        @options[:log_session] = true
       end
 
       # Also check if DEBUG was set before script started
@@ -212,6 +228,25 @@ class ScriptBase
     # Bundler not available, continue without it
   end
 
+  # Setup session logging
+  def setup_session_logging
+    @session_start_time = Time.now
+    @session_id = Time.now.strftime('%Y%m%d_%H%M%S')
+    @session_log_file = nil
+
+    # Create logs directory if logging is enabled
+    if @options[:log_session] || ENV['LOG_SESSIONS'] == '1'
+      logs_dir = File.join(PROJECT_ROOT, 'logs')
+      FileUtils.mkdir_p(logs_dir) unless Dir.exist?(logs_dir)
+
+      @session_log_file = File.join(logs_dir, "#{script_name}_#{@session_id}.log")
+      write_session_log("=== Session started at #{@session_start_time} ===")
+      write_session_log("Script: #{script_name}")
+      write_session_log("Arguments: #{ARGV.join(' ')}")
+      write_session_log("Working directory: #{Dir.pwd}")
+    end
+  end
+
   # Execute with proper error handling
   def self.execute
     script = new
@@ -220,13 +255,17 @@ class ScriptBase
       script.validate!
       script.run
     rescue Interrupt
-      log_warning("\nOperation cancelled by user")
+      script.log_warning("\nOperation cancelled by user")
+      script.finalize_session_log
       exit 130
     rescue StandardError => e
-      log_error("Script failed: #{e.message}")
-      log_debug("Backtrace: #{e.backtrace.join("\n")}") if ENV['DEBUG'] == '1'
+      script.log_error("Script failed: #{e.message}")
+      script.log_debug("Backtrace: #{e.backtrace.join("\n")}") if ENV['DEBUG'] == '1'
+      script.finalize_session_log
       exit 1
     end
+
+    script.finalize_session_log
   end
 
   protected
@@ -350,5 +389,210 @@ class ScriptBase
       '/System/Library/LaunchAgents',
       '/System/Library/LaunchDaemons'
     ]
+  end
+
+  # =========================================================================
+  # LOGGER INTERFACE - Compatible with LLMService and other services
+  # =========================================================================
+
+  public
+
+  def log_info(message)
+    log_to_session("INFO", message)
+    super(message)
+  end
+
+  def log_warning(message)
+    log_to_session("WARN", message)
+    super(message)
+  end
+
+  def log_error(message)
+    log_to_session("ERROR", message)
+    super(message)
+  end
+
+  def log_debug(message)
+    return unless debug?
+
+    log_to_session("DEBUG", message)
+    super(message)
+  end
+
+  def log_success(message)
+    log_to_session("SUCCESS", message)
+    super(message)
+  end
+
+  def log_progress(message)
+    log_to_session("PROGRESS", message)
+    super(message)
+  end
+
+  # =========================================================================
+  # SESSION LOGGING - Persistent logs for script sessions
+  # =========================================================================
+
+  # Keep these methods public for the class execute method
+  def finalize_session_log
+    return unless @session_log_file
+
+    duration = Time.now - @session_start_time
+    write_session_log("=== Session ended at #{Time.now} (duration: #{duration.round(2)}s) ===")
+
+    if verbose?
+      log_info("Session log saved to: #{@session_log_file}")
+    end
+  end
+
+  private
+
+  def log_to_session(level, message)
+    return unless @session_log_file
+
+    timestamp = Time.now.strftime('%H:%M:%S')
+    log_entry = "[#{timestamp}] #{level}: #{message}"
+
+    @session_log << log_entry
+    write_session_log(log_entry)
+  end
+
+  def write_session_log(entry)
+    return unless @session_log_file
+
+    File.open(@session_log_file, 'a') do |f|
+      f.puts(entry)
+    end
+  rescue StandardError => e
+    # Don't fail the script if logging fails
+    puts "Warning: Failed to write to session log: #{e.message}" if debug?
+  end
+
+  # Enable session logging for this script instance
+  def enable_session_logging
+    return if @session_log_file
+
+    logs_dir = File.join(PROJECT_ROOT, 'logs')
+    FileUtils.mkdir_p(logs_dir) unless Dir.exist?(logs_dir)
+
+    @session_log_file = File.join(logs_dir, "#{script_name}_#{@session_id}.log")
+    write_session_log("=== Session logging enabled at #{Time.now} ===")
+  end
+
+  # Get path to current session log file
+  def session_log_path
+    @session_log_file
+  end
+
+  # Get current session log contents
+  def session_log_contents
+    @session_log.dup
+  end
+
+  # =========================================================================
+  # SETTINGS PERSISTENCE - Save and load user preferences
+  # =========================================================================
+
+  public
+
+  # Load saved settings for this script
+  def load_saved_settings
+    @settings_service.load_settings
+  end
+
+  # Save current options as settings (filtered for persistence)
+  def save_current_settings
+    @settings_service.save_settings(@options)
+  end
+
+  # Update specific settings
+  def update_settings(new_settings)
+    @settings_service.update_settings(new_settings)
+  end
+
+  # Get a specific setting
+  def get_setting(key, default = nil)
+    @settings_service.get_setting(key, default)
+  end
+
+  # Set a specific setting
+  def set_setting(key, value)
+    @settings_service.set_setting(key, value)
+  end
+
+  # Reset all saved settings
+  def reset_settings!
+    @settings_service.reset_settings!
+  end
+
+  # Check if settings file exists
+  def has_saved_settings?
+    @settings_service.settings_exist?
+  end
+
+  # Show settings summary
+  def show_settings_summary
+    puts @settings_service.settings_summary
+  end
+
+  # Get settings file path
+  def settings_file_path
+    @settings_service.settings_path
+  end
+
+  # =========================================================================
+  # INTERACTIVE MENUS - Universal UX patterns
+  # =========================================================================
+
+  # Show the universal action menu: Use It | Cancel | Settings
+  def show_action_menu(title, options = {})
+    @interactive_menu.show_action_menu(title, options)
+  end
+
+  # Show universal settings menu
+  def show_settings_menu
+    @interactive_menu.show_settings_menu
+  end
+
+  # Get task description with nice prompt
+  def get_task_description(prompt_text = "📝 What do you want to do?")
+    @interactive_menu.get_task_description(prompt_text)
+  end
+
+  # Confirm with user
+  def interactive_confirm(message, default: false)
+    @interactive_menu.confirm(message, default: default)
+  end
+
+  # Select from choices
+  def interactive_select(title, choices, default: nil)
+    @interactive_menu.select_from_choices(title, choices, default: default)
+  end
+
+  # Show progress with spinner
+  def with_progress(message, &block)
+    @interactive_menu.with_progress(message, &block)
+  end
+
+  # =========================================================================
+  # SCRIPT-SPECIFIC OVERRIDES - Subclasses can override these
+  # =========================================================================
+
+  # Override this to provide script-specific settings menu items
+  def interactive_settings_menu
+    # Default implementation - subclasses should override
+    [
+      {
+        key: :example_setting,
+        label: "Example Setting",
+        icon: "🔧"
+      }
+    ]
+  end
+
+  # Override this to handle script-specific setting changes
+  def handle_setting_change(setting_key, menu_service)
+    # Default implementation - subclasses should override
+    log_warning("Setting '#{setting_key}' not implemented in #{self.class}")
   end
 end

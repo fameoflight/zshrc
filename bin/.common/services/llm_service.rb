@@ -31,13 +31,18 @@ class LLMService
     system_message = options[:system] || 'You are a helpful assistant.'
     temp = options[:temperature] || @temperature
     max_tokens = options[:max_tokens] || @max_tokens
+    stream = options[:stream] || false
 
     messages = [
       { role: 'system', content: system_message },
       { role: 'user', content: prompt }
     ]
 
-    send_chat_request(messages, temperature: temp, max_tokens: max_tokens)
+    if stream
+      send_chat_request_streaming(messages, temperature: temp, max_tokens: max_tokens)
+    else
+      send_chat_request(messages, temperature: temp, max_tokens: max_tokens)
+    end
   end
 
   # Send a chat request with full message history
@@ -176,6 +181,105 @@ class LLMService
       log_error("LLM request error: #{e.class.name} - #{e.message}")
       nil
     end
+  end
+
+  def send_chat_request_streaming(messages, temperature:, max_tokens:)
+    uri = URI("#{@endpoint}/chat/completions")
+
+    payload = {
+      model: @model,
+      messages: messages,
+      temperature: temperature,
+      max_tokens: max_tokens,
+      stream: true
+    }
+
+    begin
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.read_timeout = @timeout
+      http.open_timeout = 10
+
+      request = Net::HTTP::Post.new(uri)
+      request['Content-Type'] = 'application/json'
+      request.body = payload.to_json
+
+      log_debug("Sending streaming chat request to #{uri} with model #{@model}")
+
+      full_content = ""
+      start_time = Time.now
+
+      # Start progress indicator
+      print_progress_indicator("Generating")
+
+      http.request(request) do |response|
+        if response.code == '200'
+          response.read_body do |chunk|
+            if chunk.strip.empty?
+              next
+            end
+
+            # Process SSE (Server-Sent Events) format
+            chunk.split("\n").each do |line|
+              if line.start_with?('data: ')
+                data_str = line[6..-1] # Remove 'data: ' prefix
+                next if data_str.strip == '[DONE]'
+
+                begin
+                  data = JSON.parse(data_str)
+                  content_delta = data.dig('choices', 0, 'delta', 'content')
+                  if content_delta
+                    full_content += content_delta
+                    # Show streaming progress
+                    update_progress_indicator
+                  end
+                rescue JSON::ParserError
+                  # Skip invalid JSON lines
+                end
+              end
+            end
+          end
+        else
+          clear_progress_indicator
+          log_error("Streaming request failed with status #{response.code}: #{response.body}")
+          return nil
+        end
+      end
+
+      clear_progress_indicator
+      duration = Time.now - start_time
+      log_debug("Streaming response completed in #{duration.round(2)}s: #{full_content.length} characters")
+      full_content
+    rescue StandardError => e
+      clear_progress_indicator
+      log_error("Streaming request error: #{e.class.name} - #{e.message}")
+      nil
+    end
+  end
+
+  # Progress indicator methods for streaming
+  def print_progress_indicator(message)
+    @progress_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    @progress_index = 0
+    @progress_message = message
+    @progress_active = true
+
+    # Start progress thread
+    Thread.new do
+      while @progress_active
+        print "\r#{@progress_chars[@progress_index]} #{@progress_message}..."
+        @progress_index = (@progress_index + 1) % @progress_chars.length
+        sleep 0.1
+      end
+    end
+  end
+
+  def update_progress_indicator
+    # Progress is updated by the animation thread
+  end
+
+  def clear_progress_indicator
+    @progress_active = false
+    print "\r" + " " * 50 + "\r" # Clear the line
   end
 
   # Logging methods with fallbacks

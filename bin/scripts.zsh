@@ -163,6 +163,11 @@ spotlight-manage() {
   _execute_ruby_script "spotlight-manage.rb" "$@"
 }
 
+# LLM command and script generator - create commands/scripts from natural language
+llm-generate() {
+  _execute_ruby_script "llm-generate.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -177,7 +182,7 @@ list-scripts() {
   # Show utility scripts available in ZSH
   echo "🐚 ZSH Utility Functions (interactive use):"
   echo "  📚 calibre-update        - Update Calibre to the latest version"
-  echo "  🖥️  stack-monitors        - Configure stacked monitor setup"  
+  echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
   echo "  📄 merge-pdf             - Merge multiple PDF files"
   echo "  📝 merge-md              - Merge markdown files with their references into a single file"
   echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
@@ -190,6 +195,7 @@ list-scripts() {
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
   echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
+  echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
@@ -369,6 +375,7 @@ scripts() {
     echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
     echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
+    echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo "  🛠️  macos-optimize       - Optimize macOS system settings"
@@ -443,7 +450,7 @@ scripts() {
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "agent-setup"
-    "spotlight-manage"
+    "spotlight-manage" "llm-generate"
   )
   
   for func in "${utility_functions[@]}"; do
