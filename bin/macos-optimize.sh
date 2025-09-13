@@ -216,8 +216,47 @@ configure_dock() {
     
     log_info "Making Dock icons of hidden applications translucent"
     defaults write com.apple.dock showhidden -bool true
-    
+
+    # Clean up unwanted dock items
+    log_info "Removing unwanted applications from dock"
+    if command -v dockutil >/dev/null 2>&1; then
+        # Remove specific unwanted applications
+        dockutil --remove "Notes" 2>/dev/null || true
+        dockutil --remove "Reminders" 2>/dev/null || true
+        dockutil --remove "Finder" 2>/dev/null || true
+        dockutil --remove "Mail" 2>/dev/null || true
+        dockutil --remove "Preview" 2>/dev/null || true
+        log_success "Cleaned up dock applications"
+    else
+        log_warning "dockutil not available - install with 'brew install dockutil' to clean dock"
+    fi
+
+    # Clear recent apps from dock
+    log_info "Clearing recent applications from dock"
+    defaults write com.apple.dock recent-apps -array
+
     log_success "Dock optimizations complete for $DEVICE_TYPE"
+}
+
+# Menu bar optimizations
+configure_menubar() {
+    log_section "Menu Bar"
+
+    log_info "Hiding keyboard/input source icon from menu bar"
+    defaults write com.apple.menuextra.textinput ModeNameVisible -bool false
+    defaults write com.apple.TextInputMenuAgent NSUIElement -bool true
+    launchctl unload -w /System/Library/LaunchAgents/com.apple.TextInputMenuAgent.plist 2>/dev/null || true
+    killall TextInputMenuAgent 2>/dev/null || true
+
+    log_info "Hiding Spotlight search icon from menu bar"
+    defaults write com.apple.Spotlight MenuItemHidden -int 1
+
+    log_info "Hiding Apple Intelligence/Siri icon from menu bar"
+    defaults write com.apple.Siri StatusMenuVisible -bool false
+    defaults write com.apple.assistant.support "Assistant Enabled" -bool false
+    defaults write com.apple.Siri VoiceTriggerUserEnabled -bool false
+
+    log_success "Menu bar optimizations complete"
 }
 
 # Security and privacy optimizations
@@ -328,6 +367,7 @@ show_macos_completion() {
         echo "  • Laptop-optimized Dock settings (smaller size, auto-hide)"
         echo "  • Laptop-optimized power management"
     fi
+    echo "  • Menu bar cleanup (hide keyboard, search, and AI icons)"
     echo "  • Security improvements (firewall, disable remote access)"
     echo "  • Performance tweaks (SSD optimization, power management)"
     echo "  • Developer settings (hidden files, locate database)"
@@ -457,6 +497,7 @@ main() {
     configure_display
     configure_finder
     configure_dock
+    configure_menubar
     configure_security
     configure_performance
     configure_developer

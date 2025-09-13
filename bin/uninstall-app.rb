@@ -292,9 +292,25 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
     # Dock entries (check plist)
     dock_plist = "#{System.home_dir}/Library/Preferences/com.apple.dock.plist"
     items[:dock_entries] = []
-    if File.exist?(dock_plist) && System.command?('plutil')
-      dock_check = `plutil -convert xml1 -o - "#{dock_plist}" | grep -i "#{@app_name}" || true`
-      items[:dock_entries] = dock_check.empty? ? [] : ['Found in Dock preferences']
+    if File.exist?(dock_plist)
+      begin
+        require 'plist'
+        dock_data = Plist.parse_xml(dock_plist)
+        if dock_data && dock_data['persistent-apps']
+          dock_entries = dock_data['persistent-apps'].select do |app|
+            app.dig('tile-data', 'file-label')&.downcase&.include?(@app_name.downcase) ||
+              app.dig('tile-data', 'bundle-identifier')&.downcase&.include?(@app_name.downcase)
+          end
+          items[:dock_entries] = dock_entries.empty? ? [] : ["Found #{dock_entries.size} Dock entry(ies)"]
+        end
+      rescue StandardError => e
+        log_debug("Failed to parse Dock plist: #{e.message}")
+        # Fallback to plutil if plist gem fails
+        if System.command?('plutil')
+          dock_check = `plutil -convert xml1 -o - "#{dock_plist}" | grep -i "#{@app_name}" || true`
+          items[:dock_entries] = dock_check.empty? ? [] : ['Found in Dock preferences']
+        end
+      end
     end
 
     total = items.values.sum(&:length)

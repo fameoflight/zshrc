@@ -135,6 +135,7 @@ GEM
       hashery (~> 2.0)
       ruby-rc4
       ttfunk
+    plist (3.7.2)
     prism (1.4.0)
     public_suffix (6.0.2)
     racc (1.8.1)
@@ -292,6 +293,7 @@ DEPENDENCIES
   optparse (~> 0.4)
   pastel (~> 0.8)
   pdf-reader (~> 2.11)
+  plist (~> 3.7)
   rexml (~> 3.2)
   rspec (~> 3.12)
   rubocop (~> 1.56)

@@ -42,6 +42,7 @@ gem 'sqlite3', '~> 1.6'
 
 # XML/Plist handling for macOS preferences
 gem 'rexml', '~> 3.2'
+gem 'plist', '~> 3.7'
 
 # PDF manipulation
 gem 'combine_pdf', '~> 1.0'
