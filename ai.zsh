@@ -238,11 +238,3 @@ alias ai-unload='lms-unload'
 
 # Auto-bootstrap LM Studio CLI on shell startup
 _lms_bootstrap >/dev/null 2>&1
-
-# Display AI tools status if they're available
-if command -v lms >/dev/null 2>&1; then
-  # Only show status if LM Studio is actually running
-  if lms status >/dev/null 2>&1; then
-    log_info "🤖 LM Studio available"
-  fi
-fi

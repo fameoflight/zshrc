@@ -23,7 +23,12 @@ configure_ui_ux() {
     log_section "General UI/UX"
     
     log_info "Disabling Gatekeeper (allows installation of apps from anywhere)"
-    sudo spctl --master-disable
+    if sudo spctl --master-disable 2>/dev/null; then
+        log_success "Gatekeeper disabled"
+    else
+        log_warning "Could not disable Gatekeeper automatically"
+        log_info "To disable manually: System Settings → Privacy & Security → Allow apps downloaded from: Anywhere"
+    fi
     
     log_info "Increasing window resize speed for Cocoa applications"
     defaults write NSGlobalDomain NSWindowResizeTime -float 0.001
@@ -262,20 +267,158 @@ configure_menubar() {
 # Security and privacy optimizations
 configure_security() {
     log_section "Security & Privacy"
-    
+
     log_info "Enabling firewall"
     sudo defaults write /Library/Preferences/com.apple.alf globalstate -int 1
-    
+
     log_info "Disabling remote apple events"
     sudo systemsetup -setremoteappleevents off 2>/dev/null || true
-    
+
     log_info "Disabling remote login"
     sudo systemsetup -setremotelogin off 2>/dev/null || true
-    
+
     log_info "Disabling wake-on-lan"
     sudo systemsetup -setwakeonnetworkaccess off 2>/dev/null || true
-    
+
+    configure_terminal_access
+
     log_success "Security optimizations complete"
+}
+
+# Check if terminal has Full Disk Access
+check_full_disk_access() {
+    local test_file="/Users/hemantv/Library/Safari/Bookmarks.plist"
+
+    if [[ -r "$test_file" ]]; then
+        log_success "✅ Terminal has Full Disk Access"
+        return 0
+    else
+        log_warning "⚠️  Terminal does NOT have Full Disk Access"
+        return 1
+    fi
+}
+
+# Show Full Disk Access instructions and open settings
+show_full_disk_access_instructions() {
+    local terminal_app=""
+    local terminal_path=""
+
+    # Detect current terminal
+    if [[ -n "${ITERM_SESSION_ID:-}" ]]; then
+        terminal_app="iTerm2"
+        terminal_path="/Applications/iTerm.app"
+    elif [[ -n "${TERM_PROGRAM:-}" ]] && [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
+        terminal_app="Terminal"
+        terminal_path="/Applications/Utilities/Terminal.app"
+    else
+        terminal_app="your terminal application"
+        terminal_path="/Applications/[Your Terminal].app"
+    fi
+
+    echo ""
+    log_error "❌ Full Disk Access Required for Terminal"
+    echo ""
+    log_info "Your terminal ($terminal_app) needs Full Disk Access to:"
+    echo "  • Configure system security settings"
+    echo "  • Access Safari bookmarks and other protected files"
+    echo "  • Complete the macOS optimization"
+    echo ""
+    log_info "📋 Manual Setup Instructions:"
+    echo "  1. Security Settings will open automatically"
+    echo "  2. Click the 🔒 lock and enter your password"
+    echo "  3. Click '+' button below the app list"
+    echo "  4. Navigate to: $terminal_path"
+    echo "  5. Select $terminal_app and click 'Open'"
+    echo "  6. Ensure $terminal_app is checked (✅)"
+    echo "  7. Close System Settings"
+    echo "  8. Restart your terminal"
+    echo ""
+    log_warning "⚠️  After granting access, restart your terminal and run this script again"
+
+    # Open Security Settings
+    if command -v open >/dev/null 2>&1; then
+        log_info "🔍 Opening Security Settings..."
+        open "/System/Library/PreferencePanes/Security.prefPane"
+        sleep 2
+
+        # Try to navigate to Full Disk Access using AppleScript
+        osascript <<'EOF' 2>/dev/null || true
+tell application "System Events"
+    tell process "System Settings"
+        keystroke "Full Disk Access" using command down
+        delay 1
+        key code 36 -- return key
+    end tell
+end tell
+EOF
+    fi
+
+    echo ""
+    log_info "💡 Tip: You can also manually navigate to:"
+    echo "   System Settings → Privacy & Security → Full Disk Access"
+    echo ""
+    return 1
+}
+
+# Configure Full Disk Access for terminal applications
+configure_terminal_access() {
+    log_section "Terminal Full Disk Access"
+
+    # First check if terminal already has Full Disk Access
+    if ! check_full_disk_access; then
+        show_full_disk_access_instructions
+        return 1
+    fi
+
+    # TCC (Transparency, Consent, and Control) database path
+    local tcc_db="/Library/Application Support/com.apple.TCC/TCC.db"
+
+    # Check if we can access the TCC database
+    if [[ ! -r "$tcc_db" ]]; then
+        log_warning "Cannot access TCC database directly"
+        log_info "Manual Full Disk Access setup is recommended"
+        return 0
+    fi
+
+    log_info "Configuring Full Disk Access for terminal applications..."
+
+    # Common terminal applications to grant access
+    local -a terminal_apps=(
+        "/Applications/iTerm.app"
+        "/Applications/Utilities/Terminal.app"
+        "/Applications/Alacritty.app"
+        "/Applications/Kitty.app"
+        "/Applications/Hyper.app"
+    )
+
+    for app_path in "${terminal_apps[@]}"; do
+        if [[ -d "$app_path" ]]; then
+            local app_name=$(basename "$app_path" .app)
+            log_info "Granting Full Disk Access to $app_name"
+
+            # Get the app bundle identifier
+            local bundle_id
+            bundle_id=$(plutil -p "$app_path/Contents/Info.plist" | grep CFBundleIdentifier | sed 's/.*=> "\(.*\)"/\1/')
+
+            if [[ -n "$bundle_id" ]]; then
+                # Add to TCC database for Full Disk Access (kTCCServiceSystemPolicyAllFiles)
+                sudo sqlite3 "$tcc_db" "INSERT OR REPLACE INTO access VALUES('kTCCServiceSystemPolicyAllFiles','$bundle_id',0,1,1,NULL,NULL,NULL,'UNUSED',NULL,0,1541440109);" 2>/dev/null || {
+                    log_warning "Could not automatically grant access to $app_name"
+                    log_info "Please add $app_path manually in System Preferences"
+                }
+            fi
+        fi
+    done
+
+    # Special handling for current terminal session
+    if [[ -n "${ITERM_SESSION_ID:-}" ]]; then
+        log_info "✅ iTerm2 detected - ensuring Full Disk Access"
+    elif [[ -n "${TERM_PROGRAM:-}" ]] && [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
+        log_info "✅ Apple Terminal detected - ensuring Full Disk Access"
+    fi
+
+    log_success "Terminal Full Disk Access configuration complete"
+    log_info "ℹ️  You may need to restart your terminal for changes to take effect"
 }
 
 # Performance optimizations with device-aware settings
@@ -487,11 +630,19 @@ main() {
     fi
     
     mac_request_sudo
-    
+
     if [[ "$FORCE_MODE" == false ]]; then
         mac_confirm_changes "macOS system optimization" "This will apply developer and power user optimizations to your system."
     fi
-    
+
+    # Check Full Disk Access first - critical for security configuration
+    if ! check_full_disk_access; then
+        log_warning "⚠️  Cannot proceed without Full Disk Access"
+        log_info "Please grant Full Disk Access and restart your terminal"
+        show_full_disk_access_instructions
+        exit 1
+    fi
+
     configure_ui_ux
     configure_input
     configure_display

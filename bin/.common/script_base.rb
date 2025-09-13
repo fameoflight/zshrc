@@ -222,10 +222,54 @@ class ScriptBase
 
     if File.exist?(gemfile_path)
       ENV['BUNDLE_GEMFILE'] = gemfile_path
-      require 'bundler/setup' if defined?(Bundler)
+
+      # Try to require bundler/setup, but handle gracefully if not available
+      begin
+        require 'bundler/setup'
+      rescue LoadError
+        # If bundler/setup fails, try to auto-install bundler and gems
+        setup_bundler_fallback(zsh_config_dir)
+      end
     end
   rescue LoadError
     # Bundler not available, continue without it
+  end
+
+  private
+
+  # Fallback bundler setup - tries to bootstrap the environment
+  def setup_bundler_fallback(zsh_config_dir)
+    return unless File.exist?(File.join(zsh_config_dir, 'Gemfile'))
+
+    # Check if we're in the right directory context
+    original_dir = Dir.pwd
+
+    begin
+      Dir.chdir(zsh_config_dir)
+
+      # Try to install bundler if missing
+      unless system('gem list bundler -i > /dev/null 2>&1')
+        puts "📦 Installing bundler..."
+        system('gem install bundler')
+      end
+
+      # Try bundle install if Gemfile.lock is missing or outdated
+      gemfile_lock = File.join(zsh_config_dir, 'Gemfile.lock')
+      gemfile = File.join(zsh_config_dir, 'Gemfile')
+
+      if !File.exist?(gemfile_lock) || File.mtime(gemfile) > File.mtime(gemfile_lock)
+        puts "📚 Installing gems with bundle install..."
+        system('bundle install --path vendor/bundle --quiet')
+      end
+
+      # Now try to require bundler/setup again
+      require 'bundler/setup'
+    rescue StandardError => e
+      # If all else fails, just continue - the script might work without bundler
+      puts "⚠️  Warning: Could not setup bundler: #{e.message}" if ENV['DEBUG']
+    ensure
+      Dir.chdir(original_dir)
+    end
   end
 
   # Setup session logging

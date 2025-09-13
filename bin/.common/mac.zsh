@@ -94,6 +94,15 @@ mac_detect_device() {
         DEVICE_TYPE="laptop"
         log_info "🔋 Laptop detected: $model ($model_id)"
         [[ -n "$chip" ]] && log_info "   Processor: $chip"
+
+        # Add RAM and storage info for laptops
+        local ram_gb
+        ram_gb=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2, $3}' | head -1)
+        [[ -n "$ram_gb" ]] && log_info "   Memory: $ram_gb"
+
+        local storage_size
+        storage_size=$(df -h / | tail -1 | awk '{print $2}')
+        [[ -n "$storage_size" ]] && log_info "   Storage: $storage_size total"
     else
         DEVICE_TYPE="desktop"
         if [[ "$is_imac" == true ]]; then
@@ -111,6 +120,15 @@ mac_detect_device() {
             log_info "🖥️  Desktop Mac detected: $model ($model_id)"
         fi
         [[ -n "$chip" ]] && log_info "   Processor: $chip"
+
+        # Add RAM and storage info for initial detection
+        local ram_gb
+        ram_gb=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2, $3}' | head -1)
+        [[ -n "$ram_gb" ]] && log_info "   Memory: $ram_gb"
+
+        local storage_size
+        storage_size=$(df -h / | tail -1 | awk '{print $2}')
+        [[ -n "$storage_size" ]] && log_info "   Storage: $storage_size total"
     fi
     
     # Export for use by other functions
@@ -257,6 +275,27 @@ mac_show_system_info() {
     log_info "Model: $DEVICE_MODEL"
     log_info "Model ID: $DEVICE_MODEL_ID"
     [[ -n "$DEVICE_CHIP" ]] && log_info "Processor: $DEVICE_CHIP"
+
+    # Add RAM information
+    local ram_gb
+    ram_gb=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2, $3}' | head -1)
+    if [[ -n "$ram_gb" ]]; then
+        log_info "Memory: $ram_gb"
+    fi
+
+    # Add disk information
+    local disk_info
+    disk_info=$(df -h / | tail -1 | awk '{print "Total: " $2 ", Used: " $3 " (" $5 "), Free: " $4}')
+    if [[ -n "$disk_info" ]]; then
+        log_info "Storage: $disk_info"
+    fi
+
+    # Add SSD/storage details for more context
+    local storage_type
+    storage_type=$(system_profiler SPStorageDataType 2>/dev/null | grep -A1 "Physical Drive" | grep "Medium Type" | cut -d: -f2 | xargs | head -1)
+    if [[ -n "$storage_type" ]]; then
+        log_info "Storage Type: $storage_type"
+    fi
 }
 
 # Parse common command line arguments

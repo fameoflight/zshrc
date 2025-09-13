@@ -1209,3 +1209,4 @@ Important Notes
 - When checking implementations, be specific about what you're looking for to get accurate results
 ```
 ````
+- always use dry principle - do not repeat yourself and small functions

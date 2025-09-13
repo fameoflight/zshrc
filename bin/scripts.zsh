@@ -141,6 +141,11 @@ website-epub() {
   _execute_ruby_script "website-epub.rb" "$@"
 }
 
+# Safari reading list to EPUB converter
+safari-epub() {
+  _execute_ruby_script "safari-epub.rb" "$@"
+}
+
 # Agent documentation setup - convert CLAUDE.md to AGENT.md with symlinks
 agent-setup() {
   local script_path="$ZSH_CONFIG/bin/agent-setup.sh"
@@ -194,6 +199,7 @@ list-scripts() {
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
   echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+  echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
   echo "  📜 list-scripts          - Show this help"
@@ -373,6 +379,7 @@ scripts() {
     echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
     echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
     echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+    echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
     echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
@@ -449,8 +456,8 @@ scripts() {
   local utility_functions=(
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
-    "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "agent-setup"
-    "spotlight-manage" "llm-generate"
+    "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
+    "agent-setup" "spotlight-manage" "llm-generate"
   )
   
   for func in "${utility_functions[@]}"; do

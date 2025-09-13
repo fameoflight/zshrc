@@ -158,3 +158,6 @@ When multiple valid approaches exist, choose based on:
 - Update plan documentation as you go
 - Learn from existing implementations
 - Stop after 3 failed attempts and reassess
+- always use dry principle - do not repeat yourself and small functions 
+
+code should be readable (not too long, not unnecessary to make it too short, it's okay to break the rules sometimes)

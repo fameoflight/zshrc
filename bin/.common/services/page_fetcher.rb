@@ -25,6 +25,7 @@ class PageFetcher
     {
       cache_enabled: true,
       cache_ttl: 24 * 60 * 60, # 24 hours in seconds
+      parallel_enabled: true,
       timeout: 30,
       user_agent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
     }
@@ -36,11 +37,17 @@ class PageFetcher
 
   # Fetch page content (tries cache first, then fetches)
   def fetch_page(url, javascript: false)
-    puts "📄 Fetching: #{url}" if verbose?
-    
+    puts "📄 Fetching: #{url} (JS: #{javascript})" if verbose?
+
     cache_namespace = javascript ? 'js' : 'no_js'
-    
-    with_cache("#{url}:#{javascript}", namespace: cache_namespace) do
+    cache_key = "#{url}:#{javascript}"
+
+    if verbose?
+      puts "📂 Cache namespace: #{cache_namespace}"
+      puts "🔑 Cache key: #{cache_key}"
+    end
+
+    with_cache(cache_key, namespace: cache_namespace) do
       puts "💾 Cache miss, fetching..." if verbose?
       javascript ? fetch_with_javascript(url) : fetch_without_javascript(url)
     end
@@ -49,8 +56,40 @@ class PageFetcher
   # Batch fetch multiple URLs with progress bar
   def fetch_pages(urls, javascript: false)
     require 'tty-progressbar'
-    
-    bar = TTY::ProgressBar.new("📄 [:bar] :percent Fetching pages (:current/:total)", 
+
+    # Use parallel processing for non-JavaScript mode with multiple domains
+    if !javascript && can_use_parallel_processing?(urls)
+      fetch_pages_parallel(urls, javascript: javascript)
+    else
+      fetch_pages_sequential(urls, javascript: javascript)
+    end
+  end
+
+  # Check if we can use parallel processing
+  def can_use_parallel_processing?(urls)
+    return false unless @options[:parallel_enabled]
+    return false if urls.size < 2
+
+    # Count distinct domains
+    domains = urls.map { |url| extract_domain(url) }.compact.uniq
+    domains.size > 1
+  end
+
+  # Extract domain from URL for parallel processing logic
+  def extract_domain(url)
+    begin
+      uri = URI(url)
+      uri.host
+    rescue URI::InvalidURIError
+      nil
+    end
+  end
+
+  # Sequential fetch (original implementation)
+  def fetch_pages_sequential(urls, javascript: false)
+    require 'tty-progressbar'
+
+    bar = TTY::ProgressBar.new("📄 [:bar] :percent Fetching pages (:current/:total)",
                               total: urls.size,
                               width: 20,
                               incomplete: '·',
@@ -72,6 +111,74 @@ class PageFetcher
     results
   end
 
+  # Parallel fetch using threads for different domains
+  def fetch_pages_parallel(urls, javascript: false)
+    require 'tty-progressbar'
+    require 'thread'
+
+    # Group URLs by domain
+    domain_groups = urls.group_by { |url| extract_domain(url) || 'unknown' }
+
+    puts "🚀 Processing #{domain_groups.size} domains in parallel..." if @options[:verbose]
+
+    # Create shared results hash and mutex for thread safety
+    results = {}
+    results_mutex = Mutex.new
+    completed_count = 0
+    completed_mutex = Mutex.new
+
+    # Create progress bar
+    bar = TTY::ProgressBar.new("📄 [:bar] :percent Fetching pages (:current/:total)",
+                              total: urls.size,
+                              width: 20,
+                              incomplete: '·',
+                              complete: '█')
+
+    # Create thread pool (one thread per domain)
+    threads = []
+
+    domain_groups.each do |domain, domain_urls|
+      threads << Thread.new do
+        begin
+          # Process all URLs from this domain sequentially
+          domain_urls.each do |url|
+            begin
+              page_data = fetch_page(url, javascript: javascript)
+
+              # Store result safely
+              results_mutex.synchronize do
+                results[url] = page_data
+              end
+
+            rescue => e
+              puts "\n⚠️  Error fetching #{url}: #{e.message}" if @options[:verbose]
+              results_mutex.synchronize do
+                results[url] = nil
+              end
+            end
+
+            # Update progress safely
+            completed_mutex.synchronize do
+              completed_count += 1
+              bar.advance(1)
+            end
+          end
+        rescue => e
+          puts "\n❌ Thread error for domain #{domain}: #{e.message}" if @options[:verbose]
+        end
+      end
+    end
+
+    # Wait for all threads to complete
+    threads.each(&:join)
+
+    bar.finish
+    puts "\n📊 Successfully fetched: #{results.values.compact.size}/#{urls.size} pages"
+    puts "⚡ Parallel processing completed for #{domain_groups.size} domains" if @options[:verbose]
+
+    results
+  end
+
   def close
     if @browser
       puts "🔒 Closing browser..." if @options[:verbose]
@@ -85,25 +192,42 @@ class PageFetcher
 
   def fetch_with_javascript(url)
     setup_browser unless @browser
-    
+
     begin
       @browser.goto(url)
-      
-      # Wait for page to load
-      sleep(2)
-      
+
+      # Wait for page to load - increased wait time for complex sites
+      sleep(3)
+
       # Check if page is fully loaded
       ready_state = @browser.evaluate("document.readyState")
       if ready_state != 'complete'
-        sleep(1) # Wait a bit more
+        puts "⏳ Waiting for page to fully load..." if verbose?
+        sleep(2) # Wait a bit more for complex sites
       end
-      
+
+      # Wait for dynamic content to load (JavaScript-heavy sites)
+      begin
+        # Wait up to 10 seconds for content to appear
+        wait_start = Time.now
+        while (Time.now - wait_start) < 10
+          # Check if there's meaningful content (not just loading messages)
+          body_text = @browser.evaluate("document.body.innerText")
+          if body_text && body_text.length > 100 && !body_text.include?('JavaScript') && !body_text.include?('loading')
+            break
+          end
+          sleep(0.5)
+        end
+      rescue => e
+        puts "⚠️  Content wait check failed: #{e.message}" if verbose?
+      end
+
       content = @browser.body
-      
+
       # Handle encoding issues for JavaScript content
       content = clean_encoding(content)
       title = clean_encoding(@browser.title)
-      
+
       {
         url: url,
         content: content,
@@ -172,19 +296,27 @@ class PageFetcher
 
   def setup_browser
     return if @browser
-    
+
     require 'ferrum'
-    
+
     @browser = Ferrum::Browser.new(
       headless: true,
-      timeout: @options[:timeout],
+      timeout: @options[:timeout] || 60,  # Increased timeout for JavaScript-heavy sites
       window_size: [1920, 1080],
       browser_options: {
         'no-sandbox' => nil,
         'disable-gpu' => nil,
-        'disable-dev-shm-usage' => nil
-      }
+        'disable-dev-shm-usage' => nil,
+        'disable-web-security' => nil,  # Allow cross-origin requests for complex sites
+        'disable-features' => 'VizDisplayCompositor'  # Reduce memory usage
+      },
+      # Ignore certificate errors for HTTPS sites
+      ignore_default_options: false,
+      process_timeout: 120  # Increased process timeout
     )
+
+    # Set user agent to appear more like a real browser
+    @browser.headers.set('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
   end
 
   # Clean and handle encoding issues in content
