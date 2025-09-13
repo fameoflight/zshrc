@@ -158,6 +158,11 @@ agent-setup() {
   bash "$script_path" "$@"
 }
 
+# Spotlight indexing management - control macOS Spotlight settings
+spotlight-manage() {
+  _execute_ruby_script "spotlight-manage.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -237,18 +242,114 @@ list-scripts() {
 # UNIFIED SCRIPTS INTERFACE
 # =============================================================================
 
+# Recently used scripts tracking with CSV format
+_track_script_usage() {
+  local script_name="$1"
+  local history_file="$ZSH_CONFIG/.scripts_history"
+
+  # Create history file with CSV header if it doesn't exist
+  if [[ ! -f "$history_file" ]]; then
+    echo "timestamp,script_name,working_directory" > "$history_file"
+  fi
+
+  # Get current timestamp and working directory
+  local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  local working_directory=$(pwd)
+
+  # Add new entry directly to the file
+  echo "$timestamp,\"$script_name\",\"$working_directory\"" >> "$history_file"
+
+  # Keep only last 100 entries (plus header)
+  if [[ -f "$history_file" ]]; then
+    head -1 "$history_file" > "${history_file}.tmp"
+    tail -n +2 "$history_file" | tail -100 >> "${history_file}.tmp"
+    mv "${history_file}.tmp" "$history_file"
+  fi
+}
+
+# Fuzzy finder integration for script selection
+_fuzzy_select_script() {
+  # Check if fzf is available
+  if ! command -v fzf >/dev/null 2>&1; then
+    log_error "fzf not found. Install with: brew install fzf"
+    return 1
+  fi
+  
+  local -a all_scripts
+  local zsh_config_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
+  
+  # Collect all available scripts with descriptions and categories
+  
+  # Add ZSH utility functions
+  if [[ -f "$zsh_config_dir/bin/scripts.zsh" ]]; then
+    local -a utility_functions
+    utility_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-scripts\(\)' | cut -d'(' -f1))
+    
+    for func in $utility_functions; do
+      all_scripts+=("🐚 $func - ZSH utility function")
+    done
+  fi
+  
+  # Add Makefile targets
+  if [[ -f "$zsh_config_dir/Makefile" ]]; then
+    local -a makefile_targets
+    makefile_targets=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*:' "$zsh_config_dir/Makefile" | grep -v '^\.PHONY' | cut -d':' -f1 | grep -E '^(macos|claude|gemini|vscode|xcode|iterm|find-orphans)' | head -20))
+    
+    for target in $makefile_targets; do
+      all_scripts+=("🔧 $target - Makefile target")
+    done
+  fi
+  
+  # Add recently used scripts at the top
+  if [[ -f "$zsh_config_dir/.scripts_history" ]]; then
+    local -a recent_scripts
+    # Skip header and get last 10 unique script names from CSV
+    recent_scripts=($(tail -n +2 "$zsh_config_dir/.scripts_history" | cut -d',' -f2 | tail -10 | tac | sort -u))
+
+    for script in $recent_scripts; do
+      all_scripts=("⭐ $script - Recently used" "${all_scripts[@]}")
+    done
+  fi
+  
+  # Use fzf to select script
+  local selected
+  selected=$(printf "%s\n" "${all_scripts[@]}" | fzf \
+    --height=20 \
+    --layout=reverse \
+    --border \
+    --prompt="🔍 Select script: " \
+    --preview='echo {}' \
+    --preview-window=down:1 \
+    --header="Tab: select, Enter: run, Esc: cancel")
+  
+  if [[ -n "$selected" ]]; then
+    # Extract script name from selection
+    local script_name=$(echo "$selected" | sed -E 's/^[🐚🔧⭐] ([^ ]+) -.*/\1/')
+    echo "$script_name"
+  fi
+}
+
 # Unified scripts function - provides clean interface to all scripts
 scripts() {
   local script_name="$1"
   shift  # Remove script name from arguments
   
-  # Show help if no arguments or --help
-  if [[ -z "$script_name" ]] || [[ "$script_name" == "--help" ]] || [[ "$script_name" == "-h" ]]; then
+  # Interactive fuzzy finder if no arguments
+  if [[ -z "$script_name" ]]; then
+    script_name=$(_fuzzy_select_script)
+    [[ -z "$script_name" ]] && return 0  # User cancelled
+    log_info "Selected: $script_name"
+  fi
+  
+  # Show help if --help
+  if [[ "$script_name" == "--help" ]] || [[ "$script_name" == "-h" ]]; then
     echo -e "\033[1m\033[0;36m📜 Scripts Interface\033[0m"
     echo ""
     echo -e "\033[1mUSAGE:\033[0m"
+    echo "  scripts                     Interactive fuzzy finder (fzf)"
     echo "  scripts --help              Show this help"
     echo "  scripts --list              Show all available scripts"
+    echo "  scripts --recent            Show recently used scripts"
     echo "  scripts make                Show Makefile help (make targets)"
     echo "  scripts <script> [args...]  Run a script with arguments"
     echo ""
@@ -267,6 +368,7 @@ scripts() {
     echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
     echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
     echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
+    echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo "  🛠️  macos-optimize       - Optimize macOS system settings"
@@ -279,9 +381,12 @@ scripts() {
     echo "  ⚙️  iterm-setup          - Restore iTerm2 settings"
     echo ""
     echo -e "\033[1mEXAMPLES:\033[0m"
+    echo "  scripts                               # Interactive fuzzy finder"
+    echo "  scripts --recent                      # Show recently used scripts"
     echo "  scripts make                          # Show all Makefile targets"
     echo "  scripts merge-pdf output.pdf *.pdf    # Merge PDF files"
     echo "  scripts stack-monitors --dry-run      # Test monitor setup"
+    echo "  scripts spotlight-manage --status     # Check Spotlight status"
     echo "  scripts uninstall-app Docker          # Uninstall application"
     echo "  scripts macos-optimize --dry-run      # Preview macOS optimizations"
     echo ""
@@ -291,6 +396,38 @@ scripts() {
   # Show list if --list
   if [[ "$script_name" == "--list" ]] || [[ "$script_name" == "-l" ]]; then
     list-scripts
+    return 0
+  fi
+  
+  # Show recently used scripts
+  if [[ "$script_name" == "--recent" ]] || [[ "$script_name" == "-r" ]]; then
+    echo -e "\033[1m\033[0;36m⭐ Recently Used Scripts\033[0m"
+    echo ""
+    if [[ -f "$ZSH_CONFIG/.scripts_history" ]]; then
+      echo "Last 20 scripts used:"
+      # Skip header and format the CSV output
+      tail -n +2 "$ZSH_CONFIG/.scripts_history" | tail -20 | awk -F',' '
+      {
+        timestamp = $1
+        script = $2
+        working_dir = $3
+
+        # Remove quotes from fields
+        gsub(/"/, "", script)
+        gsub(/"/, "", working_dir)
+
+        # Format timestamp for display
+        gsub(/T/, " ", timestamp)
+        gsub(/Z/, "", timestamp)
+
+        printf "  \033[0;33m%d.\033[0m %s (\033[0;36m%s\033[0m)\n", NR, script, timestamp
+        printf "    \033[0;37m📁 %s\033[0m\n", working_dir
+      }'
+    else
+      echo "No script usage history found"
+    fi
+    echo ""
+    echo "💡 Run any script to start tracking usage"
     return 0
   fi
   
@@ -306,10 +443,13 @@ scripts() {
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "agent-setup"
+    "spotlight-manage"
   )
   
   for func in "${utility_functions[@]}"; do
     if [[ "$script_name" == "$func" ]]; then
+      # Track usage before execution
+      _track_script_usage "$script_name"
       # Call the function directly with all arguments
       "$script_name" "$@"
       return $?
@@ -324,6 +464,8 @@ scripts() {
   
   for script in "${makefile_scripts[@]}"; do
     if [[ "$script_name" == "$script" ]]; then
+      # Track usage before execution
+      _track_script_usage "$script_name"
       echo -e "\033[0;34mℹ️  Running Makefile target: make $script_name $*\033[0m"
       cd "$ZSH_CONFIG" && make "$script_name" "$@"
       return $?
@@ -333,6 +475,8 @@ scripts() {
   # Check if it's a raw script file in bin/
   local script_path="$ZSH_CONFIG/bin/$script_name"
   if [[ -f "$script_path" ]] && [[ -x "$script_path" ]]; then
+    # Track usage before execution
+    _track_script_usage "$script_name"
     echo -e "\033[0;34mℹ️  Running script: $script_path $*\033[0m"
     
     # Determine how to execute based on file extension

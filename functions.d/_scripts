@@ -1,0 +1,147 @@
+#compdef scripts
+
+# Dynamic tab completion for scripts function
+# Automatically discovers all available scripts without manual updates
+
+_scripts() {
+  local context state state_descr line
+  typeset -A opt_args
+  
+  # Define the completion specification
+  _arguments -C \
+    '1: :->command' \
+    '*: :->args' \
+    && return 0
+  
+  case $state in
+    command)
+      local -a commands
+      local zsh_config_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
+      
+      # Add special commands
+      commands+=(
+        '--help:Show help for scripts interface'
+        '--list:Show all available scripts'
+        'make:Show Makefile help'
+      )
+      
+      # Dynamically discover ZSH utility functions from scripts.zsh
+      if [[ -f "$zsh_config_dir/bin/scripts.zsh" ]]; then
+        local -a utility_functions
+        utility_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-scripts\(\)' | cut -d'(' -f1))
+        
+        for func in $utility_functions; do
+          # Try to extract description from comment above function
+          local desc=$(grep -B5 "^${func}()" "$zsh_config_dir/bin/scripts.zsh" | grep -E "^# " | tail -1 | sed 's/^# //')
+          [[ -z "$desc" ]] && desc="ZSH utility function"
+          commands+=("${func}:${desc}")
+        done
+      fi
+      
+      # Dynamically discover Makefile targets
+      if [[ -f "$zsh_config_dir/Makefile" ]]; then
+        local -a makefile_targets
+        makefile_targets=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*:' "$zsh_config_dir/Makefile" | grep -v '^\.PHONY' | cut -d':' -f1 | grep -E '^(macos|claude|gemini|vscode|xcode|iterm|find-orphans)' | head -20))
+        
+        for target in $makefile_targets; do
+          # Extract description from comment above target
+          local desc=$(grep -B3 "^${target}:" "$zsh_config_dir/Makefile" | grep -E "^#" | tail -1 | sed 's/^# *//')
+          [[ -z "$desc" ]] && desc="Makefile target"
+          commands+=("${target}:${desc}")
+        done
+      fi
+      
+      # Dynamically discover script files in bin/
+      if [[ -d "$zsh_config_dir/bin" ]]; then
+        local -a script_files
+        for script in "$zsh_config_dir/bin"/*; do
+          if [[ -f "$script" && -x "$script" ]]; then
+            local basename_script=$(basename "$script")
+            # Skip special files
+            [[ "$basename_script" =~ ^(scripts\.zsh|\..*|.*\.applescript)$ ]] && continue
+            
+            # Remove extension for completion
+            local script_name="${basename_script%.*}"
+            local extension="${basename_script##*.}"
+            
+            # Determine icon and type
+            local icon=""
+            case "$extension" in
+              rb) icon="💎 Ruby" ;;
+              py) icon="🐍 Python" ;;
+              sh) icon="🔧 Shell" ;;
+              *) icon="📄 Script" ;;
+            esac
+            
+            commands+=("${script_name}:${icon} script")
+          fi
+        done
+      fi
+      
+      # Add recently used scripts (prioritized)
+      if [[ -f "$zsh_config_dir/.scripts_history" ]]; then
+        local -a recent_scripts
+        recent_scripts=($(tail -10 "$zsh_config_dir/.scripts_history" | sort -u))
+        for script in $recent_scripts; do
+          # Add star to indicate recently used and move to front
+          commands=("${script}:⭐ Recently used" "${commands[@]}")
+        done
+      fi
+      
+      _describe 'scripts' commands
+      ;;
+    args)
+      # Dynamic argument completion based on script type
+      case $words[2] in
+        merge-pdf)
+          _files -g "*.pdf"
+          ;;
+        merge-md)
+          _files -g "*.md"
+          ;;
+        website-epub)
+          _urls
+          ;;
+        uninstall-app)
+          # Complete with installed applications
+          local -a apps
+          if [[ -d "/Applications" ]]; then
+            apps=($(ls /Applications 2>/dev/null | sed 's/\.app$//' | head -20))
+          fi
+          _describe 'applications' apps
+          ;;
+        *-optimize|*-setup|*-backup)
+          # Common options for system scripts
+          local -a options
+          options=(
+            '--dry-run:Preview changes without applying'
+            '--force:Skip confirmation prompts'
+            '--help:Show help for this command'
+            '--verbose:Enable verbose output'
+          )
+          _describe 'options' options
+          ;;
+        spotlight-manage)
+          local -a spotlight_options
+          spotlight_options=(
+            '--status:Show current Spotlight status'
+            '--disable:Disable Spotlight indexing'
+            '--enable:Enable Spotlight indexing'
+            '--rebuild:Rebuild Spotlight index'
+            '--exclude:Add directory to exclusions'
+            '--include:Remove directory from exclusions'
+            '--help:Show Spotlight management help'
+          )
+          _describe 'spotlight options' spotlight_options
+          ;;
+        *)
+          # Default file completion
+          _files
+          ;;
+      esac
+      ;;
+  esac
+}
+
+# Register the completion function
+_scripts "$@"
