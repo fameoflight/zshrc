@@ -346,20 +346,14 @@ configure_notifications() {
 configure_hot_corners() {
     log_section "Hot Corners for Display Protection (Using Your Current Setup)"
     
-    log_info "Applying your custom hot corner configuration:"
-    echo "  • Top-left: Disabled (user preference)"
-    echo "  • Top-right: Disabled (user preference)"
-    echo "  • Bottom-left: Lock Screen (user preference)"
-    echo "  • Bottom-right: Mission Control (user preference)"
-    
     # Apply your custom hot corner settings
-    defaults write com.apple.dock wvous-tl-corner -int 0   # Disabled
+    defaults write com.apple.dock wvous-tl-corner -int 2   # Mission Control
     defaults write com.apple.dock wvous-tl-modifier -int 0
     defaults write com.apple.dock wvous-tr-corner -int 0   # Disabled
     defaults write com.apple.dock wvous-tr-modifier -int 0
     defaults write com.apple.dock wvous-bl-corner -int 13  # Lock Screen
     defaults write com.apple.dock wvous-bl-modifier -int 0
-    defaults write com.apple.dock wvous-br-corner -int 2   # Mission Control
+    defaults write com.apple.dock wvous-br-corner -int 0   # Disabled
     defaults write com.apple.dock wvous-br-modifier -int 0
     
     log_success "Hot corners set with your hardcoded OLED-optimized configuration"
