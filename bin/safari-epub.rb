@@ -45,6 +45,14 @@ class SafariEpub < ScriptBase
       @options[:use_javascript] = js
     end
 
+    opts.on('--[no-]download-images', 'Download and embed images in EPUB (default: true)') do |download|
+      @options[:download_images] = download
+    end
+
+    opts.on('--max-image-size SIZE', Integer, 'Maximum image size in bytes (default: 5MB)') do |size|
+      @options[:max_image_size] = size
+    end
+
     opts.on('--[no-]cache', 'Enable page caching (default: true)') do |cache|
       @options[:cache_enabled] = cache
     end
@@ -80,6 +88,8 @@ class SafariEpub < ScriptBase
                   epub_author: 'Safari Reader',
                   save_to_icloud: true,
                   use_javascript: false,
+                  download_images: true,
+                  max_image_size: 5 * 1024 * 1024, # 5MB
                   cache_enabled: true,
                   max_articles: 33,
                   parallel_enabled: true,
@@ -105,8 +115,11 @@ class SafariEpub < ScriptBase
     puts "  #{script_name} --list-only                  # Just show reading list URLs"
     puts "  #{script_name} --epub-title 'My Articles'   # Custom EPUB title"
     puts "  #{script_name} --max-articles 50            # Limit to 50 articles (default: 33)"
+    puts "  #{script_name} --force                      # Force fresh download (clears all cache)"
     puts "  #{script_name} --delete-after               # Delete articles after EPUB creation"
     puts "  #{script_name} --javascript                 # Use JavaScript for better content extraction"
+    puts "  #{script_name} --no-download-images         # Skip downloading images (smaller EPUB size)"
+    puts "  #{script_name} --max-image-size 1048576     # Limit images to 1MB each"
     puts "  #{script_name} --no-parallel                # Disable parallel downloads (slower but safer)"
     puts "  #{script_name} --no-save-to-icloud          # Save locally instead of iCloud"
     puts "  #{script_name} --no-cache                   # Disable caching"
@@ -115,6 +128,8 @@ class SafariEpub < ScriptBase
     puts ""
     puts "Note: Default EPUB title is 'Readings {Current Date}' (e.g., 'Readings May 12, 2025')"
     puts "Note: JavaScript and non-JavaScript modes use separate caches"
+    puts "Note: Images are downloaded and embedded by default (max 5MB each)"
+    puts "Note: Use --force to clear all cache and ensure fresh content downloads"
   end
 
   def run
@@ -489,6 +504,11 @@ class SafariEpub < ScriptBase
   def create_epub_from_reading_list(urls)
     return if urls.empty?
 
+    if force?
+      log_section('🧹 Force Mode Enabled - Clearing All Cache')
+      log_info('This will ensure fresh content is downloaded')
+    end
+
     log_section('📚 Creating EPUB from Reading List')
 
     # Initialize EPUB generator using existing service (DRY principle)
@@ -497,6 +517,8 @@ class SafariEpub < ScriptBase
                                          javascript: @options[:use_javascript],
                                          parallel_enabled: @options[:parallel_enabled],
                                          save_to_icloud: @options[:save_to_icloud],
+                                         download_images: @options[:download_images],
+                                         max_image_size: @options[:max_image_size],
                                          app_name: 'SafariEPUB',
                                          icloud_identifier: 'reading-list',
                                          force: force?,
@@ -524,7 +546,7 @@ class SafariEpub < ScriptBase
 
       # Delete articles from reading list if requested
       if @options[:delete_after]
-        delete_processed_articles(reading_list_urls)
+        delete_processed_articles(urls)
       end
     else
       log_error('Failed to create EPUB')

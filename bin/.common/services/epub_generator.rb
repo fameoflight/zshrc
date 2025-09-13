@@ -8,12 +8,14 @@ require 'cgi'
 require 'json'
 require 'securerandom'
 require 'readability'
+require 'nokogiri'
 require_relative '../script_base'
 require_relative '../logger'
 require_relative './page_fetcher'
 require_relative './browser_service'
 require_relative '../concerns/article_detector'
 require_relative '../concerns/icloud_storage'
+require_relative './image_processor'
 
 # EPUB Generator Service - Creates EPUB files from website articles
 class EPUBGenerator
@@ -28,7 +30,9 @@ class EPUBGenerator
       app_name: 'WebsiteEPUB',
       icloud_identifier: nil,
       verbose: false,
-      debug: false
+      debug: false,
+      download_images: true,
+      max_image_size: 5 * 1024 * 1024 # 5MB
     }.merge(options)
 
     @page_fetcher = PageFetcher.new(
@@ -37,7 +41,17 @@ class EPUBGenerator
       verbose: @options[:verbose]
     )
 
+    @image_processor = ImageProcessor.new({
+      download_images: @options[:download_images],
+      max_image_size: @options[:max_image_size],
+      verbose: @options[:verbose],
+      debug: @options[:debug]
+    })
+
     @logger = @options[:logger]
+
+    # Clear cache if force mode is enabled
+    clear_all_cache if @options[:force]
   end
 
   def generate_epub_from_urls(urls, title = nil, author = nil)
@@ -1006,50 +1020,57 @@ class EPUBGenerator
             <p><strong>Source:</strong> <a href="#{CGI.escapeHTML(url)}">#{CGI.escapeHTML(url)}</a></p>
           </div>
           <div class="content">
-            #{format_content_for_epub(content)}
+            #{format_content_for_epub(content, url)}
           </div>
         </body>
       </html>
     HTML
   end
 
-  def format_content_for_epub(content)
+  def format_content_for_epub(content, base_url = nil)
     return "<p>Content not available</p>" if content.nil? || content.empty?
-    
+
     # Check if content is already HTML (from Readability)
     if content.include?('<p>') || content.include?('<div>') || content.include?('<h')
-      # Content is already HTML, just clean it up
+      # Content is already HTML, process images and clean it up
       doc = Nokogiri::HTML::DocumentFragment.parse(content)
-      
+
+      # Process images if image downloading is enabled
+      if @options[:download_images] && base_url
+        puts "🖼️  Processing images in content from: #{base_url}" if @options[:verbose]
+        processed_html = @image_processor.process_html_content(doc.to_html, base_url)
+        doc = Nokogiri::HTML::DocumentFragment.parse(processed_html)
+      end
+
       # Remove any unwanted attributes but keep structure
       doc.search('*').each do |element|
         # Keep only essential attributes
-        allowed_attrs = %w[href src alt title]
+        allowed_attrs = %w[href src alt title width height]
         element.attributes.each do |name, attr|
           attr.remove unless allowed_attrs.include?(name)
         end
       end
-      
+
       # Return the cleaned HTML
       doc.to_html
     else
       # Content is plain text, format as paragraphs
       # Split by double newlines to separate paragraphs
       paragraphs = content.split(/\n\s*\n/)
-      
+
       html_content = paragraphs.map do |paragraph|
         next if paragraph.strip.empty?
-        
+
         # Clean up the paragraph
         clean_para = paragraph.strip.gsub(/\s+/, ' ')
-        
+
         # Escape HTML entities
         escaped_para = CGI.escapeHTML(clean_para)
-        
+
         # Wrap in paragraph tags
         "<p>#{escaped_para}</p>"
       end.compact.join("\n")
-      
+
       html_content
     end
   end
@@ -1294,6 +1315,27 @@ class EPUBGenerator
     else
       puts "❌ #{message}"
     end
+  end
+
+  def clear_all_cache
+    log_section("🧹 Clearing All Cache (Force Mode)")
+
+    # Clear page fetcher caches
+    js_cleared = @page_fetcher.cache_clear(namespace: 'js')
+    no_js_cleared = @page_fetcher.cache_clear(namespace: 'no_js')
+
+    # Clear image processor cache
+    if @options[:download_images]
+      image_cache_dir = File.join(Dir.tmpdir, 'epub_images')
+      if Dir.exist?(image_cache_dir)
+        image_count = Dir.glob(File.join(image_cache_dir, '*')).size
+        FileUtils.rm_rf(image_cache_dir)
+        FileUtils.mkdir_p(image_cache_dir)
+        log_info("Cleared #{image_count} cached images")
+      end
+    end
+
+    log_success("Cache cleared - JS: #{js_cleared} files, No-JS: #{no_js_cleared} files")
   end
 
   def log_debug(message)

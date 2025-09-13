@@ -316,7 +316,9 @@ class PageFetcher
     )
 
     # Set user agent to appear more like a real browser
-    @browser.headers.set('User-Agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+    @browser.headers.set({
+      'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    })
   end
 
   # Clean and handle encoding issues in content

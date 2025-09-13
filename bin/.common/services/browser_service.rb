@@ -57,24 +57,33 @@ class BrowserService
         click_count += 1
         puts "🎯 Click #{click_count}/#{max_clicks}"
         
-        # Wait for new content
-        if @element_analyzer.wait_for_content_change(initial_counts)
-          # Collect ALL URLs from updated page (exactly like original debug script)
-          new_urls_found = @element_analyzer.collect_all_urls_after_click
-          
-          # Find truly new URLs that weren't there before (like original debug script lines 487-488)
+        # Wait for new content to load after clicking
+        if @element_analyzer.wait_for_content_change(initial_counts, timeout: 45)
+          # Re-collect ALL URLs from the entire updated page
+          puts "         🔄 Re-scanning entire page for URLs..."
+
+          # Wait for async loading to complete and scan multiple times
+          sleep(2)
+          @url_collector.reload_and_collect
+
+          # Additional scan for better coverage
+          sleep(2)
+          @url_collector.reload_and_collect
+
+          # Compare with URLs from before the click
           original_urls = urls_before_click.map { |u| u[:url] }
-          truly_new_urls = new_urls_found.select { |u| !original_urls.include?(u[:url]) }
-          
+          current_urls = @url_collector.urls
+          truly_new_urls = current_urls.select { |u| !original_urls.include?(u[:url]) }
+
           puts "         📊 New URLs discovered after click: #{truly_new_urls.size}"
-          
-          # Display new URLs by category (like original debug script)
+
+          # Display new URLs by category
           if truly_new_urls.any?
-            # Group new URLs by type (like original debug script lines 493-496)
+            # Group new URLs by type
             new_external_urls = truly_new_urls.select { |u| u[:url].start_with?('http') && !u[:url].include?(@url_collector.domain) }
             new_internal_urls = truly_new_urls.select { |u| u[:url].include?(@url_collector.domain) || u[:url].start_with?('/') }
             new_other_urls = truly_new_urls - new_external_urls - new_internal_urls
-            
+
             if new_external_urls.any?
               puts "\n         🌐 NEW External URLs (#{new_external_urls.size}):"
               new_external_urls.first(3).each do |url_info|
@@ -83,7 +92,7 @@ class BrowserService
               end
               puts "            ... (showing first 3 of #{new_external_urls.size})" if new_external_urls.size > 3
             end
-            
+
             if new_internal_urls.any?
               puts "\n         🏠 NEW Internal/#{@url_collector.domain.capitalize} URLs (#{new_internal_urls.size}):"
               new_internal_urls.first(3).each do |url_info|
@@ -92,7 +101,7 @@ class BrowserService
               end
               puts "            ... (showing first 3 of #{new_internal_urls.size})" if new_internal_urls.size > 3
             end
-            
+
             if new_other_urls.any?
               puts "\n         📎 NEW Other URLs (#{new_other_urls.size}):"
               new_other_urls.first(3).each do |url_info|
@@ -103,11 +112,8 @@ class BrowserService
             end
           else
             puts "         ⚠️  No completely new URLs found"
-            puts "         💡 Total links: #{urls_before_click.size} → #{new_urls_found.size}"
+            puts "         💡 Total links: #{urls_before_click.size} → #{current_urls.size}"
           end
-          
-          # Update URL collector with all URLs (before + after)
-          @url_collector.merge_urls(new_urls_found)
           
         else
           puts "⚠️  No new content loaded"
