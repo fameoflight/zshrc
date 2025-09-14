@@ -776,23 +776,49 @@ class YouTubeTranscriptChat < ScriptBase
   # MARKDOWN DISPLAY AND FORMATTING
   # =========================================================================
 
+  # Flag to disable markdown after multiple failures
+  def markdown_disabled?
+    @markdown_disabled ||= false
+  end
+
+  def disable_markdown!
+    @markdown_disabled = true
+    @options[:markdown] = false
+    log_warning("Markdown rendering disabled due to repeated failures")
+  end
+
   def display_summary(summary)
-    if @options[:markdown]
+    if @options[:markdown] && !markdown_disabled?
       begin
         require 'tty-markdown'
 
+        # Validate summary before parsing
+        return display_plain_summary(summary) if summary.nil? || summary.empty? || !summary.is_a?(String)
+
+        # Clean up text that might cause parsing issues
+        cleaned_summary = summary.dup.force_encoding('UTF-8').scrub('?')
+
         puts "\n"
-        puts TTY::Markdown.parse(summary, width: 100)
+        puts TTY::Markdown.parse(cleaned_summary, width: 100)
         puts "\n"
         return
       rescue LoadError
         log_debug("tty-markdown not available, using plain text")
+        disable_markdown!
+      rescue ArgumentError, IndexError => e
+        log_debug("Markdown parsing error: #{e.message}, using plain text")
+        disable_markdown!
       rescue StandardError => e
-        log_debug("Markdown rendering failed: #{e.message}")
+        log_debug("Markdown rendering failed: #{e.message}, using plain text")
+        disable_markdown!
       end
     end
 
     # Fallback to simple text display
+    display_plain_summary(summary)
+  end
+
+  def display_plain_summary(summary)
     puts "\n" + "="*80
     puts "📋 SUMMARY"
     puts "="*80
@@ -801,18 +827,29 @@ class YouTubeTranscriptChat < ScriptBase
   end
 
   def display_markdown_response(text)
-    if @options[:markdown]
+    if @options[:markdown] && !markdown_disabled?
       begin
         require 'tty-markdown'
 
-        # Parse markdown with better settings and error handling
-        parsed = TTY::Markdown.parse(text, width: 120, indent: 0)
+        # Validate text before parsing
+        return puts text if text.nil? || text.empty? || !text.is_a?(String)
+
+        # Clean up text that might cause parsing issues
+        cleaned_text = text.dup.force_encoding('UTF-8').scrub('?')
+
+        # Parse markdown with error handling
+        parsed = TTY::Markdown.parse(cleaned_text, width: 120, indent: 0)
         puts parsed
         return
       rescue LoadError
         log_debug("tty-markdown not available, using plain text")
+        disable_markdown!
+      rescue ArgumentError, IndexError => e
+        log_debug("Markdown parsing error: #{e.message}, falling back to plain text")
+        disable_markdown!
       rescue StandardError => e
         log_debug("Markdown rendering failed: #{e.message}, falling back to plain text")
+        disable_markdown!
       end
     end
 
