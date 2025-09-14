@@ -331,15 +331,7 @@ class YouTubeTranscriptChat < ScriptBase
     log_info("Using full transcript: #{text.length} characters for summarization")
 
     system_prompt = <<~PROMPT
-      You are an AI assistant that creates concise, helpful summaries of YouTube video transcripts.
-
-      Create a structured summary with:
-      1. Brief overview (2-3 sentences)
-      2. Key points (3-5 bullet points)
-      3. Main topics covered
-      4. Any actionable insights or conclusions
-
-      Be concise but comprehensive. Focus on the most valuable information.
+      You are an AI assistant that creates detailed, helpful summaries of YouTube video transcripts. Focus on the most valuable information.
     PROMPT
 
     user_prompt = <<~PROMPT
