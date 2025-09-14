@@ -23,6 +23,7 @@ class YouTubeTranscriptChat < ScriptBase
       • Interactive chat with video content
       • Support for multiple transcript languages
       • Local LLM integration via LM Studio
+      • Smart caching to avoid re-downloading transcripts
     BANNER
   end
 
@@ -37,6 +38,22 @@ class YouTubeTranscriptChat < ScriptBase
 
     opts.on('-o', '--output FILE', 'Save transcript to file') do |file|
       @options[:output_file] = file
+    end
+
+    opts.on('--force-refresh', 'Force re-download transcript, ignore cache') do
+      @options[:force_refresh] = true
+    end
+
+    opts.on('--cache-ttl DAYS', Integer, 'Cache time-to-live in days (default: 7)') do |days|
+      @options[:cache_ttl] = days
+    end
+
+    opts.on('--clear-cache', 'Clear all cached transcripts') do
+      @options[:clear_cache] = true
+    end
+
+    opts.on('--no-cache', 'Disable caching for this session') do
+      @options[:no_cache] = true
     end
 
     opts.on('-m', '--model MODEL', 'LLM model to use (if multiple available)') do |model|
@@ -89,6 +106,10 @@ class YouTubeTranscriptChat < ScriptBase
       language: 'en',
       summary_only: false,
       output_file: nil,
+      force_refresh: false,
+      cache_ttl: 7,
+      clear_cache: false,
+      no_cache: false,
       model: nil,
       list_models: false,
       temperature: 0.3,
@@ -105,6 +126,12 @@ class YouTubeTranscriptChat < ScriptBase
   end
 
   def validate!
+    if @options[:clear_cache]
+      clear_cache
+      log_success("Cache cleared successfully")
+      exit 0
+    end
+
     if @options[:list_models]
       list_available_models
       exit 0
@@ -132,6 +159,9 @@ class YouTubeTranscriptChat < ScriptBase
       log_error("yt-dlp is required but not installed. Run: brew install yt-dlp")
       exit 1
     end
+
+    # Initialize cache directory
+    initialize_cache unless @options[:no_cache]
 
     super
   end
@@ -178,8 +208,161 @@ class YouTubeTranscriptChat < ScriptBase
 
   private
 
+  # =========================================================================
+  # CACHE MANAGEMENT
+  # =========================================================================
+
+  def cache_dir
+    @cache_dir ||= File.expand_path('~/.cache/youtube-transcript-chat')
+  end
+
+  def initialize_cache
+    return if @options[:no_cache]
+
+    FileUtils.mkdir_p(cache_dir) unless Dir.exist?(cache_dir)
+    log_debug("Cache directory: #{cache_dir}")
+  end
+
+  def cache_key(video_id, language)
+    "#{video_id}_#{language}.json"
+  end
+
+  def extract_video_id(url)
+    # Extract video ID from various YouTube URL formats
+    patterns = [
+      /youtube\.com\/watch\?v=([\w-]+)/,
+      /youtu\.be\/([\w-]+)/,
+      /youtube\.com\/embed\/([\w-]+)/
+    ]
+
+    patterns.each do |pattern|
+      match = url.match(pattern)
+      return match[1] if match
+    end
+
+    nil
+  end
+
+  def cached_transcript_path(video_id, language)
+    File.join(cache_dir, cache_key(video_id, language))
+  end
+
+  def cached_transcript_available?(video_id, language)
+    return false if @options[:no_cache] || @options[:force_refresh]
+
+    cache_file = cached_transcript_path(video_id, language)
+    return false unless File.exist?(cache_file)
+
+    # Check if cache is still valid (within TTL)
+    file_age = File.mtime(cache_file)
+    ttl_days = @options[:cache_ttl] || 7
+    max_age = Time.now - (ttl_days * 24 * 60 * 60)
+
+    file_age > max_age
+  end
+
+  def load_cached_transcript(video_id, language)
+    cache_file = cached_transcript_path(video_id, language)
+    return nil unless File.exist?(cache_file)
+
+    begin
+      content = File.read(cache_file)
+      transcript_data = JSON.parse(content)
+
+      # Validate cached data structure
+      unless transcript_data.is_a?(Hash) &&
+             transcript_data['video_info'] &&
+             transcript_data['full_text'] &&
+             transcript_data['segments']
+        log_warning("Cached transcript has invalid structure, re-downloading...")
+        File.delete(cache_file)  # Remove invalid cache
+        return nil
+      end
+
+      # Convert string keys to symbols for consistency
+      transcript_data = {
+        video_info: transcript_data['video_info'],
+        full_text: transcript_data['full_text'],
+        segments: transcript_data['segments'],
+        word_count: transcript_data['word_count']
+      }
+
+      log_info("📦 Using cached transcript (#{format_file_age(File.mtime(cache_file))} old)")
+      transcript_data
+    rescue JSON::ParserError, StandardError => e
+      log_warning("Failed to load cached transcript: #{e.message}")
+      # Remove corrupted cache file
+      File.delete(cache_file) rescue nil
+      nil
+    end
+  end
+
+  def save_cached_transcript(video_id, language, transcript_data)
+    return if @options[:no_cache]
+
+    cache_file = cached_transcript_path(video_id, language)
+
+    begin
+      File.write(cache_file, JSON.pretty_generate(transcript_data))
+      log_success("💾 Transcript cached successfully")
+      log_debug("Cache file: #{cache_file}")
+    rescue StandardError => e
+      log_warning("Failed to cache transcript: #{e.message}")
+    end
+  end
+
+  def clear_cache
+    return unless Dir.exist?(cache_dir)
+
+    cache_files = Dir.glob(File.join(cache_dir, "*.json"))
+    if cache_files.empty?
+      log_info("Cache is already empty")
+      return
+    end
+
+    log_info("🧹 Clearing cache...")
+    FileUtils.rm_rf(cache_dir)
+    FileUtils.mkdir_p(cache_dir)  # Recreate empty directory
+  end
+
+  def format_file_age(file_time)
+    age_seconds = Time.now - file_time
+    age_minutes = age_seconds / 60
+    age_hours = age_minutes / 60
+    age_days = age_hours / 24
+
+    if age_days > 0
+      "#{age_days.to_i} day#{age_days > 1 ? 's' : ''}"
+    elsif age_hours > 0
+      "#{age_hours.to_i} hour#{age_hours > 1 ? 's' : ''}"
+    elsif age_minutes > 0
+      "#{age_minutes.to_i} minute#{age_minutes > 1 ? 's' : ''}"
+    else
+      "less than a minute"
+    end
+  end
+
+  # =========================================================================
+  # TRANSCRIPT DOWNLOAD AND PROCESSING
+  # =========================================================================
+
   def download_transcript
     log_section("📥 Downloading Transcript")
+
+    # Extract video ID for caching
+    video_id = extract_video_id(@youtube_url)
+    unless video_id
+      log_error("Could not extract video ID from URL")
+      return nil
+    end
+
+    language = @options[:language] || 'en'
+
+    # Check cache first
+    if cached_transcript_available?(video_id, language)
+      cached_data = load_cached_transcript(video_id, language)
+      return cached_data if cached_data
+    end
 
     # Get video info first
     video_info = get_video_info
@@ -191,8 +374,6 @@ class YouTubeTranscriptChat < ScriptBase
     # Create temporary directory for transcript
     @temp_dir = Dir.mktmpdir("youtube_transcript_")
     transcript_file = File.join(@temp_dir, "transcript.json")
-
-    language = @options[:language] || 'en'
 
     # Download transcript using yt-dlp
     cmd = [
@@ -233,7 +414,18 @@ class YouTubeTranscriptChat < ScriptBase
     log_success("Transcript downloaded successfully")
 
     # Parse transcript
-    parse_transcript(transcript_file, video_info)
+    transcript_data = parse_transcript(transcript_file, video_info)
+
+    # Only cache if we have valid transcript data
+    if transcript_data && transcript_data[:video_info] && transcript_data[:full_text] && !@options[:no_cache]
+      save_cached_transcript(video_id, language, transcript_data)
+    elsif !transcript_data
+      log_error("Failed to parse transcript data")
+    else
+      log_warning("Transcript data is incomplete, not caching")
+    end
+
+    transcript_data
   end
 
   def get_video_info
@@ -324,6 +516,13 @@ class YouTubeTranscriptChat < ScriptBase
   def generate_summary(transcript_data)
     log_section("📝 Generating Summary")
 
+    # Validate transcript data structure
+    unless transcript_data && transcript_data[:video_info] && transcript_data[:full_text]
+      log_error("Invalid transcript data structure - missing required fields")
+      log_debug("Transcript data keys: #{transcript_data&.keys&.join(', ') || 'nil'}")
+      return nil
+    end
+
     video_info = transcript_data[:video_info]
     text = transcript_data[:full_text]
 
@@ -331,7 +530,15 @@ class YouTubeTranscriptChat < ScriptBase
     log_info("Using full transcript: #{text.length} characters for summarization")
 
     system_prompt = <<~PROMPT
-      You are an AI assistant that creates detailed, helpful summaries of YouTube video transcripts. Focus on the most valuable information.
+      You are an AI assistant that creates concise, helpful summaries of YouTube video transcripts.
+
+      Create a structured summary with:
+      1. Brief overview (2-3 sentences)
+      2. Key points (3-5 bullet points)
+      3. Main topics covered
+      4. Any actionable insights or conclusions
+
+      Be concise but comprehensive. Focus on the most valuable information.
     PROMPT
 
     user_prompt = <<~PROMPT
@@ -341,8 +548,9 @@ class YouTubeTranscriptChat < ScriptBase
       **Duration:** #{video_info[:duration]}
       **Uploader:** #{video_info[:uploader]}
 
-      **Transcript:**
+      <transcript>
       #{text}
+      </transcript>
     PROMPT
 
     log_progress("Generating summary with local LLM")
@@ -426,6 +634,7 @@ class YouTubeTranscriptChat < ScriptBase
 
       if response && !response.empty?
         puts "\n🤖 "
+        log_debug("Response length: #{response.length} characters")
         display_markdown_response(response)
         puts
       else
@@ -518,11 +727,19 @@ class YouTubeTranscriptChat < ScriptBase
   def show_examples
     puts <<~EXAMPLES
       Examples:
-        # Basic usage
+        # Basic usage (with automatic caching)
         #{script_name} https://youtu.be/8dqU27oqkuE
 
         # Different language transcript
         #{script_name} --language es https://youtu.be/8dqU27oqkuE
+
+        # Force refresh cached transcript
+        #{script_name} --force-refresh https://youtu.be/8dqU27oqkuE
+
+        # Cache management
+        #{script_name} --clear-cache                    # Clear all cached transcripts
+        #{script_name} --no-cache https://youtu.be/8dqU27oqkuE    # Disable caching for this session
+        #{script_name} --cache-ttl 3 https://youtu.be/8dqU27oqkuE # Cache for 3 days only
 
         # Summary only with transcript save
         #{script_name} --summary-only --output transcript.txt https://youtu.be/8dqU27oqkuE
@@ -536,7 +753,8 @@ class YouTubeTranscriptChat < ScriptBase
         # Configuration and models
         #{script_name} --list-models
 
-      Configuration is automatically saved between sessions.
+      Configuration and automatically saved between sessions.
+      Transcripts are cached for 7 days by default to avoid re-downloading.
     EXAMPLES
   end
 
@@ -587,14 +805,18 @@ class YouTubeTranscriptChat < ScriptBase
       begin
         require 'tty-markdown'
 
-        puts TTY::Markdown.parse(text, width: 100)
+        # Parse markdown with better settings and error handling
+        parsed = TTY::Markdown.parse(text, width: 120, indent: 0)
+        puts parsed
         return
-      rescue LoadError, StandardError
-        # Fall through to plain text
+      rescue LoadError
+        log_debug("tty-markdown not available, using plain text")
+      rescue StandardError => e
+        log_debug("Markdown rendering failed: #{e.message}, falling back to plain text")
       end
     end
 
-    # Plain text display
+    # Plain text display with better formatting
     puts text
   end
 
@@ -621,6 +843,16 @@ class YouTubeTranscriptChat < ScriptBase
     config_sections << "│  Language:     #{@options[:language]}"
     config_sections << "│  Summary Only: #{@options[:summary_only] ? '✅ Yes' : '❌ No'}"
     config_sections << "│  Auto-reload:  #{@options[:auto_reload] ? '✅ Yes' : '❌ No'}"
+    config_sections << '╰────────────────────────────────────────'
+
+    # Cache Settings
+    cache_status = @options[:no_cache] ? '❌ Disabled' : '✅ Enabled'
+    cache_files = Dir.exist?(cache_dir) ? Dir.glob(File.join(cache_dir, '*.json')).length : 0
+    config_sections << '╭─ 💾 Cache Settings ───────────────────────'
+    config_sections << "│  Caching:      #{cache_status}"
+    config_sections << "│  Cache TTL:    #{@options[:cache_ttl]} days"
+    config_sections << "│  Cached Files: #{cache_files}"
+    config_sections << "│  Cache Dir:     #{cache_dir}"
     config_sections << '╰────────────────────────────────────────'
 
     # Context Management
@@ -670,6 +902,7 @@ class YouTubeTranscriptChat < ScriptBase
       choices = [
         { name: '🤖 Model Settings', value: :model_settings },
         { name: '🎥 Transcript Settings', value: :transcript_settings },
+        { name: '💾 Cache Settings', value: :cache_settings },
         { name: '🧠 Context Management', value: :context_settings },
         { name: '📄 Output Settings', value: :output_settings },
         { name: '💾 Save Current Settings', value: :save_settings },
@@ -684,6 +917,8 @@ class YouTubeTranscriptChat < ScriptBase
         configure_model_settings(prompt)
       when :transcript_settings
         configure_transcript_settings(prompt)
+      when :cache_settings
+        configure_cache_settings(prompt)
       when :context_settings
         configure_context_settings(prompt)
       when :output_settings
@@ -736,7 +971,12 @@ class YouTubeTranscriptChat < ScriptBase
     when :temperature
       @options[:temperature] = prompt.slider('Temperature (creativity)', min: 0.0, max: 1.0, step: 0.1, default: @options[:temperature])
     when :max_tokens
-      @options[:max_tokens] = prompt.slider('Max tokens to generate', min: 100, max: 4000, step: 100, default: @options[:max_tokens])
+      token_choices = [
+        { name: '1000 tokens (default)', value: 1000 },
+        { name: '2000 tokens (longer responses)', value: 2000 },
+        { name: '4000 tokens (maximum responses)', value: 4000 }
+      ]
+      @options[:max_tokens] = prompt.select('Select max tokens:', token_choices)
     when :timeout
       @options[:timeout] = prompt.slider('Request timeout (seconds)', min: 30, max: 600, step: 30, default: @options[:timeout])
     when :back
@@ -778,6 +1018,104 @@ class YouTubeTranscriptChat < ScriptBase
     when :back
       return
     end
+  end
+
+  def configure_cache_settings(prompt)
+    cache_files = Dir.exist?(cache_dir) ? Dir.glob(File.join(cache_dir, '*.json')).length : 0
+    cache_size = if Dir.exist?(cache_dir)
+                   files = Dir.glob(File.join(cache_dir, '*.json'))
+                   files.sum { |f| File.size(f) }
+                 else
+                   0
+                 end
+
+    choices = [
+      { name: "🔄 Caching: #{@options[:no_cache] ? 'Disabled' : 'Enabled'}", value: :caching },
+      { name: "⏰ Cache TTL: #{@options[:cache_ttl]} days", value: :cache_ttl },
+      { name: "📊 Cache Info: #{cache_files} files (#{format_bytes(cache_size)})", value: :cache_info },
+      { name: "🧹 Clear Cache Now", value: :clear_cache },
+      { name: '← Back to Main Menu', value: :back }
+    ]
+
+    selection = prompt.select('💾 Cache Settings', choices, cycle: true)
+
+    case selection
+    when :caching
+      @options[:no_cache] = !prompt.yes?('Enable transcript caching?', default: !@options[:no_cache])
+    when :cache_ttl
+      @options[:cache_ttl] = prompt.slider('Cache time-to-live (days)', min: 1, max: 30, step: 1, default: @options[:cache_ttl])
+    when :cache_info
+      show_cache_info
+      prompt.keypress('Press any key to continue...')
+    when :clear_cache
+      if prompt.yes?('🗑️  Clear all cached transcripts?', default: false)
+        clear_cache
+        log_success('Cache cleared successfully!')
+      end
+    when :back
+      return
+    end
+  end
+
+  def show_cache_info
+    require 'tty-table'
+
+    unless Dir.exist?(cache_dir)
+      puts "Cache directory does not exist"
+      return
+    end
+
+    cache_files = Dir.glob(File.join(cache_dir, '*.json'))
+
+    if cache_files.empty?
+      puts "Cache is empty"
+      return
+    end
+
+    puts "\n📊 Cache Information"
+    puts "=" * 50
+
+    # Show cache statistics
+    total_size = cache_files.sum { |f| File.size(f) }
+    oldest_file = cache_files.min_by { |f| File.mtime(f) }
+    newest_file = cache_files.max_by { |f| File.mtime(f) }
+
+    puts "Total files: #{cache_files.length}"
+    puts "Total size: #{format_bytes(total_size)}"
+    puts "Oldest file: #{format_file_age(File.mtime(oldest_file))} old"
+    puts "Newest file: #{format_file_age(File.mtime(newest_file))} old"
+
+    # Show recent files
+    puts "\n📁 Recent Cache Files:"
+    table = TTY::Table.new(
+      ['Age', 'Size', 'Video ID'],
+      cache_files.sort_by { |f| -File.mtime(f).to_i }.first(5).map do |file|
+        filename = File.basename(file, '.json')
+        video_id = filename.split('_').first
+        [
+          format_file_age(File.mtime(file)),
+          format_bytes(File.size(file)),
+          video_id
+        ]
+      end
+    )
+
+    puts table.render(:unicode, padding: [0, 1], alignments: [:left, :right, :left])
+  end
+
+  def format_bytes(bytes)
+    return '0 B' if bytes == 0
+
+    units = %w[B KB MB GB]
+    size = bytes.to_f
+    unit_index = 0
+
+    while size >= 1024 && unit_index < units.length - 1
+      size /= 1024
+      unit_index += 1
+    end
+
+    "#{size.round(1)} #{units[unit_index]}"
   end
 
   def configure_context_settings(prompt)

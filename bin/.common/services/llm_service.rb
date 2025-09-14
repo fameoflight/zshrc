@@ -15,6 +15,7 @@ class LLMService
     @timeout = options[:timeout] || 120
     @temperature = options[:temperature] || 0.1
     @max_tokens = options[:max_tokens] || 1000
+    @reasoning_effort = options[:reasoning_effort] || 3 
     @logger = options[:logger]
     @debug = options[:debug] || false
   end
@@ -30,42 +31,87 @@ class LLMService
 
     # Estimate tokens needed (rough approximation: 4 chars per token)
     estimated_tokens = (content_length / 4.0).ceil
-    min_context_needed ||= [estimated_tokens * 1.5, 8192].max.to_i # Add 50% buffer, minimum 8K
+
+    # Use provided min_context or calculate based on content with buffer
+    if min_context_needed
+      target_context = min_context_needed.to_i
+    else
+      # Add 50% buffer for safety, but ensure minimum of 8192
+      target_context = [estimated_tokens * 1.5, 8192].max.to_i
+    end
 
     current_context = get_current_context_length
 
-    if current_context && current_context < min_context_needed
-      log_info("Current context (#{current_context}) insufficient for content (#{estimated_tokens} tokens)")
+    # Only reload if we can get current context and it's insufficient
+    if current_context && current_context < target_context
+      log_info("Current context (#{current_context}) insufficient for content (#{estimated_tokens} tokens, need #{target_context})")
 
       if auto_reload
-        log_info("Attempting to reload model with larger context (#{min_context_needed})")
-        return reload_model_with_context(min_context_needed)
+        log_info("Attempting to reload model with larger context (#{target_context})")
+        return reload_model_with_context(target_context)
       else
-        log_warning("Auto-reload disabled. Current context may be insufficient for content.")
+        log_warning("Auto-reload disabled. Current context (#{current_context}) may be insufficient for content (needs #{target_context}).")
         log_info("To enable auto-reload, use --auto-reload flag")
         return false
       end
+    elsif !current_context
+      # This is normal when no models are loaded or when lms is not available
+      log_debug("Could not determine current context length (no models loaded or lms unavailable). Proceeding without auto-reload.")
+      return true
     end
 
+    log_debug("Current context (#{current_context}) sufficient for content (#{estimated_tokens} tokens)")
     true
   end
 
   # Get the current model's context length
   def get_current_context_length
-    if command_exists?('lms')
-      output = `#{lms_command} ps 2>/dev/null`
-      if $?.success?
-        lines = output.split("\n")
-        # Find the line with our current model
-        model_line = lines.find { |line| line.include?(@model) }
-        if model_line
-          # Parse context from the line (format: IDENTIFIER MODEL STATUS SIZE CONTEXT TTL)
-          parts = model_line.split(/\s+/)
-          context = parts[4]&.to_i
-          return context if context && context > 0
-        end
-      end
+    return nil unless command_exists?('lms')
+
+    output = `#{lms_command} ps 2>/dev/null`
+    return nil unless $?.success?
+
+    # Check if no models are loaded
+    if output.include?('No models are currently loaded')
+      log_debug("No models currently loaded in LM Studio")
+      return nil
     end
+
+    lines = output.split("\n")
+    # Find the line with our current model
+    model_line = lines.find { |line| line.include?(@model) }
+    if model_line
+      # Parse context from the line. Actual format varies, look for numeric context value
+      # Example: "openai/gpt-oss-120b    openai/gpt-oss-120b    IDLE      63.39 GB    9669"
+      parts = model_line.split(/\s+/)
+
+      # Look for the context number (usually the last numeric field or before TTL)
+      context = nil
+
+      # Try different parsing strategies
+      # Strategy 1: Last numeric field (excluding sizes with GB/MB)
+      numeric_parts = parts.select { |part| part.match(/^\d+$/) }
+      if numeric_parts.length > 0
+        context = numeric_parts.last.to_i
+      end
+
+      # Strategy 2: Look for specific positions based on common formats
+      if !context || context == 0
+        # Try position 4 (0-indexed) which is often context
+        potential_context = parts[4]&.to_i
+        context = potential_context if potential_context && potential_context > 0
+      end
+
+      if context && context > 0
+        log_debug("Found current context length: #{context}")
+        return context
+      else
+        log_debug("Could not parse context length from model line: #{model_line.strip}")
+      end
+    else
+      log_debug("Current model '#{@model}' not found in loaded models")
+    end
+
     nil
   end
 
@@ -273,7 +319,8 @@ class LLMService
       model: @model,
       messages: messages,
       temperature: temperature,
-      max_tokens: max_tokens
+      max_tokens: max_tokens,
+      reasoning_effort: @reasoning_effort
     }
 
     begin
@@ -313,7 +360,8 @@ class LLMService
       messages: messages,
       temperature: temperature,
       max_tokens: max_tokens,
-      stream: true
+      stream: true,
+      reasoning_effort: @reasoning_effort
     }
 
     begin

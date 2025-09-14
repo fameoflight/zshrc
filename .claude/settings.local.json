@@ -55,7 +55,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(python3:*)",
       "Bash(xargs kill:*)",
-      "Bash(scripts:*)"
+      "Bash(scripts:*)",
+      "Bash(lms ps:*)"
     ],
     "deny": [],
     "additionalDirectories": [
