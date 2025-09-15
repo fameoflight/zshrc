@@ -56,7 +56,8 @@
       "Bash(python3:*)",
       "Bash(xargs kill:*)",
       "Bash(scripts:*)",
-      "Bash(lms ps:*)"
+      "Bash(lms ps:*)",
+      "Bash(defaults delete:*)"
     ],
     "deny": [],
     "additionalDirectories": [
