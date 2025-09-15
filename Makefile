@@ -92,6 +92,8 @@ help:
 	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
 	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
 	@echo "  macos-oled-optimize - 🖥️  Optimize macOS settings for OLED displays (burn-in prevention)"
+	@echo "  setup-hooks     - ⚙️  Setup wake/sleep hooks and login scripts"
+	@echo "  uninstall-hooks - 🗑️  Remove wake/sleep hooks and login scripts"
 	@echo ""
 	@echo "🔄 Settings restoration:"
 	@echo "  app-settings    - 📱 Restore all application settings (iTerm, VS Code, Xcode, Sublime, Dock, Ruby)"
@@ -140,7 +142,7 @@ endif
 # =============================================================================
 
 .PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup-message
-mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-wake-hook post-mac-setup-message find-orphans
+mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-hooks post-mac-setup-message find-orphans
 
 linux: common linux-packages linux-settings
 
@@ -477,38 +479,32 @@ macos-oled-optimize:
 		return 1; \
 	fi
 
-.PHONY: setup-wake-hook
-setup-wake-hook:
-	@echo "⚙️  Setting up wake and login hooks..."
-	@echo "🍺 Ensuring sleepwatcher is installed..."
-	-@brew install sleepwatcher
-	@echo "🔗 Linking wakeup script to ~/.wakeup..."
-	@ln -sf "${PWD}/hooks/wakeup.sh" "${HOME}/.wakeup"
-	@echo "🔗 Linking sleep script to ~/.sleep..."
-	@ln -sf "${PWD}/hooks/sleep.sh" "${HOME}/.sleep"
-	@echo "🚀 Starting sleepwatcher service with brew services..."
-	-@brew services start sleepwatcher
-	@echo "📱 Setting up LaunchAgent for login hook..."
-	@mkdir -p "${HOME}/Library/LaunchAgents"
-	@mkdir -p "${HOME}/logs"
-	@ln -sf "${PWD}/hooks/com.hemantv.wakeup.plist" "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
-	@echo "🚀 Loading LaunchAgent..."
-	-@launchctl load "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
-	@echo "✅ Wake and login hooks setup complete"
+.PHONY: setup-hooks
+setup-hooks:
+	@echo -e "$(MAGENTA)⚙️  Setting up wake and sleep hooks...$(NC)"
+	@if [ -f "bin/setup-hooks.sh" ]; then \
+		echo -e "$(CYAN)🚀 Running hooks setup script...$(NC)"; \
+		bash bin/setup-hooks.sh; \
+		echo -e "$(BOLD)$(GREEN)✅ Hooks setup complete$(NC)"; \
+	else \
+		echo -e "$(RED)❌ Hooks setup script not found at bin/setup-hooks.sh$(NC)"; \
+		return 1; \
+	fi
 
-.PHONY: uninstall-wake-hook
-uninstall-wake-hook:
-	@echo "🗑️  Uninstalling wake and login hooks..."
-	@echo "🚀 Stopping sleepwatcher service..."
+.PHONY: uninstall-hooks
+uninstall-hooks:
+	@echo -e "$(MAGENTA)🗑️  Uninstalling wake and sleep hooks...$(NC)"
+	@echo -e "$(CYAN)🚀 Stopping sleepwatcher service...$(NC)"
 	-@brew services stop sleepwatcher
-	@echo "🔗 Removing wakeup script symlink..."
+	@echo -e "$(CYAN)🔗 Removing script symlinks...$(NC)"
 	@rm -f "${HOME}/.wakeup"
-	@echo "🔗 Removing sleep script symlink..."
 	@rm -f "${HOME}/.sleep"
-	@echo "📱 Unloading and removing LaunchAgent..."
+	@echo -e "$(CYAN)📱 Unloading and removing LaunchAgent...$(NC)"
 	-@launchctl unload "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist" 2>/dev/null
 	@rm -f "${HOME}/Library/LaunchAgents/com.hemantv.wakeup.plist"
-	@echo "✅ Wake and login hooks uninstalled"
+	@echo -e "$(CYAN)🔗 Removing from Login Items if present...$(NC)"
+	-@osascript -e 'tell application "System Events" to delete login item "wakeup.sh"' 2>/dev/null || true
+	@echo -e "$(BOLD)$(GREEN)✅ Wake and sleep hooks uninstalled$(NC)"
 
 .PHONY: linux-settings
 linux-settings:
