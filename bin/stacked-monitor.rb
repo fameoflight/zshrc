@@ -47,10 +47,19 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     log_banner(script_title)
 
     displays_info = get_display_info
-    show_current_setup(displays_info) if debug_mode?
 
     validate_display_count(displays_info)
     main_monitor, left_bottom, left_top, portrait_monitor = identify_displays(displays_info)
+
+    # Always show current configuration in box style first
+    display_monitor_config_box("🖥️  Current Monitor Configuration:", displays_info, show_current_positions: true)
+
+    # Show current spatial layout
+    display_spatial_layout(displays_info, "📍 Current Monitor Layout")
+
+    # Show detailed debug info if requested
+    show_current_setup(displays_info) if debug_mode?
+
     configure_positions(main_monitor, left_bottom, left_top, portrait_monitor)
 
     command = build_command([main_monitor, left_bottom, left_top, portrait_monitor])
@@ -165,9 +174,10 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
   end
 
   def show_current_setup(displays_info)
-    puts "\n🔍 CURRENT MONITOR SETUP DEBUG INFO"
+    puts "\n🔍 DETAILED MONITOR DEBUG INFO"
     puts '=' * 50
 
+    puts "\n📊 Detailed Display Information:"
     displays_info.each_with_index do |display, i|
       puts "\nDisplay #{i + 1}:"
       puts "  Type: #{display[:type]}"
@@ -234,15 +244,15 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     # Position main monitor at origin (center)
     main_monitor[:origin] = '0,0'
 
-    # Position left stack to the left of main monitor
-    left_stack_x = -(left_width + SPACING)
+    # Position left stack to the left of main monitor (touching)
+    left_stack_x = -left_width
 
-    # Calculate left stack positioning - monitor 2 (top) at 1/3 of main display height
-    # Monitor 2 (left top) starts at 1/3 of main display height
+    # Calculate left stack positioning - stack monitors touching each other
+    # Position left top monitor at 1/3 of main display height
     left_top_y = main_height / 3
     left_top[:origin] = "#{left_stack_x},#{left_top_y}"
 
-    # Monitor 1 (left bottom) positioned below monitor 2
+    # Position left bottom monitor directly below left top (touching)
     left_bottom_y = left_top_y + left_height
     left_bottom[:origin] = "#{left_stack_x},#{left_bottom_y}"
 
@@ -286,18 +296,199 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     'displayplacer ' + command_parts.map { |part| "\"#{part}\"" }.join(' ')
   end
 
-  def show_configuration(main_monitor, left_bottom, left_top, portrait_monitor)
-    puts "\n📺 Monitor Configuration:"
-    puts "  Main Display (#{main_monitor[:type]}): Center position"
-    puts "  Left Stack Bottom (#{left_bottom[:type]}): Left side, lower monitor"
-    puts "  Left Stack Top (#{left_top[:type]}): Left side, upper monitor"
-    puts "  Portrait Monitor (#{portrait_monitor[:type]}): Right side, vertical orientation"
+  def display_monitor_config_box(title, monitors, show_current_positions: false)
+    puts "\n#{title}"
+    puts "┌" + "─" * 78 + "┐"
 
-    puts "\n📍 Calculated Positions:"
-    puts "  Main: #{main_monitor[:origin]} (#{main_monitor[:resolution]})"
-    puts "  Left Bottom: #{left_bottom[:origin]} (#{left_bottom[:resolution]})"
-    puts "  Left Top: #{left_top[:origin]} (#{left_top[:resolution]})"
-    puts "  Portrait: #{portrait_monitor[:origin]} (#{portrait_monitor[:resolution]})"
+    monitors.each_with_index do |monitor, index|
+      label = (index + 1).to_s
+      name = monitor[:type] || "Unknown Monitor"
+      resolution = monitor[:resolution] || "Unknown"
+      rotation = monitor[:rotation] || "0"
+
+      # Add rotation indicator
+      rotation_indicator = case rotation.to_i
+                          when 90
+                            " ↻90°"
+                          when 180
+                            " ↻180°"
+                          when 270
+                            " ↻270°"
+                          else
+                            ""
+                          end
+
+      # Format position info
+      position_info = if show_current_positions && monitor[:origin]
+        " at (#{monitor[:origin]})"
+      elsif !show_current_positions && monitor[:calculated_origin]
+        " → (#{monitor[:calculated_origin]})"
+      else
+        ""
+      end
+
+      # Create the line with proper spacing
+      line_content = "#{label}. #{name} - #{resolution}#{rotation_indicator}#{position_info}"
+      padding = 76 - line_content.length
+      padding = [0, padding].max  # Ensure non-negative padding
+
+      puts "│ #{line_content}" + " " * padding + " │"
+    end
+
+    puts "└" + "─" * 78 + "┘"
+  end
+
+  def display_spatial_layout(monitors, title = "📍 Spatial Monitor Layout")
+    puts "\n#{title}"
+
+    # Parse positions and find bounds
+    monitor_positions = monitors.map do |monitor|
+      x, y = if monitor[:origin]
+               monitor[:origin].split(',').map(&:to_i)
+             else
+               [0, 0]
+             end
+      width, height = parse_resolution(monitor[:resolution])
+      rotation = (monitor[:rotation] || "0").to_i
+
+      # Don't swap dimensions - displayplacer already reports correct pixel dimensions
+      # The resolution already reflects the actual screen orientation
+
+      {
+        monitor: monitor,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        right: x + width,
+        bottom: y + height,
+        rotation: rotation
+      }
+    end
+
+    # Find layout bounds
+    min_x = monitor_positions.map { |m| m[:x] }.min
+    max_x = monitor_positions.map { |m| m[:right] }.max
+    min_y = monitor_positions.map { |m| m[:y] }.min
+    max_y = monitor_positions.map { |m| m[:bottom] }.max
+
+    # Scale factor for ASCII representation (pixels per character)
+    scale_x = [(max_x - min_x) / 60.0, 1].max
+    scale_y = [(max_y - min_y) / 20.0, 1].max
+
+    # Create ASCII grid
+    grid_width = 70
+    grid_height = 25
+    grid = Array.new(grid_height) { Array.new(grid_width, ' ') }
+
+    # Draw each monitor on the grid
+    monitor_positions.each_with_index do |pos, index|
+      # Convert to grid coordinates
+      grid_x = ((pos[:x] - min_x) / scale_x).round
+      grid_y = ((pos[:y] - min_y) / scale_y).round
+      grid_width_m = [((pos[:width] / scale_x).round), 1].max
+      grid_height_m = [((pos[:height] / scale_y).round), 1].max
+
+      label = (index + 1).to_s
+      rotation = pos[:rotation]
+
+      # Create rotation indicator
+      rotation_char = case rotation
+                     when 90
+                       '↻'
+                     when 180
+                       '↺'
+                     when 270
+                       '↻'
+                     else
+                       label
+                     end
+
+      # Draw monitor box
+      (0...grid_height_m).each do |dy|
+        (0...grid_width_m).each do |dx|
+          gx = grid_x + dx
+          gy = grid_y + dy
+
+          if gx >= 0 && gx < grid_width && gy >= 0 && gy < grid_height
+            if dy == 0 || dy == grid_height_m - 1
+              grid[gy][gx] = '─'
+            elsif dx == 0 || dx == grid_width_m - 1
+              grid[gy][gx] = '│'
+            elsif dy == grid_height_m / 2 && dx == grid_width_m / 2
+              grid[gy][gx] = rotation_char
+            elsif rotation != 0 && dy == grid_height_m / 2 && dx == grid_width_m / 2 + 1
+              grid[gy][gx] = label if gx < grid_width
+            else
+              grid[gy][gx] = ' ' if grid[gy][gx] == ' '
+            end
+          end
+        end
+      end
+
+      # Draw corners
+      corners = [
+        [grid_x, grid_y, '┌'],
+        [grid_x + grid_width_m - 1, grid_y, '┐'],
+        [grid_x, grid_y + grid_height_m - 1, '└'],
+        [grid_x + grid_width_m - 1, grid_y + grid_height_m - 1, '┘']
+      ]
+
+      corners.each do |x, y, char|
+        if x >= 0 && x < grid_width && y >= 0 && y < grid_height
+          grid[y][x] = char
+        end
+      end
+    end
+
+    # Print the grid
+    puts "┌" + "─" * grid_width + "┐"
+    grid.each do |row|
+      puts "│" + row.join('') + "│"
+    end
+    puts "└" + "─" * grid_width + "┘"
+
+    # Print legend
+    puts "\nLegend:"
+    monitors.each_with_index do |monitor, index|
+      name = monitor[:type] || "Unknown Monitor"
+      resolution = monitor[:resolution] || "Unknown"
+      rotation = (monitor[:rotation] || "0").to_i
+
+      rotation_info = case rotation
+                     when 90
+                       " - Portrait 90° ↻"
+                     when 180
+                       " - Inverted 180° ↺"
+                     when 270
+                       " - Portrait 270° ↻"
+                     else
+                       " - Landscape"
+                     end
+
+      puts "  #{index + 1}. #{name} (#{resolution})#{rotation_info}"
+    end
+  end
+
+  def show_configuration(main_monitor, left_bottom, left_top, portrait_monitor)
+    # Store calculated positions for box display
+    monitors = [
+      main_monitor.merge(calculated_origin: main_monitor[:origin]),
+      left_bottom.merge(calculated_origin: left_bottom[:origin]),
+      left_top.merge(calculated_origin: left_top[:origin]),
+      portrait_monitor.merge(calculated_origin: portrait_monitor[:origin])
+    ]
+
+    display_monitor_config_box("📺 Final Monitor Configuration:", monitors)
+
+    # Show spatial layout
+    display_spatial_layout([main_monitor, left_bottom, left_top, portrait_monitor], "📍 Target Monitor Layout")
+
+    puts "\n📍 Layout Description:"
+    puts "  1. Main Display: Center position (#{main_monitor[:resolution]})"
+    puts "  2. Left Stack Bottom: Left side, lower monitor (#{left_bottom[:resolution]})"
+    puts "  3. Left Stack Top: Left side, upper monitor (#{left_top[:resolution]})"
+    puts "  4. Portrait Monitor: Right side, vertical orientation (#{portrait_monitor[:resolution]})"
   end
 
   def show_dry_run(command, main_monitor, left_bottom, left_top, portrait_monitor)
