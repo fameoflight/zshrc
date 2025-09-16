@@ -144,6 +144,7 @@ alias -s asc="gpg"
 alias -s pem="openssl x509 -noout -text -in "
 
 alias zshrc="cd ~/zshrc"
+alias xcode="open -a Xcode"
 
 alias deploy-sf="ssh deploy@45.55.6.197"
 
