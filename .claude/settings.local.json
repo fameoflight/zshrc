@@ -63,7 +63,8 @@
       "Read(//Users/hemantv/workspace/upscaler pro/**)",
       "Bash(xcode-icon-generator:*)",
       "Bash(BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby:*)",
-      "Bash(claude config:*)"
+      "Bash(claude config:*)",
+      "Read(//Users/hemantv/Library/**)"
     ],
     "deny": [],
     "additionalDirectories": [

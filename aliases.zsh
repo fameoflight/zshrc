@@ -249,6 +249,108 @@ function parallel-commands() {
   echo "All processes have completed";
 }
 
+# ALTERNATIVE GREP (AGREP) - Enhanced search with Spotlight integration
+# agrep: Alternative grep that combines ripgrep power with Spotlight speed
+# Searches current directory content with optional extension filtering
+function agrep() {
+  local pattern="$1"
+  local extensions="$2"
+  local current_dir="$(pwd)"
+
+  if [[ -z "$pattern" ]]; then
+    log_error "Usage: agrep <pattern> [extensions]"
+    log_info "Examples:"
+    log_info "  agrep 'function.*auth' js,ts"
+    log_info "  agrep 'TODO|FIXME' py,rb"
+    log_info "  agrep 'class.*User'"
+    return 1
+  fi
+
+  log_section "🔍 Smart Search in Current Directory"
+  log_info "Directory: $(basename "$current_dir")"
+  log_info "Pattern: $pattern"
+
+  if [[ -n "$extensions" ]]; then
+    log_info "Extensions: $extensions"
+
+    # Convert comma-separated extensions to ripgrep glob pattern
+    local glob_pattern=""
+    if [[ "$extensions" == *","* ]]; then
+      # Multiple extensions: js,ts,py -> "*.{js,ts,py}"
+      local ext_list=$(echo "$extensions" | sed 's/,/,/g')
+      glob_pattern="*.{$ext_list}"
+    else
+      # Single extension: js -> "*.js"
+      glob_pattern="*.$extensions"
+    fi
+
+    log_progress "Searching with extension filter..."
+    rg --color=always --line-number --heading --smart-case --glob "$glob_pattern" "$pattern" "$current_dir" 2>/dev/null
+  else
+    log_progress "Searching all file types..."
+    rg --color=always --line-number --heading --smart-case "$pattern" "$current_dir" 2>/dev/null
+  fi
+
+  local exit_code=$?
+  if [[ $exit_code -eq 0 ]]; then
+    log_success "Search completed"
+  elif [[ $exit_code -eq 1 ]]; then
+    log_warning "No matches found for pattern: $pattern"
+  else
+    log_error "Search failed with error code: $exit_code"
+  fi
+}
+
+# Find files by name with optional extension filtering using Spotlight
+function find-files() {
+  local filename="$1"
+  local extensions="$2"
+  local current_dir="$(pwd)"
+
+  if [[ -z "$filename" ]]; then
+    log_error "Usage: find-files <filename> [extensions]"
+    log_info "Examples:"
+    log_info "  find-files 'config' js,json"
+    log_info "  find-files 'test.*spec' ts"
+    log_info "  find-files 'README'"
+    return 1
+  fi
+
+  log_section "📁 File Search in Current Directory"
+  log_info "Directory: $(basename "$current_dir")"
+  log_info "Filename: $filename"
+
+  if [[ -n "$extensions" ]]; then
+    log_info "Extensions: $extensions"
+
+    # Use mdfind (Spotlight) for fast file searching with extension filter
+    if [[ "$extensions" == *","* ]]; then
+      # Multiple extensions - need to search each separately and combine
+      local ext_array=(${(@s/,/)extensions})
+      log_progress "Using Spotlight search with extension filter..."
+
+      for ext in $ext_array; do
+        mdfind -onlyin "$current_dir" "kMDItemDisplayName == '*$filename*' && kMDItemFSName == '*.$ext'" 2>/dev/null
+      done | sort -u
+    else
+      # Single extension
+      log_progress "Using Spotlight search with extension filter..."
+      mdfind -onlyin "$current_dir" "kMDItemDisplayName == '*$filename*' && kMDItemFSName == '*.$extensions'" 2>/dev/null
+    fi
+  else
+    log_progress "Using Spotlight search..."
+    mdfind -onlyin "$current_dir" "kMDItemDisplayName == '*$filename*'" 2>/dev/null
+  fi
+
+  local matches=$(mdfind -onlyin "$current_dir" "kMDItemDisplayName == '*$filename*'" 2>/dev/null | wc -l)
+  if [[ $matches -gt 0 ]]; then
+    log_success "Found $matches matching files"
+  else
+    log_warning "No files found matching: $filename"
+  fi
+}
+
+
 
 # FIND PROCESS
 function find-process(){
