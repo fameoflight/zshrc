@@ -65,7 +65,8 @@
       "Bash(BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby:*)",
       "Bash(claude config:*)",
       "Read(//Users/hemantv/Library/**)",
-      "Read(//System/Library/ColorSync/Profiles/**)"
+      "Read(//System/Library/ColorSync/Profiles/**)",
+      "Bash(defaults:*)"
     ],
     "deny": [],
     "additionalDirectories": [
