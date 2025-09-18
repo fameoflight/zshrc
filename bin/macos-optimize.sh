@@ -487,7 +487,39 @@ configure_apps() {
     log_info "Enabling Debug menu in Disk Utility"
     defaults write com.apple.DiskUtility DUDebugMenuEnabled -bool true
     defaults write com.apple.DiskUtility advanced-image-options -bool true
-    
+
+    # Safari
+    if [[ -d "/Applications/Safari.app" ]]; then
+        log_info "Configuring Safari preferences and developer settings"
+
+        # Developer menu settings
+        defaults write com.apple.Safari IncludeInternalDebugMenu -bool true
+        defaults write com.apple.Safari IncludeDevelopMenu -bool true
+        defaults write com.apple.Safari WebKitDeveloperExtrasEnabledPreferenceKey -bool true
+        defaults write com.apple.Safari com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled -bool true
+
+        # General preferences
+        defaults write com.apple.Safari AlwaysRestoreSessionAtLaunch -bool true
+        defaults write com.apple.Safari NewWindowBehavior -int 1  # Homepage
+        defaults write com.apple.Safari NewTabBehavior -int 1     # Homepage
+        defaults write com.apple.Safari HomePage -string "https://www.google.com/"
+        defaults write com.apple.Safari HistoryAgeInDaysLimit -int 30  # Remove history after one month
+        defaults write com.apple.Safari DownloadsPath -string "~/Downloads"
+        defaults write com.apple.Safari DownloadsClearingPolicy -int 1  # Remove download items after one day
+
+        # Tabs preferences
+        defaults write com.apple.Safari TabCreationPolicy -int 1  # Open pages in tabs instead of windows: Automatically
+        defaults write com.apple.Safari ShowColorInTabBar -bool true
+        defaults write com.apple.Safari ShowWebsiteTitlesInTabs -bool true
+
+        # Navigation preferences
+        defaults write com.apple.Safari CommandClickMakesTabs -bool true    # ⌘-click opens link in new tab
+        defaults write com.apple.Safari OpenNewTabsInFront -bool true       # Make new tabs/windows active
+        defaults write com.apple.Safari Command1Through9SwitchesTabs -bool true  # Use ⌘-1 through ⌘-9 to switch tabs
+
+        log_success "Safari configuration complete"
+    fi
+
     log_success "Application optimizations complete"
 }
 
@@ -584,7 +616,7 @@ dry_run() {
     echo "• Security improvements (enable firewall, disable remote access)"
     echo "• Performance tweaks (disable motion sensor, optimize sleep)"
     echo "• Developer settings (show hidden files, enable locate database)"
-    echo "• Application-specific optimizations (Chrome, TextEdit, etc.)"
+    echo "• Application-specific optimizations (Safari, Chrome, TextEdit, etc.)"
     echo ""
     
     if [[ "$DEVICE_TYPE" == "desktop" ]]; then
