@@ -9,10 +9,12 @@ require 'base64'
 require 'securerandom'
 require 'nokogiri'
 require 'digest'
+require_relative 'base_service'
 
 # Image processing service for downloading and embedding images in EPUBs
-class ImageProcessor
+class ImageProcessor < BaseService
   def initialize(options = {})
+    super(options)
     @options = {
       download_images: true,
       max_image_size: 5 * 1024 * 1024, # 5MB

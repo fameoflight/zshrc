@@ -11,6 +11,7 @@ require 'readability'
 require 'nokogiri'
 require_relative '../script_base'
 require_relative '../logger'
+require_relative './base_service'
 require_relative './page_fetcher'
 require_relative './browser_service'
 require_relative '../concerns/article_detector'
@@ -18,10 +19,11 @@ require_relative '../concerns/icloud_storage'
 require_relative './image_processor'
 
 # EPUB Generator Service - Creates EPUB files from website articles
-class EPUBGenerator
+class EPUBGenerator < BaseService
   include ICloudStorage
 
   def initialize(options = {})
+    super(options)
     @options = {
       cache_enabled: true,
       javascript: false,
@@ -47,8 +49,6 @@ class EPUBGenerator
       verbose: @options[:verbose],
       debug: @options[:debug]
     })
-
-    @logger = @options[:logger]
 
     # Clear cache if force mode is enabled
     clear_all_cache if @options[:force]
@@ -1285,37 +1285,6 @@ class EPUBGenerator
     nice_name[0..50]
   end
 
-  def log_info(message)
-    if @logger
-      @logger.send(:log_info, message)
-    elsif @options[:verbose]
-      puts "ℹ️  #{message}"
-    end
-  end
-
-  def log_success(message)
-    if @logger
-      @logger.send(:log_success, message)
-    else
-      puts "✅ #{message}"
-    end
-  end
-
-  def log_warning(message)
-    if @logger
-      @logger.send(:log_warning, message)
-    else
-      puts "⚠️  #{message}"
-    end
-  end
-
-  def log_error(message)
-    if @logger
-      @logger.send(:log_error, message)
-    else
-      puts "❌ #{message}"
-    end
-  end
 
   def clear_all_cache
     log_section("🧹 Clearing All Cache (Force Mode)")
@@ -1338,11 +1307,4 @@ class EPUBGenerator
     log_success("Cache cleared - JS: #{js_cleared} files, No-JS: #{no_js_cleared} files")
   end
 
-  def log_debug(message)
-    if @logger
-      @logger.send(:log_debug, message)
-    elsif @options[:debug]
-      puts "🐛 #{message}"
-    end
-  end
 end

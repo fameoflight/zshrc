@@ -6,6 +6,7 @@ require 'fileutils'
 require 'time'
 require_relative 'logger'
 require_relative 'system'
+require_relative 'utils/error_utils'
 require_relative 'services/settings_service'
 require_relative 'services/interactive_menu_service'
 
@@ -56,6 +57,7 @@ require_relative 'services/interactive_menu_service'
 #
 # ============================================================================
 class ScriptBase
+  include ErrorUtils
   PROJECT_ROOT = ENV['ZSH_CONFIG'] || File.expand_path('../..', __dir__)
   attr_reader :options, :args
 

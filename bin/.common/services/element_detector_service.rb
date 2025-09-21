@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
+require_relative 'base_service'
 require_relative 'llm_service'
 
 # Service for detecting next/more buttons and other elements using LLM analysis
-class ElementDetectorService
+class ElementDetectorService < BaseService
   def initialize(options = {})
+    super(options)
     @llm = LLMService.new(options)
-    @logger = options[:logger]
-    @debug = options[:debug] || false
   end
 
   # Check if the service is available (LLM is running)
@@ -329,28 +329,4 @@ class ElementDetectorService
     "#{first_part}\n\n<!-- CONTENT TRUNCATED -->\n\n#{last_part}"
   end
 
-  # Logging methods with fallbacks
-  def log_info(message)
-    if @logger&.respond_to?(:log_info)
-      @logger.log_info(message)
-    else
-      puts "ℹ️  #{message}" if @debug
-    end
-  end
-
-  def log_error(message)
-    if @logger&.respond_to?(:log_error)
-      @logger.log_error(message)
-    else
-      puts "❌ #{message}"
-    end
-  end
-
-  def log_debug(message)
-    if @logger&.respond_to?(:log_debug)
-      @logger.log_debug(message)
-    else
-      puts "🐛 #{message}" if @debug
-    end
-  end
 end

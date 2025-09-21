@@ -3,21 +3,21 @@
 require 'net/http'
 require 'uri'
 require 'json'
+require_relative 'base_service'
 
 # Generic service for interacting with local LLM Studio models
-class LLMService
+class LLMService < BaseService
   DEFAULT_MODEL = ENV['LOCAL_MODEL'] || 'gemma-2-27b-it'
   DEFAULT_ENDPOINT = 'http://localhost:1234/v1'
 
   def initialize(options = {})
+    super(options)
     @endpoint = options[:endpoint] || DEFAULT_ENDPOINT
     @model = options[:model] || DEFAULT_MODEL
     @timeout = options[:timeout] || 120
     @temperature = options[:temperature] || 0.1
     @max_tokens = options[:max_tokens] || 1000
-    @reasoning_effort = options[:reasoning_effort] || 3 
-    @logger = options[:logger]
-    @debug = options[:debug] || false
+    @reasoning_effort = options[:reasoning_effort] || 3
   end
 
   # Test if LLM Studio is available and responsive
@@ -33,12 +33,12 @@ class LLMService
     estimated_tokens = (content_length / 4.0).ceil
 
     # Use provided min_context or calculate based on content with buffer
-    if min_context_needed
-      target_context = min_context_needed.to_i
-    else
-      # Add 50% buffer for safety, but ensure minimum of 8192
-      target_context = [estimated_tokens * 1.5, 8192].max.to_i
-    end
+    target_context = if min_context_needed
+                       min_context_needed.to_i
+                     else
+                       # Add 50% buffer for safety, but ensure minimum of 8192
+                       [estimated_tokens * 1.5, 8192].max.to_i
+                     end
 
     current_context = get_current_context_length
 
@@ -51,12 +51,12 @@ class LLMService
         return reload_model_with_context(target_context)
       else
         log_warning("Auto-reload disabled. Current context (#{current_context}) may be insufficient for content (needs #{target_context}).")
-        log_info("To enable auto-reload, use --auto-reload flag")
+        log_info('To enable auto-reload, use --auto-reload flag')
         return false
       end
     elsif !current_context
       # This is normal when no models are loaded or when lms is not available
-      log_debug("Could not determine current context length (no models loaded or lms unavailable). Proceeding without auto-reload.")
+      log_debug('Could not determine current context length (no models loaded or lms unavailable). Proceeding without auto-reload.')
       return true
     end
 
@@ -73,7 +73,7 @@ class LLMService
 
     # Check if no models are loaded
     if output.include?('No models are currently loaded')
-      log_debug("No models currently loaded in LM Studio")
+      log_debug('No models currently loaded in LM Studio')
       return nil
     end
 
@@ -91,9 +91,7 @@ class LLMService
       # Try different parsing strategies
       # Strategy 1: Last numeric field (excluding sizes with GB/MB)
       numeric_parts = parts.select { |part| part.match(/^\d+$/) }
-      if numeric_parts.length > 0
-        context = numeric_parts.last.to_i
-      end
+      context = numeric_parts.last.to_i if numeric_parts.length > 0
 
       # Strategy 2: Look for specific positions based on common formats
       if !context || context == 0
@@ -120,28 +118,26 @@ class LLMService
     return false unless command_exists?('lms')
 
     begin
-      log_info("Unloading current model...")
+      log_info('Unloading current model...')
       unload_result = system("#{lms_command} unload #{@model} >/dev/null 2>&1")
 
-      unless unload_result
-        log_warning("Failed to unload model, continuing anyway...")
-      end
+      log_warning('Failed to unload model, continuing anyway...') unless unload_result
 
       log_info("Reloading model with #{context_length} context length...")
       load_result = system("#{lms_command} load #{@model} --context-length #{context_length} >/dev/null 2>&1")
 
       if load_result
-        log_success("Model reloaded successfully with larger context")
+        log_success('Model reloaded successfully with larger context')
         # Reset connection test to recheck availability
         @available = nil
-        return available?
+        available?
       else
-        log_error("Failed to reload model with larger context")
-        return false
+        log_error('Failed to reload model with larger context')
+        false
       end
     rescue StandardError => e
       log_error("Error reloading model: #{e.message}")
-      return false
+      false
     end
   end
 
@@ -157,9 +153,7 @@ class LLMService
 
       candidates.each do |cmd|
         expanded = File.expand_path(cmd)
-        if File.exist?(expanded) && File.executable?(expanded)
-          return expanded
-        end
+        return expanded if File.exist?(expanded) && File.executable?(expanded)
       end
 
       # Fallback to system PATH
@@ -183,11 +177,11 @@ class LLMService
 
     # Check if we need larger context and auto-reload if necessary
     total_content = "#{system_message}\n#{prompt}"
-    auto_reload = options[:auto_reload].nil? ? true : options[:auto_reload]
+    auto_reload = options[:auto_reload].nil? || options[:auto_reload]
     min_context = options[:min_context]
 
     unless ensure_sufficient_context(total_content.length, min_context, auto_reload)
-      log_error("Unable to ensure sufficient context for request")
+      log_error('Unable to ensure sufficient context for request')
       return nil
     end
 
@@ -212,11 +206,11 @@ class LLMService
 
     # Check if we need larger context for all messages combined
     total_content = messages.map { |msg| msg[:content] || msg['content'] }.join("\n")
-    auto_reload = options[:auto_reload].nil? ? true : options[:auto_reload]
+    auto_reload = options[:auto_reload].nil? || options[:auto_reload]
     min_context = options[:min_context]
 
     unless ensure_sufficient_context(total_content.length, min_context, auto_reload)
-      log_error("Unable to ensure sufficient context for chat request")
+      log_error('Unable to ensure sufficient context for chat request')
       return nil
     end
 
@@ -313,42 +307,52 @@ class LLMService
   end
 
   def send_chat_request(messages, temperature:, max_tokens:)
-    uri = URI("#{@endpoint}/chat/completions")
-
-    payload = {
+    with_error_handling("LLM chat request", {
       model: @model,
-      messages: messages,
+      messages_count: messages.length,
       temperature: temperature,
-      max_tokens: max_tokens,
-      reasoning_effort: @reasoning_effort
-    }
+      max_tokens: max_tokens
+    }) do
+      uri = URI("#{@endpoint}/chat/completions")
 
-    begin
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.read_timeout = @timeout
-      http.open_timeout = 10
+      payload = {
+        model: @model,
+        messages: messages,
+        temperature: temperature,
+        max_tokens: max_tokens,
+        reasoning_effort: @reasoning_effort
+      }
 
-      request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request.body = payload.to_json
+      response = safe_http_request(uri, Net::HTTP::Post, "LLM API request", timeout: @timeout) do |request|
+        request['Content-Type'] = 'application/json'
+        request.body = payload.to_json
+      end
 
-      log_debug("Sending chat request to #{uri} with model #{@model}")
+      result = JSON.parse(response.body)
+      content = result.dig('choices', 0, 'message', 'content')
 
-      response = http.request(request)
-
-      if response.code == '200'
-        result = JSON.parse(response.body)
-        content = result.dig('choices', 0, 'message', 'content')
-
-        log_debug("LLM response received: #{content&.length || 0} characters")
+      if content && !content.empty?
+        log_debug("LLM response received: #{content.length} characters")
+        log_debug("Response preview: #{content[0..100]}...") if content.length > 100
         content
       else
-        log_error("LLM request failed with status #{response.code}: #{response.body}")
+        log_error("LLM returned empty response for model #{@model}")
+        log_debug("Full API response body: #{response.body}")
+
+        # Try to parse and log more details about the response
+        begin
+          parsed_response = JSON.parse(response.body)
+          log_debug("Parsed response: #{parsed_response}")
+          if parsed_response['choices'] && parsed_response['choices'].first
+            choice = parsed_response['choices'].first
+            log_debug("Choice content: #{choice.dig('message', 'content')}")
+            log_debug("Choice finish reason: #{choice['finish_reason']}")
+          end
+        rescue JSON::ParserError => e
+          log_debug("Failed to parse JSON response: #{e.message}")
+        end
         nil
       end
-    rescue StandardError => e
-      log_error("LLM request error: #{e.class.name} - #{e.message}")
-      nil
     end
   end
 
@@ -375,36 +379,34 @@ class LLMService
 
       log_debug("Sending streaming chat request to #{uri} with model #{@model}")
 
-      full_content = ""
+      full_content = ''
       start_time = Time.now
 
       # Start progress indicator
-      print_progress_indicator("Generating")
+      print_progress_indicator('Generating')
 
       http.request(request) do |response|
         if response.code == '200'
           response.read_body do |chunk|
-            if chunk.strip.empty?
-              next
-            end
+            next if chunk.strip.empty?
 
             # Process SSE (Server-Sent Events) format
             chunk.split("\n").each do |line|
-              if line.start_with?('data: ')
-                data_str = line[6..-1] # Remove 'data: ' prefix
-                next if data_str.strip == '[DONE]'
+              next unless line.start_with?('data: ')
 
-                begin
-                  data = JSON.parse(data_str)
-                  content_delta = data.dig('choices', 0, 'delta', 'content')
-                  if content_delta
-                    full_content += content_delta
-                    # Show streaming progress
-                    update_progress_indicator
-                  end
-                rescue JSON::ParserError
-                  # Skip invalid JSON lines
+              data_str = line[6..-1] # Remove 'data: ' prefix
+              next if data_str.strip == '[DONE]'
+
+              begin
+                data = JSON.parse(data_str)
+                content_delta = data.dig('choices', 0, 'delta', 'content')
+                if content_delta
+                  full_content += content_delta
+                  # Show streaming progress
+                  update_progress_indicator
                 end
+              rescue JSON::ParserError
+                # Skip invalid JSON lines
               end
             end
           end
@@ -449,39 +451,6 @@ class LLMService
 
   def clear_progress_indicator
     @progress_active = false
-    print "\r" + " " * 50 + "\r" # Clear the line
-  end
-
-  # Logging methods with fallbacks
-  def log_info(message)
-    if @logger&.respond_to?(:log_info)
-      @logger.log_info(message)
-    elsif @debug
-      puts "ℹ️  #{message}"
-    end
-  end
-
-  def log_warning(message)
-    if @logger&.respond_to?(:log_warning)
-      @logger.log_warning(message)
-    elsif @debug
-      puts "⚠️  #{message}"
-    end
-  end
-
-  def log_error(message)
-    if @logger&.respond_to?(:log_error)
-      @logger.log_error(message)
-    else
-      puts "❌ #{message}"
-    end
-  end
-
-  def log_debug(message)
-    if @logger&.respond_to?(:log_debug)
-      @logger.log_debug(message)
-    elsif @debug
-      puts "🐛 #{message}"
-    end
+    print "\r" + ' ' * 50 + "\r" # Clear the line
   end
 end

@@ -66,7 +66,8 @@
       "Bash(claude config:*)",
       "Read(//Users/hemantv/Library/**)",
       "Read(//System/Library/ColorSync/Profiles/**)",
-      "Bash(defaults:*)"
+      "Bash(defaults:*)",
+      "Bash(/Users/hemantv/zshrc/bin/youtube-transcript-chat.rb:*)"
     ],
     "deny": [],
     "additionalDirectories": [

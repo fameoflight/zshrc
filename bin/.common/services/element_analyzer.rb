@@ -1,15 +1,15 @@
 # frozen_string_literal: true
 
+require_relative 'base_service'
 require_relative 'element_detector_service'
 
 # Element finder and analyzer utility for browser automation
-class ElementAnalyzer
+class ElementAnalyzer < BaseService
   def initialize(browser, options = {})
+    super(options)
     @browser = browser
     @use_llm = options[:use_llm] || false
-    @logger = options[:logger]
-    @debug = options[:debug] || false
-    
+
     # Initialize LLM detector service if requested
     if @use_llm
       @llm_detector = ElementDetectorService.new(logger: @logger, debug: @debug)
