@@ -54,7 +54,7 @@ function gemini-cli() {
     fi
 
     # Go to the root of the git repository
-    cd `git rev-parse --show-toplevel` || return 1
+    cd "$(git rev-parse --show-toplevel)" || return 1
 
     # Ensure GEMINI.md exists (create symlink to AGENT.md if needed)
     if [[ -f AGENT.md ]] && [[ ! -f GEMINI.md ]]; then

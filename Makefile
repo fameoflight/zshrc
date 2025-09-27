@@ -118,6 +118,7 @@ help:
 	@echo "  fix-brew        - 🔧 Fix Homebrew issues (with permissions)"
 	@echo "  fix-brew-only   - ⭐ Fix Homebrew issues (without permissions) - recommended"
 	@echo "  brew-doctor     - 🩺 Run Homebrew diagnostics"
+	@echo "  brew-clean      - 🧹 Clean incomplete Homebrew processes and cache"
 	@echo "  brew-relink     - 🔗 Fix broken package symlinks"
 	@echo ""
 	@echo "🧹 Maintenance:"
@@ -229,21 +230,21 @@ dev-tools: brew core-utils dev-utils modern-cli editors
 core-utils:
 	@echo -e "$(MAGENTA)📦 Installing core utilities...$(NC)"
 	@for pkg in $(CORE_UTILS_BREW); do \
-		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
+		brew install $$pkg || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 # Install development utilities
 dev-utils:
 	@echo "🔧 Installing development utilities..."
 	@for pkg in $(DEV_UTILS_BREW); do \
-		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
+		brew install $$pkg || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 # Install modern CLI tools and enhancements
 modern-cli:
 	@echo "✨ Installing modern CLI tools..."
 	@for pkg in $(MODERN_CLI_BREW); do \
-		brew install --quiet $$pkg 2>/dev/null || echo "⚠️  Could not install $$pkg (may already be installed)"; \
+		brew install $$pkg || echo "⚠️  Could not install $$pkg (may already be installed)"; \
 	done
 
 	claude config set -g autoUpdates false
@@ -252,10 +253,10 @@ modern-cli:
 editors:
 	@echo "📝 Installing editors and IDEs..."
 	@for cask in $(EDITORS_CASK); do \
-		brew install --cask --quiet $$cask 2>/dev/null || echo "⚠️  Could not install $$cask (may already be installed)"; \
+		brew install --cask $$cask || echo "⚠️  Could not install $$cask (may already be installed)"; \
 	done
-	-@brew install --quiet vim 2>/dev/null || true        # Classic editor
-	-@brew install --quiet neovim 2>/dev/null || true     # Modern Vim
+	-@brew install vim || true        # Classic editor
+	-@brew install neovim || true     # Modern Vim
 
 .PHONY: python
 python: brew
@@ -307,7 +308,7 @@ ruby-gems:
 	@if [ -f "Gemfile" ]; then \
 		echo "Installing gems from Gemfile..."; \
 		bundle config set --local path 'vendor/bundle'; \
-		bundle install --quiet; \
+		bundle install; \
 		echo -e "$(GREEN)✅ Ruby gems installed successfully$(NC)"; \
 	else \
 		echo -e "$(YELLOW)⚠️  No Gemfile found - skipping gem installation$(NC)"; \
@@ -442,7 +443,7 @@ vscode-setup:
 mac-apps: github-tools xcode-setup
 	@echo "🖥️  Installing macOS applications..."
 	@for cask in $(MAC_APPS_CASK); do \
-		brew install --cask --quiet $$cask 2>/dev/null || echo "⚠️  Could not install $$cask (may already be installed)"; \
+		brew install --cask $$cask || echo "⚠️  Could not install $$cask (may already be installed)"; \
 	done
 	@echo -e "$(BOLD)$(GREEN)✅ macOS applications installation complete$(NC)"
 
@@ -775,7 +776,7 @@ find-orphans:
 # HOMEBREW TROUBLESHOOTING - Fix common Homebrew issues
 # =============================================================================
 
-.PHONY: fix-brew fix-brew-only brew-doctor brew-relink xcode-update
+.PHONY: fix-brew fix-brew-only brew-doctor brew-clean brew-relink xcode-update
 fix-brew: fix-permissions brew-doctor brew-update brew-relink xcode-update
 	@echo -e "$(BOLD)$(GREEN)✅ Homebrew troubleshooting complete$(NC)"
 
@@ -793,11 +794,26 @@ brew-doctor:
 		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
 	fi
 
+# Clean incomplete Homebrew processes and cache
+brew-clean:
+	@echo -e "$(CYAN)🧹 Cleaning incomplete Homebrew processes and cache...$(NC)"
+	@if command -v brew >/dev/null 2>&1; then \
+		echo -e "$(BLUE)🔍 Checking for incomplete downloads...$(NC)"; \
+		ps aux | grep -i brew | grep -v grep | head -5; \
+		echo -e "$(BLUE)🧹 Cleaning up Homebrew cache...$(NC)"; \
+		brew cleanup; \
+		echo -e "$(BLUE)🔧 Cleaning up services...$(NC)"; \
+		brew services cleanup; \
+		echo -e "$(GREEN)✅ Homebrew cleanup complete$(NC)"; \
+	else \
+		echo -e "$(RED)❌ Homebrew not available$(NC)"; \
+	fi
+
 # Fix broken package symlinks
 brew-relink:
 	@echo -e "$(CYAN)🔗 Relinking Homebrew packages...$(NC)"
 	@if command -v brew >/dev/null 2>&1; then \
-		brew link --overwrite $$(brew list --formula) 2>/dev/null || echo -e "$(YELLOW)⚠️  Some packages may already be linked$(NC)"; \
+		brew link --overwrite $$(brew list --formula) || echo -e "$(YELLOW)⚠️  Some packages may already be linked$(NC)"; \
 	else \
 		echo -e "$(RED)❌ Homebrew not available for relinking$(NC)"; \
 	fi
@@ -830,8 +846,8 @@ fix-permissions:
 	fi
 	@if [ -d "/opt/homebrew" ]; then \
 		echo "Fixing /opt/homebrew permissions..."; \
-		sudo chown -R $(whoami):admin /opt/homebrew 2>/dev/null || echo "⚠️  Could not fix /opt/homebrew permissions"; \
-		sudo chmod -R g+w /opt/homebrew 2>/dev/null || true; \
+		sudo chown -R $(whoami):admin /opt/homebrew || echo "⚠️  Could not fix /opt/homebrew permissions"; \
+		sudo chmod -R g+w /opt/homebrew || true; \
 	else \
 		echo "ℹ️  /opt/homebrew not found"; \
 	fi

@@ -52,7 +52,7 @@ function claude() {
     fi
 
     # Go to the root of the git repository
-    cd `git rev-parse --show-toplevel` || return 1
+    cd "$(git rev-parse --show-toplevel)" || return 1
 
     # Ensure CLAUDE.md exists (create symlink to AGENT.md if needed)
     if [[ -f AGENT.md ]] && [[ ! -f CLAUDE.md ]]; then
@@ -63,7 +63,7 @@ function claude() {
       echo -e "${BLUE}ℹ️  Run 'agent-setup' to set up unified agent documentation${NC}"
     fi
 
-    echo -e "${BLUE}🚀 Running claude in: ${GREEN}`pwd`${NC}"
+    echo -e "${BLUE}🚀 Running claude in: ${GREEN}$(pwd)${NC}"
     "$claude_path" "$@"
   else
     echo -e "${RED}❌ Error: claude not found in /usr/local/bin or /opt/homebrew/bin${NC}"
@@ -130,7 +130,7 @@ function claude-zai() {
     fi
 
     # Go to the root of the git repository
-    cd `git rev-parse --show-toplevel` || return 1
+    cd "$(git rev-parse --show-toplevel)" || return 1
 
     # Ensure CLAUDE.md exists (create symlink to AGENT.md if needed)
     if [[ -f AGENT.md ]] && [[ ! -f CLAUDE.md ]]; then
@@ -145,7 +145,7 @@ function claude-zai() {
     export ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic"
     export ANTHROPIC_AUTH_TOKEN="$ZAI_API_KEY"
 
-    echo -e "${MAGENTA}🤖 Running Claude Code with Z.AI GLM-4.5 in: ${GREEN}`pwd`${NC}"
+    echo -e "${MAGENTA}🤖 Running Claude Code with Z.AI GLM-4.5 in: ${GREEN}$(pwd)${NC}"
     echo -e "${BLUE}ℹ️  Using Z.AI endpoint: ${ANTHROPIC_BASE_URL}${NC}"
     "$claude_path" "$@"
   else
