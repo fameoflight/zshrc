@@ -184,6 +184,30 @@ llm-generate() {
 }
 
 # =============================================================================
+# XCODE PROJECT MANAGEMENT
+# =============================================================================
+
+# Add file to Xcode project with automatic category detection
+xcode-add-file() {
+  _execute_ruby_script "xcode-add-file.rb" "$@"
+}
+
+# View files in Xcode project, optionally filtered by category
+xcode-view-files() {
+  _execute_ruby_script "xcode-view-files.rb" "$@"
+}
+
+# Remove file from Xcode project and filesystem
+xcode-delete-file() {
+  _execute_ruby_script "xcode-delete-file.rb" "$@"
+}
+
+# List available file categories for Xcode project organization
+xcode-list-categories() {
+  _execute_ruby_script "xcode-list-categories.rb" "$@"
+}
+
+# =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
 
@@ -214,6 +238,10 @@ list-scripts() {
   echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
+  echo "  📱 xcode-add-file        - Add file to Xcode project with category detection"
+  echo "  📱 xcode-view-files      - View files in Xcode project by category"
+  echo "  📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
+  echo "  📱 xcode-list-categories - List available Xcode file categories"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
@@ -395,6 +423,10 @@ scripts() {
     echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
+    echo "  📱 xcode-add-file        - Add file to Xcode project with category detection"
+    echo "  📱 xcode-view-files      - View files in Xcode project by category"
+    echo "  📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
+    echo "  📱 xcode-list-categories - List available Xcode file categories"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo "  🛠️  macos-optimize       - Optimize macOS system settings"
@@ -470,6 +502,7 @@ scripts() {
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate"
+    "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories"
   )
   
   for func in "${utility_functions[@]}"; do
