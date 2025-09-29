@@ -13,21 +13,22 @@ _execute_ruby_script() {
   local script_name="$1"
   local script_path="$ZSH_CONFIG/bin/$1"
   shift # Remove script name from arguments
-  
+
   if [[ ! -f "$script_path" ]]; then
     log_error "$script_name not found at $script_path"
     return 1
   fi
-  
+
   if [[ ! -x "$script_path" ]]; then
     log_info "Making $script_name executable..."
     chmod +x "$script_path"
   fi
-  
-  # Change to the script's directory and use bundle exec
+
+  # Store the current working directory and change to script's directory
+  local current_dir="$(pwd)"
   (
     cd "$ZSH_CONFIG" || return
-    bundle exec ruby "bin/$script_name" "$@"
+    ORIGINAL_WORKING_DIR="$current_dir" bundle exec ruby "bin/$script_name" "$@"
   )
 }
 
@@ -207,6 +208,11 @@ xcode-list-categories() {
   _execute_ruby_script "xcode-list-categories.rb" "$@"
 }
 
+# Generate app icons for Xcode projects with customizable themes
+xcode-icon-generator() {
+  _execute_ruby_script "xcode-icon-generator.rb" "$@"
+}
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -242,6 +248,7 @@ list-scripts() {
   echo "  📱 xcode-view-files      - View files in Xcode project by category"
   echo "  📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
   echo "  📱 xcode-list-categories - List available Xcode file categories"
+  echo "  🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
   echo "  📜 list-scripts          - Show this help"
   echo ""
   
@@ -427,6 +434,7 @@ scripts() {
     echo "  📱 xcode-view-files      - View files in Xcode project by category"
     echo "  📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
     echo "  📱 xcode-list-categories - List available Xcode file categories"
+    echo "  🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo "  🛠️  macos-optimize       - Optimize macOS system settings"
@@ -502,7 +510,7 @@ scripts() {
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate"
-    "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories"
+    "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )
   
   for func in "${utility_functions[@]}"; do

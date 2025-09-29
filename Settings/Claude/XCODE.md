@@ -15,6 +15,7 @@ xcode-add-file <file_path> [category]        # Add file with auto-detection
 xcode-view-files [category]                  # View project files by category
 xcode-delete-file <file_name>                # Remove file safely
 xcode-list-categories                        # Show available categories
+xcode-icon-generator                         # Generate app icons (run from project dir)
 ```
 
 ### Key Features
@@ -24,6 +25,7 @@ xcode-list-categories                        # Show available categories
 - **Resource File Handling**: Special handling for assets, plists, storyboards, etc.
 - **Safe Deletion**: Handles different file types appropriately
 - **Dry-run Support**: Preview changes before applying
+- **Icon Generation**: Create modern app icons with customizable themes and colors
 
 ## File Categories
 
@@ -135,6 +137,37 @@ xcode-list-categories --patterns
 # JSON output
 xcode-list-categories --json
 ```
+
+### Icon Generation
+
+```bash
+# Generate all icons (run from project directory)
+xcode-icon-generator
+
+# Use minimal theme
+xcode-icon-generator --theme minimal
+
+# Generate iOS icons only
+xcode-icon-generator --ios-only
+
+# Use custom colors
+xcode-icon-generator --color #FF6B6B --accent #4ECDC4
+
+# Preview without generating
+xcode-icon-generator --dry-run
+```
+
+**Icon Themes:**
+- **modern**: Layered design with gradients and accents (default)
+- **minimal**: Clean, simple circular design
+
+**Color Options:**
+- `--color`: Background color in hex format (e.g., #2D2D2D)
+- `--accent`: Accent color in hex format (e.g., #0096FF)
+
+**Generated Icons:**
+- iOS: 1024px icons (normal, dark, tinted variants)
+- macOS: All required sizes from 16px to 1024px
 
 ## Project Structure Detection
 

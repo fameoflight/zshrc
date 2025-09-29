@@ -99,6 +99,7 @@ stack-monitors         # Configure stacked monitor setup
 merge-pdf              # Merge multiple PDF files
 dropbox-backup         # Move directories to Dropbox with symlinks
 uninstall-app          # Comprehensive application uninstaller
+xcode-icon-generator   # Generate app icons for Xcode projects
 list-scripts           # Show all available scripts
 ```
 
@@ -131,7 +132,7 @@ make find-orphans      # Find orphaned Makefile targets
 make ruby-gems
 ```
 
-**Available gems:** tty-prompt, tty-progressbar, pastel, sqlite3, rexml
+**Available gems:** tty-prompt, tty-progressbar, pastel, sqlite3, rexml, chunky_png, oily_png
 
 **Script template:**
 

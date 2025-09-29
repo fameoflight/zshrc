@@ -65,6 +65,7 @@ class ScriptBase
     @options = default_options
     @args = []
     @session_log = []
+    @original_working_dir = ENV['ORIGINAL_WORKING_DIR'] || Dir.pwd
     setup_bundler
     setup_session_logging
     parse_arguments
@@ -329,6 +330,10 @@ class ScriptBase
 
   def debug?
     @options[:debug]
+  end
+
+  def original_working_dir
+    @original_working_dir
   end
 
   def confirm_action(message)

@@ -59,9 +59,14 @@
       "Bash(lms ps:*)",
       "Bash(defaults delete:*)",
       "Bash(rvm use:*)",
-      "Bash(rvm list:*)"
+      "Bash(rvm list:*)",
+      "Read(//Users/hemantv/workspace/upscaler pro/**)",
+      "Bash(xcode-icon-generator:*)",
+      "Bash(BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby:*)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }

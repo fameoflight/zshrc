@@ -50,6 +50,10 @@ gem 'plist', '~> 3.7'
 gem 'combine_pdf', '~> 1.0'
 gem 'pdf-reader', '~> 2.11'
 
+# Image processing for icon generation
+gem 'chunky_png', '~> 1.3.7'
+gem 'oily_png', '~> 1.2'
+
 # Web scraping and EPUB creation
 gem 'nokogiri', '~> 1.15'        # HTML/XML parsing
 gem 'gepub', '~> 1.0'            # EPUB creation
