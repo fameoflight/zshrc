@@ -6,8 +6,6 @@ require_relative '.common/xcode_project'
 require_relative '.common/image_utils'
 require 'find'
 require 'json'
-require 'securerandom'
-require 'tmpdir'
 require 'fileutils'
 
 # Icon Generator for Xcode Projects
@@ -92,9 +90,16 @@ class XcodeIconGenerator < ScriptBase
 
     # Validate SVG input file if provided
     if @options[:input_svg]
-      svg_path = File.expand_path(@options[:input_svg])
+      # Check if path is absolute or relative to current directory
+      if @options[:input_svg].start_with?('/')
+        svg_path = @options[:input_svg]
+      else
+        svg_path = File.expand_path(@options[:input_svg], original_working_dir)
+      end
+
       unless File.exist?(svg_path)
         log_error("SVG file not found: #{@options[:input_svg]}")
+        log_info("Current directory: #{original_working_dir}")
         exit 1
       end
 
@@ -109,6 +114,9 @@ class XcodeIconGenerator < ScriptBase
         log_info('Please install either librsvg (rsvg-convert) or ImageMagick (convert)')
         exit 1
       end
+
+      # Store the absolute path for later use
+      @svg_absolute_path = svg_path
     end
   end
 
@@ -286,9 +294,9 @@ class XcodeIconGenerator < ScriptBase
 
     case @options[:theme]
     when :minimal
-      draw_minimal_icon(canvas, size, accent_color)
+      ImageUtils::Icons.draw_minimal_icon(canvas, size, accent_color)
     else
-      draw_modern_icon(canvas, size, accent_color)
+      ImageUtils::Icons.draw_modern_icon(canvas, size, accent_color)
     end
 
     # Save the icon
@@ -298,170 +306,24 @@ class XcodeIconGenerator < ScriptBase
     log_file_created(filepath)
   end
 
-  def draw_modern_icon(canvas, size, accent_color)
-    margin = size / 8
-    center = size / 2
 
-    # Outer square
-    outer_size = size - margin * 2
-    draw_rect(canvas, margin, margin, outer_size, outer_size, accent_color, 3)
-
-    # Inner square with gradient effect
-    inner_size = outer_size * 0.7
-    inner_offset = (outer_size - inner_size) / 2
-    inner_x = margin + inner_offset
-    inner_y = margin + inner_offset
-
-    # Create gradient by drawing multiple rectangles with decreasing opacity
-    10.times do |i|
-      alpha = 255 * (i / 10.0)
-      color = ImageUtils::PNG.with_alpha(accent_color, alpha.to_i)
-      offset = i * 2
-      ImageUtils::PNG.draw_rect(canvas, inner_x - offset, inner_y - offset,
-                                inner_size + offset * 2, inner_size + offset * 2, color, 2)
-    end
-
-    # Central circle
-    symbol_size = size / 4
-    ImageUtils::PNG.draw_circle(canvas, center, center, symbol_size / 2, accent_color, 3)
-
-    # Center dot
-    dot_size = size / 16
-    ImageUtils::PNG.draw_circle(canvas, center, center, dot_size, accent_color, :fill)
-
-    # Corner accents
-    accent_size = size / 12
-    accents = [
-      [margin + accent_size, margin + accent_size],
-      [size - margin - accent_size, margin + accent_size],
-      [margin + accent_size, size - margin - accent_size],
-      [size - margin - accent_size, size - margin - accent_size]
-    ]
-
-    accents.each do |x, y|
-      ImageUtils::PNG.draw_rect(canvas, x - accent_size/4, y - accent_size/4,
-                                accent_size/2, accent_size/2, accent_color, :fill)
-    end
-  end
-
-  def draw_minimal_icon(canvas, size, accent_color)
-    margin = size / 8
-    center = size / 2
-
-    # Main circle
-    circle_size = size - margin * 2
-    ImageUtils::PNG.draw_circle(canvas, center, center, circle_size / 2, accent_color, 4)
-
-    # Center square
-    center_size = size / 3
-    center_x = center - center_size / 2
-    center_y = center - center_size / 2
-    ImageUtils::PNG.draw_rect(canvas, center_x, center_y, center_size, center_size, accent_color, :fill)
-  end
 
   def convert_svg_to_png(size, filename, base_dir, variant = :normal)
-    svg_path = File.expand_path(@options[:input_svg])
+    svg_path = @svg_absolute_path
     output_path = File.join(base_dir, filename)
 
     log_progress("Converting SVG to PNG...")
 
-    # First convert SVG to PNG
-    temp_png = File.join(Dir.tmpdir, "temp_#{SecureRandom.hex(8)}.png")
-
-    unless ImageUtils::SVG.convert_to_png(svg_path, temp_png, size, size)
+    unless ImageUtils::Icons.convert_svg_to_png(svg_path, output_path, size, variant)
       log_error("Failed to convert SVG to PNG using available tools")
       log_info("Available tools: #{ImageUtils::SVG.available_tools.join(', ')}")
       exit 1
     end
 
-    # Apply color filters for dark/tinted variants
-    if variant != :normal
-      apply_color_filter(temp_png, output_path, variant)
-    else
-      # Just move the file for normal variant
-      FileUtils.mv(temp_png, output_path)
-    end
-
     log_file_created(output_path)
-
-    # Clean up temporary file
-    File.delete(temp_png) if File.exist?(temp_png)
   end
 
-  def apply_color_filter(input_path, output_path, variant)
-    case variant
-    when :dark
-      # Apply dark mode filter using ImageMagick
-      command = ['convert', input_path, '-modulate', '80,50,100', output_path]
-    when :tinted
-      # Apply tinted filter - add blue tint and reduce saturation
-      command = ['convert', input_path, '-modulate', '90,70,100', '-fill', '#4A90E2', '-colorize', '20%', output_path]
-    else
-      # No filter, just copy
-      FileUtils.cp(input_path, output_path)
-      return
-    end
 
-    unless system(*command)
-      log_error("Failed to apply color filter for #{variant}")
-      exit 1
-    end
-  end
-
-  def create_modified_svg(original_svg, variant)
-    # Read the original SVG content
-    svg_content = File.read(original_svg)
-
-    case variant
-    when :dark
-      # Apply dark mode filter - make colors darker
-      if svg_content.include?('<defs>')
-        # Insert filter inside existing defs section
-        modified_svg = svg_content.sub(
-          /(<defs>)/,
-          '\1<filter id="dark-mode"><feColorMatrix type="matrix" values="0.3 0 0 0.2 0 0.3 0 0 0.2 0 0 0.3 0 0.2 0 0 0 0.5 0.5"/></filter>'
-        )
-      else
-        # Add defs section with filter
-        modified_svg = svg_content.sub(
-          /<svg([^>]*)>/,
-          '<svg\1><defs><filter id="dark-mode"><feColorMatrix type="matrix" values="0.3 0 0 0.2 0 0.3 0 0 0.2 0 0 0.3 0 0.2 0 0 0 0.5 0.5"/></filter></defs>'
-        )
-      end
-      # Wrap content in a filtered group (after defs section)
-      modified_svg = modified_svg.sub(
-        /(<\/defs>)(.*)/m,
-        '\1<g filter="url(#dark-mode)">\2</g>'
-      )
-    when :tinted
-      # Apply tinted mode filter - add a blue tint
-      if svg_content.include?('<defs>')
-        # Insert filter inside existing defs section
-        modified_svg = svg_content.sub(
-          /(<defs>)/,
-          '\1<filter id="tint-mode"><feColorMatrix type="matrix" values="0.8 0 0 0.3 0 0.6 0 0 0.4 0 0 0.4 0 0 0.5 0 0 0 0.7 0.6"/></filter>'
-        )
-      else
-        # Add defs section with filter
-        modified_svg = svg_content.sub(
-          /<svg([^>]*)>/,
-          '<svg\1><defs><filter id="tint-mode"><feColorMatrix type="matrix" values="0.8 0 0 0.3 0 0.6 0 0 0.4 0 0 0.4 0 0 0.5 0 0 0 0.7 0.6"/></filter></defs>'
-        )
-      end
-      # Wrap content in a filtered group (after defs section)
-      modified_svg = modified_svg.sub(
-        /(<\/defs>)(.*)/m,
-        '\1<g filter="url(#tint-mode)">\2</g>'
-      )
-    else
-      modified_svg = svg_content
-    end
-
-    # Create temporary file
-    temp_file = File.join(Dir.tmpdir, "temp_#{variant}_#{SecureRandom.hex(8)}.svg")
-    File.write(temp_file, modified_svg)
-    temp_file
-  end
 
   def generate_app_logo
     log_section('AppLogo')
@@ -495,7 +357,7 @@ class XcodeIconGenerator < ScriptBase
 
     if @options[:input_svg]
       # If SVG input is provided, convert it to PNG
-      svg_path = File.expand_path(@options[:input_svg])
+      svg_path = @svg_absolute_path
       output_path = File.join(base_dir, filename)
 
       log_progress("Converting SVG to PNG for #{scale}...")
@@ -515,9 +377,9 @@ class XcodeIconGenerator < ScriptBase
 
       case @options[:theme]
       when :minimal
-        draw_minimal_logo(canvas, size, accent_color)
+        ImageUtils::Logos.draw_minimal_logo(canvas, size, accent_color)
       else
-        draw_modern_logo(canvas, size, accent_color)
+        ImageUtils::Logos.draw_modern_logo(canvas, size, accent_color)
       end
 
       # Save the logo
@@ -525,30 +387,6 @@ class XcodeIconGenerator < ScriptBase
       canvas.save(filepath)
       log_file_created(filepath)
     end
-  end
-
-  def draw_modern_logo(canvas, size, accent_color)
-    # Similar to modern icon but simpler for in-app use
-    margin = size / 10
-    center = size / 2
-
-    # Outer square
-    outer_size = size - margin * 2
-    ImageUtils::PNG.draw_rect(canvas, margin, margin, outer_size, outer_size, accent_color, 4)
-
-    # Inner element
-    inner_size = outer_size * 0.6
-    inner_x = margin + (outer_size - inner_size) / 2
-    inner_y = margin + (outer_size - inner_size) / 2
-    ImageUtils::PNG.draw_rect(canvas, inner_x, inner_y, inner_size, inner_size, accent_color, :fill)
-  end
-
-  def draw_minimal_logo(canvas, size, accent_color)
-    # Minimal circular logo
-    center = size / 2
-    radius = size / 3
-
-    ImageUtils::PNG.draw_circle(canvas, center, center, radius, accent_color, 4)
   end
 
   def update_app_logo_contents_json(logo_dir)
