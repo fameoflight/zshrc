@@ -88,6 +88,7 @@ help:
 	@echo "  xcode-update    - 📱 Install/update Xcode and Command Line Tools"
 	@echo "  vscode-setup    - 💻 Setup VS Code settings and extensions"
 	@echo "  claude-setup    - 🤖 Setup Claude Code settings via symlinks"
+	@echo "  claude-link     - 🔗 Create Claude binary symlink for native install detection"
 	@echo "  github-setup    - 🐙 Configure Git settings"
 	@echo "  mac-settings    - ⚡ Configure macOS system settings (calls macos-optimize)"
 	@echo "  macos-optimize  - ⚡ Optimize macOS system settings for developers"
@@ -403,9 +404,31 @@ iterm-backup:
 iterm-setup:
 	@bash "${ZSH}/bin/iterm-setup.sh"
 
-.PHONY: claude-setup
-claude-setup:
+.PHONY: claude-setup claude-link
+claude-setup: claude-link
 	@bash "${ZSH}/bin/claude-setup.sh"
+
+# Create symlink for Claude binary to expected native installation path
+claude-link:
+	@echo -e "$(CYAN)🔗 Setting up Claude binary symlink...$(NC)"
+	@if command -v claude >/dev/null 2>&1; then \
+		echo -e "$(BLUE)📁 Creating ~/.local/bin directory...$(NC)"; \
+		mkdir -p ~/.local/bin; \
+		if [ -f /opt/homebrew/bin/claude ]; then \
+			echo -e "$(BLUE)🔗 Creating symlink from ~/.local/bin/claude to /opt/homebrew/bin/claude...$(NC)"; \
+			ln -sf /opt/homebrew/bin/claude ~/.local/bin/claude; \
+			echo -e "$(GREEN)✅ Claude binary symlink created$(NC)"; \
+		elif [ -f /usr/local/bin/claude ]; then \
+			echo -e "$(BLUE)🔗 Creating symlink from ~/.local/bin/claude to /usr/local/bin/claude...$(NC)"; \
+			ln -sf /usr/local/bin/claude ~/.local/bin/claude; \
+			echo -e "$(GREEN)✅ Claude binary symlink created$(NC)"; \
+		else \
+			echo -e "$(YELLOW)⚠️  Claude binary not found in standard locations$(NC)"; \
+		fi; \
+	else \
+		echo -e "$(RED)❌ Claude not installed - install with 'brew install claude-code'$(NC)"; \
+		exit 1; \
+	fi
 
 .PHONY: vscode-setup
 vscode-setup:

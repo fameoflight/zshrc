@@ -275,7 +275,7 @@ class YouTubeTranscriptChat < ScriptBase
              transcript_data['full_text'] &&
              transcript_data['segments']
         log_warning("Cached transcript has invalid structure, re-downloading...")
-        File.delete(cache_file)  # Remove invalid cache
+        File.delete(cache_file) # Remove invalid cache
         return nil
       end
 
@@ -322,7 +322,7 @@ class YouTubeTranscriptChat < ScriptBase
 
     log_info("🧹 Clearing cache...")
     FileUtils.rm_rf(cache_dir)
-    FileUtils.mkdir_p(cache_dir)  # Recreate empty directory
+    FileUtils.mkdir_p(cache_dir) # Recreate empty directory
   end
 
   def format_file_age(file_time)
@@ -393,7 +393,7 @@ class YouTubeTranscriptChat < ScriptBase
     unless success
       log_warning("Failed to download transcript in #{language}, trying English...")
 
-      cmd[3] = 'en'  # Change language to English
+      cmd[3] = 'en' # Change language to English
       success = system(*cmd, out: '/dev/null', err: '/dev/null')
 
       unless success
@@ -503,7 +503,6 @@ class YouTubeTranscriptChat < ScriptBase
 
       log_info("Transcript parsed: #{transcript_data[:word_count]} words, #{segments.length} segments")
       transcript_data
-
     rescue JSON::ParserError => e
       log_error("Failed to parse transcript JSON: #{e.message}")
       nil
@@ -819,11 +818,11 @@ class YouTubeTranscriptChat < ScriptBase
   end
 
   def display_plain_summary(summary)
-    puts "\n" + "="*80
+    puts "\n" + "=" * 80
     puts "📋 SUMMARY"
-    puts "="*80
+    puts "=" * 80
     puts summary
-    puts "="*80 + "\n"
+    puts "=" * 80 + "\n"
   end
 
   def display_markdown_response(text)
@@ -990,11 +989,11 @@ class YouTubeTranscriptChat < ScriptBase
     end
 
     choices.concat([
-      { name: "🌡️  Temperature: #{@options[:temperature]}", value: :temperature },
-      { name: "🔢 Max Tokens: #{@options[:max_tokens]}", value: :max_tokens },
-      { name: "⏱️  Timeout: #{@options[:timeout]}s", value: :timeout },
-      { name: '← Back to Main Menu', value: :back }
-    ])
+                     { name: "🌡️  Temperature: #{@options[:temperature]}", value: :temperature },
+                     { name: "🔢 Max Tokens: #{@options[:max_tokens]}", value: :max_tokens },
+                     { name: "⏱️  Timeout: #{@options[:timeout]}s", value: :timeout },
+                     { name: '← Back to Main Menu', value: :back }
+                   ])
 
     selection = prompt.select('🤖 Model Settings', choices, cycle: true)
 
@@ -1002,11 +1001,12 @@ class YouTubeTranscriptChat < ScriptBase
     when :model
       if models.any?
         model_choices = [{ name: 'Auto-detect', value: nil }] +
-                       models.map { |m| { name: m, value: m } }
+                        models.map { |m| { name: m, value: m } }
         @options[:model] = prompt.select('Select model:', model_choices)
       end
     when :temperature
-      @options[:temperature] = prompt.slider('Temperature (creativity)', min: 0.0, max: 1.0, step: 0.1, default: @options[:temperature])
+      @options[:temperature] =
+        prompt.slider('Temperature (creativity)', min: 0.0, max: 1.0, step: 0.1, default: @options[:temperature])
     when :max_tokens
       token_choices = [
         { name: '1000 tokens (default)', value: 1000 },
@@ -1015,7 +1015,8 @@ class YouTubeTranscriptChat < ScriptBase
       ]
       @options[:max_tokens] = prompt.select('Select max tokens:', token_choices)
     when :timeout
-      @options[:timeout] = prompt.slider('Request timeout (seconds)', min: 30, max: 600, step: 30, default: @options[:timeout])
+      @options[:timeout] =
+        prompt.slider('Request timeout (seconds)', min: 30, max: 600, step: 30, default: @options[:timeout])
     when :back
       return
     end
@@ -1080,7 +1081,8 @@ class YouTubeTranscriptChat < ScriptBase
     when :caching
       @options[:no_cache] = !prompt.yes?('Enable transcript caching?', default: !@options[:no_cache])
     when :cache_ttl
-      @options[:cache_ttl] = prompt.slider('Cache time-to-live (days)', min: 1, max: 30, step: 1, default: @options[:cache_ttl])
+      @options[:cache_ttl] =
+        prompt.slider('Cache time-to-live (days)', min: 1, max: 30, step: 1, default: @options[:cache_ttl])
     when :cache_info
       show_cache_info
       prompt.keypress('Press any key to continue...')
@@ -1169,7 +1171,9 @@ class YouTubeTranscriptChat < ScriptBase
       @options[:auto_reload] = prompt.yes?('Enable automatic model reloading?', default: @options[:auto_reload])
     when :min_context
       if prompt.yes?('Set minimum context length?', default: @options[:min_context] != nil)
-        @options[:min_context] = prompt.slider('Minimum context tokens', min: 2048, max: 131072, step: 1024, default: @options[:min_context] || 8192)
+        @options[:min_context] =
+          prompt.slider('Minimum context tokens', min: 2048, max: 131072, step: 1024,
+                                                  default: @options[:min_context] || 8192)
       else
         @options[:min_context] = nil
       end
@@ -1190,12 +1194,14 @@ class YouTubeTranscriptChat < ScriptBase
     case selection
     when :output_file
       if prompt.yes?('Save transcript to file?', default: @options[:output_file] != nil)
-        @options[:output_file] = prompt.ask('Enter output file path:', default: @options[:output_file] || 'transcript.txt')
+        @options[:output_file] =
+          prompt.ask('Enter output file path:', default: @options[:output_file] || 'transcript.txt')
       else
         @options[:output_file] = nil
       end
     when :markdown
-      @options[:markdown] = prompt.yes?('Enable markdown formatting for summaries and responses?', default: @options[:markdown])
+      @options[:markdown] =
+        prompt.yes?('Enable markdown formatting for summaries and responses?', default: @options[:markdown])
     when :back
       return
     end

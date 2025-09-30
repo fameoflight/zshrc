@@ -120,6 +120,11 @@ git-commit-deletes() {
   _execute_ruby_script "git-commit-deletes.rb" "$@"
 }
 
+# Git commit directory - stage and commit changes in a specific directory
+git-commit-dir() {
+  _execute_ruby_script "git-commit-dir.rb" "$@"
+}
+
 # Claude-Gemini integration - run Claude Code with Gemini API via proxy
 claude-gemini() {
   local script_path="$ZSH_CONFIG/bin/claude-gemini.sh"
@@ -237,6 +242,7 @@ list-scripts() {
   echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
   echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
+  echo "  📁 git-commit-dir        - Stage and commit changes in a specific directory"
   echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
@@ -422,6 +428,7 @@ scripts() {
     echo "  🔍 comment-only-changes  - Detect files with only comment changes"
     echo "  🔄 git-commit-renames    - Commit only pure renames after confirmation"
     echo "  🗑️  git-commit-deletes    - Commit only deletions after confirmation"
+    echo "  📁 git-commit-dir        - Stage and commit changes in a specific directory"
     echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
     echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
     echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
@@ -507,7 +514,7 @@ scripts() {
   # First, check if it's a ZSH utility function
   local utility_functions=(
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
-    "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes"
+    "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"

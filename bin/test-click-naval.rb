@@ -23,7 +23,7 @@ begin
 
   # Try multiple selectors for the Read More button
   read_more_selectors = [
-    'a:contains("Read More")',  # This won't work in CSS, need to use text search
+    'a:contains("Read More")', # This won't work in CSS, need to use text search
     '.load-more-post-handle',
     '.trigger-load-more',
     '.extra-pagination-link',
@@ -90,7 +90,7 @@ begin
           element.evaluate("this.style.visibility = 'visible'; this.style.display = 'block';")
           sleep(0.2)
           browser.evaluate("arguments[0].click();", element)
-        }}
+        } }
       ]
 
       click_success = false
@@ -146,7 +146,6 @@ begin
       puts "  ❌ Error testing element: #{e.message}"
     end
   end
-
 ensure
   puts "\n🔒 Closing browser..."
   browser.quit rescue nil

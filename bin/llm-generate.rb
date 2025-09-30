@@ -329,10 +329,10 @@ class LLMGenerator < ScriptBase
 
     # Send user message and get response
     response = @conversation.send_message(@description, {
-                               temperature: @options[:temperature],
-                               max_tokens: @options[:max_tokens]
-                               # Note: streaming not supported with conversation service yet
-                             })
+                                            temperature: @options[:temperature],
+                                            max_tokens: @options[:max_tokens]
+                                            # Note: streaming not supported with conversation service yet
+                                          })
 
     unless response
       log_error('Failed to generate command')
@@ -555,9 +555,9 @@ class LLMGenerator < ScriptBase
     log_info('🔄 Regenerating command with conversation context...')
 
     response = @conversation.continue(@description, {
-                               temperature: @options[:temperature],
-                               max_tokens: @options[:max_tokens]
-                             })
+                                        temperature: @options[:temperature],
+                                        max_tokens: @options[:max_tokens]
+                                      })
 
     unless response
       log_error('Failed to regenerate command')
@@ -894,9 +894,9 @@ class LLMGenerator < ScriptBase
     PROMPT
 
     response = error_conversation.send_message(user_prompt, {
-                               temperature: 0.1, # Lower temperature for error fixing
-                               max_tokens: 500
-                             })
+                                                 temperature: 0.1, # Lower temperature for error fixing
+                                                 max_tokens: 500
+                                               })
 
     return nil unless response
 

@@ -69,7 +69,7 @@ class DebugNavalUrls < ScriptBase
       # Load the page
       log_section("📄 Loading Page")
       browser.goto(url)
-      sleep(3)  # Wait for initial load
+      sleep(3) # Wait for initial load
       log_success("Page loaded")
 
       # Initial analysis
@@ -107,7 +107,6 @@ class DebugNavalUrls < ScriptBase
 
       # Compare with expected
       check_missing_articles(browser, final_urls)
-
     rescue StandardError => e
       log_error("Debug failed: #{e.message}")
       log_debug("Backtrace: #{e.backtrace.join("\n")}") if debug?
@@ -155,11 +154,10 @@ class DebugNavalUrls < ScriptBase
           elements.first(3).each_with_index do |el, i|
             text = el.text&.strip || ""
             classes = el.attribute('class') || ""
-            puts "    #{i+1}. '#{text[0..50]}' (#{classes})"
+            puts "    #{i + 1}. '#{text[0..50]}' (#{classes})"
           end
         end
       end
-
     rescue => e
       log_error("Page analysis failed: #{e.message}")
     end
@@ -265,7 +263,6 @@ class DebugNavalUrls < ScriptBase
       # Check for click handlers
       onclick = element.attribute('onclick') rescue nil
       puts "  OnClick: #{onclick}" if onclick
-
     rescue => e
       puts "  Analysis error: #{e.message}"
     end
@@ -291,7 +288,7 @@ class DebugNavalUrls < ScriptBase
             this.dispatchEvent(new MouseEvent(eventType, { bubbles: true, cancelable: true }));
           });
         }")
-      }}
+      } }
     ]
 
     click_methods.each do |method|
@@ -368,7 +365,7 @@ class DebugNavalUrls < ScriptBase
 
     if naval_urls.any?
       puts "\n📝 Naval Articles Found:"
-      naval_urls.first(10).each_with_index { |url, i| puts "  #{i+1}. #{url}" }
+      naval_urls.first(10).each_with_index { |url, i| puts "  #{i + 1}. #{url}" }
       puts "  ... (showing first 10)" if naval_urls.size > 10
     end
   end
@@ -392,7 +389,7 @@ class DebugNavalUrls < ScriptBase
       naval_articles = found_urls.select { |url| url.include?('nav.al') && url.match?(/\/[^\/]+$/) }.size
       puts "  Estimated Naval articles found: #{naval_articles}"
 
-      if naval_articles < 50  # Naval likely has more than 50 posts
+      if naval_articles < 50 # Naval likely has more than 50 posts
         log_warning("⚠️  This seems low - Naval probably has more articles")
         log_info("Consider checking:")
         log_info("  • Archive pages")
@@ -400,7 +397,6 @@ class DebugNavalUrls < ScriptBase
         log_info("  • JavaScript-loaded content")
         log_info("  • RSS feeds or sitemaps")
       end
-
     rescue => e
       puts "  Error checking missing articles: #{e.message}"
     end

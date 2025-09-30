@@ -395,7 +395,6 @@ class SafariEpub < ScriptBase
       else
         log_warning("No articles were deleted from the reading list")
       end
-
     rescue => e
       log_error("Failed to delete articles: #{e.message}")
       log_debug("Backtrace: #{e.backtrace.join('\n')}") if debug?

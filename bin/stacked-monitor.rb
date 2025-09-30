@@ -308,29 +308,29 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
       # Add rotation indicator
       rotation_indicator = case rotation.to_i
-                          when 90
-                            " ↻90°"
-                          when 180
-                            " ↻180°"
-                          when 270
-                            " ↻270°"
-                          else
-                            ""
-                          end
+                           when 90
+                             " ↻90°"
+                           when 180
+                             " ↻180°"
+                           when 270
+                             " ↻270°"
+                           else
+                             ""
+                           end
 
       # Format position info
       position_info = if show_current_positions && monitor[:origin]
-        " at (#{monitor[:origin]})"
-      elsif !show_current_positions && monitor[:calculated_origin]
-        " → (#{monitor[:calculated_origin]})"
-      else
-        ""
-      end
+                        " at (#{monitor[:origin]})"
+                      elsif !show_current_positions && monitor[:calculated_origin]
+                        " → (#{monitor[:calculated_origin]})"
+                      else
+                        ""
+                      end
 
       # Create the line with proper spacing
       line_content = "#{label}. #{name} - #{resolution}#{rotation_indicator}#{position_info}"
       padding = 76 - line_content.length
-      padding = [0, padding].max  # Ensure non-negative padding
+      padding = [0, padding].max # Ensure non-negative padding
 
       puts "│ #{line_content}" + " " * padding + " │"
     end
@@ -394,15 +394,15 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
       # Create rotation indicator
       rotation_char = case rotation
-                     when 90
-                       '↻'
-                     when 180
-                       '↺'
-                     when 270
-                       '↻'
-                     else
-                       label
-                     end
+                      when 90
+                        '↻'
+                      when 180
+                        '↺'
+                      when 270
+                        '↻'
+                      else
+                        label
+                      end
 
       # Draw monitor box
       (0...grid_height_m).each do |dy|
@@ -456,15 +456,15 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
       rotation = (monitor[:rotation] || "0").to_i
 
       rotation_info = case rotation
-                     when 90
-                       " - Portrait 90° ↻"
-                     when 180
-                       " - Inverted 180° ↺"
-                     when 270
-                       " - Portrait 270° ↻"
-                     else
-                       " - Landscape"
-                     end
+                      when 90
+                        " - Portrait 90° ↻"
+                      when 180
+                        " - Inverted 180° ↺"
+                      when 270
+                        " - Portrait 270° ↻"
+                      else
+                        " - Landscape"
+                      end
 
       puts "  #{index + 1}. #{name} (#{resolution})#{rotation_info}"
     end

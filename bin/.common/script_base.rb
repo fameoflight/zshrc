@@ -298,7 +298,8 @@ class ScriptBase
 
     begin
       script.validate!
-      script.run
+      # Execute all script logic from the original working directory
+      script.execute_from_original_dir
     rescue Interrupt
       script.log_warning("\nOperation cancelled by user")
       script.finalize_session_log
@@ -314,6 +315,14 @@ class ScriptBase
   end
 
   protected
+
+  # Execute script logic from the original working directory
+  def execute_from_original_dir
+    # Change to the original working directory where the script was called from
+    Dir.chdir(original_working_dir) do
+      run
+    end
+  end
 
   # Utility methods for subclasses
   def dry_run?

@@ -90,16 +90,12 @@ class XcodeIconGenerator < ScriptBase
 
     # Validate SVG input file if provided
     if @options[:input_svg]
-      # Check if path is absolute or relative to current directory
-      if @options[:input_svg].start_with?('/')
-        svg_path = @options[:input_svg]
-      else
-        svg_path = File.expand_path(@options[:input_svg], original_working_dir)
-      end
+      # Expand relative paths based on the current working directory (which is now the original)
+      svg_path = File.expand_path(@options[:input_svg])
 
       unless File.exist?(svg_path)
         log_error("SVG file not found: #{@options[:input_svg]}")
-        log_info("Current directory: #{original_working_dir}")
+        log_info("Current directory: #{Dir.pwd}")
         exit 1
       end
 
@@ -123,38 +119,35 @@ class XcodeIconGenerator < ScriptBase
   def run
     log_banner('Xcode Icon Generator')
 
-    # Change to the original directory for all operations
-    Dir.chdir(original_working_dir) do
-      project_info = get_xcode_project_info
-      log_success("Found project: #{project_info[:name]}")
+    project_info = get_xcode_project_info
+    log_success("Found project: #{project_info[:name]}")
 
-      icon_set_dir = find_icon_set_directory
-      unless icon_set_dir
-        log_error('Could not find AppIcon.appiconset in the project')
-        log_info('Make sure your Xcode project has an app icon asset catalog')
-        log_info('It should be located in: Assets.xcassets/AppIcon.appiconset/')
-        exit 1
-      end
+    icon_set_dir = find_icon_set_directory
+    unless icon_set_dir
+      log_error('Could not find AppIcon.appiconset in the project')
+      log_info('Make sure your Xcode project has an app icon asset catalog')
+      log_info('It should be located in: Assets.xcassets/AppIcon.appiconset/')
+      exit 1
+    end
 
-      log_success("Found icon set at: #{icon_set_dir}")
+    log_success("Found icon set at: #{icon_set_dir}")
 
-      # Generate icons based on options
-      if @options[:ios_only]
-        generate_ios_icons(icon_set_dir)
-      elsif @options[:macos_only]
-        generate_macos_icons(icon_set_dir)
-      else
-        generate_ios_icons(icon_set_dir)
-        generate_macos_icons(icon_set_dir)
-      end
+    # Generate icons based on options
+    if @options[:ios_only]
+      generate_ios_icons(icon_set_dir)
+    elsif @options[:macos_only]
+      generate_macos_icons(icon_set_dir)
+    else
+      generate_ios_icons(icon_set_dir)
+      generate_macos_icons(icon_set_dir)
+    end
 
-      # Update Contents.json to reference the generated icons
-      update_contents_json(icon_set_dir)
+    # Update Contents.json to reference the generated icons
+    update_contents_json(icon_set_dir)
 
-      # Generate AppLogo if requested
-      if @options[:include_logo]
-        generate_app_logo
-      end
+    # Generate AppLogo if requested
+    if @options[:include_logo]
+      generate_app_logo
     end
 
     show_completion('Icon Generation')
@@ -163,12 +156,11 @@ class XcodeIconGenerator < ScriptBase
   private
 
   def xcode_project_exists?
-    # Use system command to check for Xcode project in the original directory
-    !Dir.glob(File.join(original_working_dir, '*.xcodeproj')).empty?
+    !Dir.glob('*.xcodeproj').empty?
   end
 
   def get_xcode_project_info
-    project_path = Dir.glob(File.join(original_working_dir, '*.xcodeproj')).first
+    project_path = Dir.glob('*.xcodeproj').first
     {
       name: File.basename(project_path, '.xcodeproj'),
       path: project_path,
@@ -183,7 +175,7 @@ class XcodeIconGenerator < ScriptBase
     search_paths = ['.', 'Assets.xcassets']
 
     search_paths.each do |base_path|
-      icon_path = File.join(original_working_dir, base_path, 'AppIcon.appiconset')
+      icon_path = File.join(base_path, 'AppIcon.appiconset')
       if File.directory?(icon_path)
         log_success("Found icon set: #{icon_path}")
         return icon_path
@@ -191,7 +183,7 @@ class XcodeIconGenerator < ScriptBase
     end
 
     # Do a more thorough search if not found in common locations
-    Find.find(original_working_dir) do |path|
+    Find.find('.') do |path|
       next unless File.directory?(path)
       next unless File.basename(path) == 'AppIcon.appiconset'
 
@@ -209,7 +201,7 @@ class XcodeIconGenerator < ScriptBase
     search_paths = ['.', 'Assets.xcassets']
 
     search_paths.each do |base_path|
-      logo_path = File.join(original_working_dir, base_path, 'AppLogo.imageset')
+      logo_path = File.join(base_path, 'AppLogo.imageset')
       if File.directory?(logo_path)
         log_success("Found AppLogo: #{logo_path}")
         return logo_path
@@ -217,7 +209,7 @@ class XcodeIconGenerator < ScriptBase
     end
 
     # Do a more thorough search if not found in common locations
-    Find.find(original_working_dir) do |path|
+    Find.find('.') do |path|
       next unless File.directory?(path)
       next unless File.basename(path) == 'AppLogo.imageset'
 
@@ -306,8 +298,6 @@ class XcodeIconGenerator < ScriptBase
     log_file_created(filepath)
   end
 
-
-
   def convert_svg_to_png(size, filename, base_dir, variant = :normal)
     svg_path = @svg_absolute_path
     output_path = File.join(base_dir, filename)
@@ -322,8 +312,6 @@ class XcodeIconGenerator < ScriptBase
 
     log_file_created(output_path)
   end
-
-
 
   def generate_app_logo
     log_section('AppLogo')
@@ -504,7 +492,9 @@ class XcodeIconGenerator < ScriptBase
   end
 
   def update_macos_icon_entry(contents, icon_info)
-    macos_images = contents['images'].select { |img| img['idiom'] == 'mac' && img['size'] == icon_info[:size_str] && img['scale'] == icon_info[:scale] }
+    macos_images = contents['images'].select { |img|
+      img['idiom'] == 'mac' && img['size'] == icon_info[:size_str] && img['scale'] == icon_info[:scale]
+    }
 
     macos_images.each do |image|
       image['filename'] = icon_info[:filename]

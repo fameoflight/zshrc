@@ -139,7 +139,7 @@ Perfect for identifying low-risk changes that can be committed first.'
     # Check both staged and unstaged changes
     unstaged_diff = `git diff "#{file}"`
     staged_diff = `git diff --staged "#{file}"`
-    
+
     # Combine both diffs
     combined_diff = unstaged_diff + staged_diff
     return false if combined_diff.empty?
@@ -295,7 +295,7 @@ Perfect for identifying low-risk changes that can be committed first.'
     # Build commit command with optional --no-verify flag
     commit_cmd = ['git', 'commit', '-m', commit_message]
     commit_cmd << '--no-verify' if @options[:skip_hooks]
-    
+
     if system(*commit_cmd)
       log_success("Successfully committed #{files.length} files with comment-only changes!")
     else

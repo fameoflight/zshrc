@@ -10,7 +10,7 @@ browser = Ferrum::Browser.new(headless: false, timeout: 60)
 begin
   puts "📄 Loading https://nav.al..."
   browser.goto('https://nav.al')
-  sleep(5)  # Wait for all JavaScript to load
+  sleep(5) # Wait for all JavaScript to load
 
   # Check if jQuery or other libraries are loaded
   puts "\n📚 Checking JavaScript libraries..."
@@ -205,7 +205,6 @@ begin
   else
     puts "  ❌ trigger-load-more element not found"
   end
-
 ensure
   puts "\n🔒 Closing browser..."
   browser.quit rescue nil
