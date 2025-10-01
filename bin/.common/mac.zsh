@@ -95,6 +95,9 @@ mac_detect_device() {
         log_info "🔋 Laptop detected: $model ($model_id)"
         [[ -n "$chip" ]] && log_info "   Processor: $chip"
 
+        # Show hardware information with proper indentation
+        mac_show_hardware_info "   "
+
         # Add RAM and storage info for laptops
         local ram_gb
         ram_gb=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2, $3}' | head -1)
@@ -120,6 +123,9 @@ mac_detect_device() {
             log_info "🖥️  Desktop Mac detected: $model ($model_id)"
         fi
         [[ -n "$chip" ]] && log_info "   Processor: $chip"
+
+        # Show hardware information with proper indentation
+        mac_show_hardware_info "   "
 
         # Add RAM and storage info for initial detection
         local ram_gb
@@ -267,6 +273,58 @@ mac_configure_hot_corners() {
     log_success "Hot corners configured"
 }
 
+# Show detailed hardware information
+# Usage: mac_show_hardware_info [prefix]
+# If prefix is provided, it will be added before each line
+mac_show_hardware_info() {
+    local prefix="${1:-}"
+
+    # CPU detection with core count
+    local cpu_cores
+    cpu_cores=$(sysctl -n hw.ncpu 2>/dev/null || echo "Unknown")
+    local cpu_model
+    cpu_model=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
+
+    if [[ "$cpu_model" != "Unknown" && "$cpu_cores" != "Unknown" ]]; then
+        log_info "${prefix}CPU: $cpu_model ($cpu_cores cores)"
+    elif [[ "$cpu_model" != "Unknown" ]]; then
+        log_info "${prefix}CPU: $cpu_model"
+    elif [[ "$cpu_cores" != "Unknown" ]]; then
+        log_info "${prefix}CPU cores: $cpu_cores"
+    fi
+
+    # GPU detection
+    local gpu_count
+    gpu_count=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -c "Chipset Model\|VRAM" || echo "0")
+    if [[ "$gpu_count" -gt 0 ]]; then
+        local gpu_info
+        gpu_info=$(system_profiler SPDisplaysDataType 2>/dev/null | grep "Chipset Model" | head -1 | cut -d':' -f2 | sed 's/^ *//' || echo "Unknown")
+
+        # Try to get GPU core count for Apple Silicon
+        local gpu_cores=""
+        if [[ "$gpu_info" == *"Apple"* ]]; then
+            # For Apple Silicon, get GPU cores from the displays data
+            local gpu_cores_raw
+            gpu_cores_raw=$(system_profiler SPDisplaysDataType 2>/dev/null | grep "Total Number of Cores" | awk '{print $5}' | head -1)
+            if [[ -n "$gpu_cores_raw" && "$gpu_cores_raw" =~ ^[0-9]+$ ]]; then
+                gpu_cores="$gpu_cores_raw"
+            fi
+        fi
+
+        if [[ "$gpu_info" != "Unknown" ]]; then
+            if [[ -n "$gpu_cores" && "$gpu_cores" -gt 0 ]]; then
+                log_info "${prefix}GPU: $gpu_info ($gpu_cores cores)"
+            else
+                log_info "${prefix}GPU: $gpu_info"
+            fi
+        else
+            log_info "${prefix}GPU count: $gpu_count"
+        fi
+    fi
+
+    return 0
+}
+
 # Show system information summary
 mac_show_system_info() {
     log_section "System Information"
@@ -276,6 +334,8 @@ mac_show_system_info() {
     log_info "Model ID: $DEVICE_MODEL_ID"
     [[ -n "$DEVICE_CHIP" ]] && log_info "Processor: $DEVICE_CHIP"
 
+    # Show detailed hardware info
+    mac_show_hardware_info
     # Add RAM information
     local ram_gb
     ram_gb=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2, $3}' | head -1)
@@ -292,10 +352,13 @@ mac_show_system_info() {
 
     # Add SSD/storage details for more context
     local storage_type
-    storage_type=$(system_profiler SPStorageDataType 2>/dev/null | grep -A1 "Physical Drive" | grep "Medium Type" | cut -d: -f2 | xargs | head -1)
+    # Look for the first physical drive medium type, filtering out disk images
+    storage_type=$(system_profiler SPStorageDataType 2>/dev/null | grep -A20 "Physical Drive:" | grep -B5 "Internal: Yes" | grep "Medium Type:" | grep -v "Disk Image" | head -1 | cut -d: -f2 | xargs)
     if [[ -n "$storage_type" ]]; then
         log_info "Storage Type: $storage_type"
     fi
+
+    return 0
 }
 
 # Parse common command line arguments
@@ -335,11 +398,11 @@ mac_parse_common_args() {
 mac_show_completion() {
     local script_name="${1:-macOS optimization}"
     local restart_required="${2:-true}"
-    
+
     echo ""
     log_success "🎉 $script_name complete!"
     echo ""
-    
+
     if [[ "$restart_required" == "true" ]]; then
         log_info "Some changes may require a system restart to take full effect."
         log_info "You can restart now or later at your convenience."
@@ -356,16 +419,20 @@ mac_show_completion() {
     else
         log_info "All changes have been applied and are now active."
     fi
+
+    # Explicit success return
+    return 0
 }
 
 # Export all functions for use in other scripts
 export -f mac_check_platform
-export -f mac_detect_device  
+export -f mac_detect_device
 export -f mac_request_sudo
 export -f mac_confirm_changes
 export -f mac_restart_apps
 export -f mac_configure_desktop_power
 export -f mac_configure_hot_corners
+export -f mac_show_hardware_info
 export -f mac_show_system_info
 export -f mac_parse_common_args
 export -f mac_show_completion
