@@ -132,21 +132,21 @@ install_mac_apps() {
 # Run macOS optimization
 run_macos_optimize() {
     if command -v log_info >/dev/null 2>&1; then
-        log_info "[setup-macos.sh] Optimizing macOS system settings..."
+        log_info " Optimizing macOS system settings..."
     else
-        echo "[setup-macos.sh] ⚡ Optimizing macOS system settings..."
+        echo "⚡ Optimizing macOS system settings..."
     fi
 
     # Check Full Disk Access permissions first
     if command -v check_full_disk_access >/dev/null 2>&1; then
         if command -v log_info >/dev/null 2>&1; then
-            log_info "[setup-macos.sh] Checking Full Disk Access permissions..."
+            log_info " Checking Full Disk Access permissions..."
         fi
         if ! check_full_disk_access; then
             if command -v log_error >/dev/null 2>&1; then
-                log_error "[setup-macos.sh] macOS optimization requires Full Disk Access"
+                log_error " macOS optimization requires Full Disk Access"
             else
-                echo "[setup-macos.sh] ❌ macOS optimization requires Full Disk Access"
+                echo "❌ macOS optimization requires Full Disk Access"
             fi
             echo "💡 Grant access and restart your terminal, then run again"
             return 1
@@ -155,31 +155,30 @@ run_macos_optimize() {
 
     if [[ -f "$ZSH_CONFIG/bin/macos-optimize.sh" ]]; then
         if command -v log_info >/dev/null 2>&1; then
-            log_info "[setup-macos.sh] Executing macos-optimize.sh..."
+            log_info " Executing macos-optimize.sh..."
         fi
         bash "$ZSH_CONFIG/bin/macos-optimize.sh"
         local exit_code=$?
-        echo "[setup-macos.sh] Debug: macos-optimize.sh exited with code: $exit_code"
 
         if [[ $exit_code -eq 0 ]]; then
             if command -v log_success >/dev/null 2>&1; then
-                log_success "[setup-macos.sh] macOS optimization complete"
+                log_success " macOS optimization complete"
             else
-                echo "[setup-macos.sh] ✅ macOS optimization complete"
+                echo "✅ macOS optimization complete"
             fi
         else
             if command -v log_error >/dev/null 2>&1; then
-                log_error "[setup-macos.sh] macOS optimization script failed with exit code $exit_code"
+                log_error " macOS optimization script failed with exit code $exit_code"
             else
-                echo "[setup-macos.sh] ❌ macOS optimization script failed with exit code $exit_code"
+                echo "❌ macOS optimization script failed with exit code $exit_code"
             fi
             return $exit_code
         fi
     else
         if command -v log_error >/dev/null 2>&1; then
-            log_error "[setup-macos.sh] macOS optimization script not found at bin/macos-optimize.sh"
+            log_error " macOS optimization script not found at bin/macos-optimize.sh"
         else
-            echo "[setup-macos.sh] ❌ macOS optimization script not found at bin/macos-optimize.sh"
+            echo "❌ macOS optimization script not found at bin/macos-optimize.sh"
         fi
         return 1
     fi
@@ -278,13 +277,13 @@ case "${1:-all}" in
         echo "Usage: $0 [github-tools|xcode-setup|mac-apps|macos-optimize|macos-oled-optimize|setup-hooks|all]"
         echo ""
         echo "Components:"
-        echo "  github-tools       - Install GitHub CLI and related tools"
-        echo "  xcode-setup        - Setup Xcode with themes and preferences"
-        echo "  mac-apps           - Install macOS applications via Homebrew casks"
-        echo "  macos-optimize     - Optimize macOS system settings for developers"
-        echo "  macos-oled-optimize - Optimize settings for OLED displays"
-        echo "  setup-hooks        - Setup wake/sleep hooks and login scripts"
-        echo "  all                - Install all components (default)"
+        echo " github-tools       - Install GitHub CLI and related tools"
+        echo " xcode-setup        - Setup Xcode with themes and preferences"
+        echo " mac-apps           - Install macOS applications via Homebrew casks"
+        echo " macos-optimize     - Optimize macOS system settings for developers"
+        echo " macos-oled-optimize - Optimize settings for OLED displays"
+        echo " setup-hooks        - Setup wake/sleep hooks and login scripts"
+        echo " all                - Install all components (default)"
         exit 1
         ;;
 esac

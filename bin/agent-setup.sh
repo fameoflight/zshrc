@@ -26,20 +26,20 @@ show_help() {
     echo "Usage: $(basename "$0") [OPTIONS]"
     echo ""
     echo "Options:"
-    echo "  --help, -h     Show this help message"
-    echo "  --dry-run      Show what would be done without doing it"
-    echo "  --force        Overwrite existing files without prompting"
+    echo " --help, -h     Show this help message"
+    echo " --dry-run      Show what would be done without doing it"
+    echo " --force        Overwrite existing files without prompting"
     echo ""
     echo "What this script does:"
-    echo "  • Converts CLAUDE.md to AGENT.md (unified AI documentation)"
-    echo "  • Creates CLAUDE.md → AGENT.md symlink"
-    echo "  • Creates GEMINI.md → AGENT.md symlink"
-    echo "  • Works in current git repository root"
+    echo " • Converts CLAUDE.md to AGENT.md (unified AI documentation)"
+    echo " • Creates CLAUDE.md → AGENT.md symlink"
+    echo " • Creates GEMINI.md → AGENT.md symlink"
+    echo " • Works in current git repository root"
     echo ""
     echo "Benefits:"
-    echo "  • Single source of truth for all AI agents"
-    echo "  • Automatic compatibility with Claude Code and Gemini CLI"
-    echo "  • Future-proof for other AI tools"
+    echo " • Single source of truth for all AI agents"
+    echo " • Automatic compatibility with Claude Code and Gemini CLI"
+    echo " • Future-proof for other AI tools"
     echo ""
 }
 
@@ -173,17 +173,17 @@ setup_agent_docs() {
         echo ""
         echo "📁 Agent documentation files:"
         if [ -f AGENT.md ]; then
-            echo "  AGENT.md     (main documentation file)"
+            echo " AGENT.md     (main documentation file)"
         fi
         if [ -L CLAUDE.md ]; then
-            echo "  CLAUDE.md    → $(readlink CLAUDE.md)"
+            echo " CLAUDE.md    → $(readlink CLAUDE.md)"
         elif [ -f CLAUDE.md ]; then
-            echo "  CLAUDE.md    (regular file)"
+            echo " CLAUDE.md    (regular file)"
         fi
         if [ -L GEMINI.md ]; then
-            echo "  GEMINI.md    → $(readlink GEMINI.md)"
+            echo " GEMINI.md    → $(readlink GEMINI.md)"
         elif [ -f GEMINI.md ]; then
-            echo "  GEMINI.md    (regular file)"
+            echo " GEMINI.md    (regular file)"
         fi
         echo ""
         log_success "Agent documentation setup completed!"

@@ -165,9 +165,9 @@ main() {
     
     if $dry_run; then
         log_info "DRY RUN - No changes will be made:"
-        echo "  1. Create directory: $(dirname "$dropbox_dest_path")"
-        echo "  2. Move: $real_path → $dropbox_dest_path"
-        echo "  3. Create symlink: $real_path → $dropbox_dest_path"
+        echo " 1. Create directory: $(dirname "$dropbox_dest_path")"
+        echo " 2. Move: $real_path → $dropbox_dest_path"
+        echo " 3. Create symlink: $real_path → $dropbox_dest_path"
         exit 0
     fi
     

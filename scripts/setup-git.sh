@@ -27,8 +27,8 @@ setup_user_info() {
     git config --global --replace-all user.name "$name"
     git config --global --replace-all user.email "$email"
     echo "✅ User information configured"
-    echo "  Name: $name"
-    echo "  Email: $email"
+    echo " Name: $name"
+    echo " Email: $email"
 }
 
 # Configure editors
@@ -142,12 +142,12 @@ setup_gpg_signing() {
 
     echo "GPG signing is not automatically configured."
     echo "To enable GPG signing, run:"
-    echo "  git config --global commit.gpgsign true"
-    echo "  git config --global gpg.program $(which gpg)"
-    echo "  git config --global user.signingkey YOUR_GPG_KEY_ID"
+    echo " git config --global commit.gpgsign true"
+    echo " git config --global gpg.program $(which gpg)"
+    echo " git config --global user.signingkey YOUR_GPG_KEY_ID"
     echo ""
     echo "Generate a GPG key with:"
-    echo "  gpg --full-generate-key"
+    echo " gpg --full-generate-key"
 }
 
 # Configure SSH key management hints
@@ -163,11 +163,11 @@ setup_ssh_hints() {
     local email="${EMAIL:-fameoflight@gmail.com}"
 
     echo "SSH key management:"
-    echo "  Generate new SSH key: ssh-keygen -t ed25519 -C '$email'"
-    echo "  Add SSH key to ssh-agent: ssh-add ~/.ssh/id_ed25519"
-    echo "  Copy SSH public key: pbcopy < ~/.ssh/id_ed25519.pub"
-    echo "  Test SSH connection: ssh -T git@github.com"
-    echo "  Note: Use name: $name, email: $email"
+    echo " Generate new SSH key: ssh-keygen -t ed25519 -C '$email'"
+    echo " Add SSH key to ssh-agent: ssh-add ~/.ssh/id_ed25519"
+    echo " Copy SSH public key: pbcopy < ~/.ssh/id_ed25519.pub"
+    echo " Test SSH connection: ssh -T git@github.com"
+    echo " Note: Use name: $name, email: $email"
 }
 
 # Show current Git configuration
@@ -291,17 +291,17 @@ case "${1:-all}" in
         echo "Usage: $0 [user-info|editors|push|ignore|aliases|associations|gpg|ssh|validate|show|all]"
         echo ""
         echo "Configuration options:"
-        echo "  user-info    - Set user name and email"
-        echo "  editors      - Configure default editors"
-        echo "  push         - Configure push behavior"
-        echo "  ignore       - Set up global git ignore file"
-        echo "  aliases      - Configure Git aliases"
-        echo "  associations - Set default applications for file types"
-        echo "  gpg          - Show GPG signing configuration hints"
-        echo "  ssh          - Show SSH key management hints"
-        echo "  validate     - Validate current Git configuration"
-        echo "  show         - Show current Git configuration"
-        echo "  all          - Configure all Git settings (default)"
+        echo " user-info    - Set user name and email"
+        echo " editors      - Configure default editors"
+        echo " push         - Configure push behavior"
+        echo " ignore       - Set up global git ignore file"
+        echo " aliases      - Configure Git aliases"
+        echo " associations - Set default applications for file types"
+        echo " gpg          - Show GPG signing configuration hints"
+        echo " ssh          - Show SSH key management hints"
+        echo " validate     - Validate current Git configuration"
+        echo " show         - Show current Git configuration"
+        echo " all          - Configure all Git settings (default)"
         exit 1
         ;;
 esac

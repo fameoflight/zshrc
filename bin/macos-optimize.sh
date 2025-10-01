@@ -319,19 +319,19 @@ show_full_disk_access_instructions() {
     log_error "❌ Full Disk Access Required for Terminal"
     echo ""
     log_info "Your terminal ($terminal_app) needs Full Disk Access to:"
-    echo "  • Configure system security settings"
-    echo "  • Access Safari bookmarks and other protected files"
-    echo "  • Complete the macOS optimization"
+    echo " • Configure system security settings"
+    echo " • Access Safari bookmarks and other protected files"
+    echo " • Complete the macOS optimization"
     echo ""
     log_info "📋 Manual Setup Instructions:"
-    echo "  1. Security Settings will open automatically"
-    echo "  2. Click the 🔒 lock and enter your password"
-    echo "  3. Click '+' button below the app list"
-    echo "  4. Navigate to: $terminal_path"
-    echo "  5. Select $terminal_app and click 'Open'"
-    echo "  6. Ensure $terminal_app is checked (✅)"
-    echo "  7. Close System Settings"
-    echo "  8. Restart your terminal"
+    echo " 1. Security Settings will open automatically"
+    echo " 2. Click the 🔒 lock and enter your password"
+    echo " 3. Click '+' button below the app list"
+    echo " 4. Navigate to: $terminal_path"
+    echo " 5. Select $terminal_app and click 'Open'"
+    echo " 6. Ensure $terminal_app is checked (✅)"
+    echo " 7. Close System Settings"
+    echo " 8. Restart your terminal"
     echo ""
     log_warning "⚠️  After granting access, restart your terminal and run this script again"
 
@@ -355,7 +355,7 @@ EOF
 
     echo ""
     log_info "💡 Tip: You can also manually navigate to:"
-    echo "   System Settings → Privacy & Security → Full Disk Access"
+    echo "  System Settings → Privacy & Security → Full Disk Access"
     echo ""
     return 1
 }
@@ -499,23 +499,23 @@ show_macos_completion() {
     mac_show_system_info
     echo ""
     log_info "📋 Applied optimizations:"
-    echo "  • UI/UX improvements (faster animations, better defaults)"
-    echo "  • Keyboard and trackpad optimizations"
-    echo "  • Display and screen settings"
-    echo "  • Finder enhancements (show extensions, hidden files)"
+    echo " • UI/UX improvements (faster animations, better defaults)"
+    echo " • Keyboard and trackpad optimizations"
+    echo " • Display and screen settings"
+    echo " • Finder enhancements (show extensions, hidden files)"
     if [[ "$DEVICE_TYPE" == "desktop" ]]; then
-        echo "  • Desktop-optimized Dock settings (larger size, always visible)"
-        echo "  • Desktop-optimized power management"
+        echo " • Desktop-optimized Dock settings (larger size, always visible)"
+        echo " • Desktop-optimized power management"
     else
-        echo "  • Laptop-optimized Dock settings (smaller size, auto-hide)"
-        echo "  • Laptop-optimized power management"
+        echo " • Laptop-optimized Dock settings (smaller size, auto-hide)"
+        echo " • Laptop-optimized power management"
     fi
-    echo "  • Menu bar cleanup (hide keyboard, search, and AI icons)"
-    echo "  • Security improvements (firewall, disable remote access)"
-    echo "  • Performance tweaks (SSD optimization, power management)"
-    echo "  • Developer settings (hidden files, locate database)"
-    echo "  • Application-specific optimizations"
-    echo "  • Productivity-focused hot corners"
+    echo " • Menu bar cleanup (hide keyboard, search, and AI icons)"
+    echo " • Security improvements (firewall, disable remote access)"
+    echo " • Performance tweaks (SSD optimization, power management)"
+    echo " • Developer settings (hidden files, locate database)"
+    echo " • Application-specific optimizations"
+    echo " • Productivity-focused hot corners"
     echo ""
     
     mac_show_completion "macOS system optimization" "true"
@@ -591,25 +591,25 @@ dry_run() {
         echo "🖥️  Desktop-specific optimizations:"
         case "$DEVICE_MODEL" in
             *"Mac Pro"*|*"Mac Studio"*)
-                echo "  • Large Dock icons (64px) for high-performance workstation"
-                echo "  • Extended sleep delays (24 hours) for heavy workloads"
+                echo " • Large Dock icons (64px) for high-performance workstation"
+                echo " • Extended sleep delays (24 hours) for heavy workloads"
                 ;;
             *"iMac"*)
-                echo "  • Medium Dock icons (56px) optimized for built-in display"
+                echo " • Medium Dock icons (56px) optimized for built-in display"
                 ;;
             *)
-                echo "  • Standard Dock icons (48px)"
+                echo " • Standard Dock icons (48px)"
                 ;;
         esac
-        echo "  • Dock always visible for productivity"
-        echo "  • Desktop power management (no hibernation, extended standby)"
-        echo "  • Productivity-focused hot corners"
+        echo " • Dock always visible for productivity"
+        echo " • Desktop power management (no hibernation, extended standby)"
+        echo " • Productivity-focused hot corners"
     else
         echo "🔋 Laptop-specific optimizations:"
-        echo "  • Smaller Dock icons (42px) to save screen space"
-        echo "  • Auto-hiding Dock for maximum screen real estate"
-        echo "  • Battery-optimized power management"
-        echo "  • Balanced performance and battery life"
+        echo " • Smaller Dock icons (42px) to save screen space"
+        echo " • Auto-hiding Dock for maximum screen real estate"
+        echo " • Battery-optimized power management"
+        echo " • Balanced performance and battery life"
     fi
     
     echo ""

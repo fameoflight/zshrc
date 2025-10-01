@@ -33,11 +33,11 @@ configure_dark_mode() {
     defaults write NSGlobalDomain _HIHideMenuBar -bool false
     
     log_info "Setting wallpaper with continuous shuffle across all spaces:"
-    echo "  • Wallpaper rotation: enabled (shuffle continuously)"
-    echo "  • Change interval: every $((WALLPAPER_CHANGE_INTERVAL / 60)) minutes"
-    echo "  • Random order: enabled"
-    echo "  • Multiple displays: same wallpaper across all displays"
-    echo "  • Show in all spaces: enabled"
+    echo " • Wallpaper rotation: enabled (shuffle continuously)"
+    echo " • Change interval: every $((WALLPAPER_CHANGE_INTERVAL / 60)) minutes"
+    echo " • Random order: enabled"
+    echo " • Multiple displays: same wallpaper across all displays"
+    echo " • Show in all spaces: enabled"
     
     # Enable wallpaper rotation with shuffle
     osascript -e 'tell application "System Events"
@@ -136,13 +136,13 @@ configure_oled_dock() {
     log_section "Dock & UI for OLED Protection"
     
     log_info "Setting dock with OLED-optimized configuration:"
-    echo "  • Tile size: 83 (optimized for visibility)"
-    echo "  • Large size: 128 (magnification enabled)" 
-    echo "  • Auto-hide: enabled (reduces static elements)"
-    echo "  • Auto-hide delay: 0.1s (quick response)"
-    echo "  • Auto-hide time modifier: 0.2s (smooth animation)"
-    echo "  • Orientation: bottom"
-    echo "  • Magnification: enabled"
+    echo " • Tile size: 83 (optimized for visibility)"
+    echo " • Large size: 128 (magnification enabled)" 
+    echo " • Auto-hide: enabled (reduces static elements)"
+    echo " • Auto-hide delay: 0.1s (quick response)"
+    echo " • Auto-hide time modifier: 0.2s (smooth animation)"
+    echo " • Orientation: bottom"
+    echo " • Magnification: enabled"
     
     # Apply OLED-optimized dock settings
     defaults write com.apple.dock tilesize -int 83
@@ -247,12 +247,12 @@ show_oled_completion() {
     mac_show_system_info
     echo ""
     log_info "📱 Additional OLED protection recommendations:"
-    echo "  • Manually enable dark mode in browsers (Chrome: chrome://settings/appearance)"
-    echo "  • Consider using dark themes in development tools (VS Code, Terminal apps)"
-    echo "  • If using wallpaper rotation, ensure all images are dark/black"
-    echo "  • Adjust individual app brightness settings where available"
-    echo "  • Use hot corners to quickly activate screen saver or lock screen"
-    echo "  • Dock settings applied: 83px tile size, 128px magnification, 0.1s auto-hide delay"
+    echo " • Manually enable dark mode in browsers (Chrome: chrome://settings/appearance)"
+    echo " • Consider using dark themes in development tools (VS Code, Terminal apps)"
+    echo " • If using wallpaper rotation, ensure all images are dark/black"
+    echo " • Adjust individual app brightness settings where available"
+    echo " • Use hot corners to quickly activate screen saver or lock screen"
+    echo " • Dock settings applied: 83px tile size, 128px magnification, 0.1s auto-hide delay"
     echo ""
     log_warning "⚠️  Remember: OLED burn-in is permanent - these settings help prevent it!"
     echo ""
@@ -329,21 +329,21 @@ dry_run() {
         echo "🖥️  Desktop power management:"
         case "$DEVICE_MODEL" in
             *"Mac Pro"*|*"Mac Studio"*)
-                echo "  • Display sleep: 3 minutes (aggressive OLED protection)"
+                echo " • Display sleep: 3 minutes (aggressive OLED protection)"
                 ;;
             *)
-                echo "  • Display sleep: 5 minutes (OLED protection)"
+                echo " • Display sleep: 5 minutes (OLED protection)"
                 ;;
         esac
-        echo "  • Standby delay: 5 minutes"
-        echo "  • Hibernate mode: Disabled"
-        echo "  • Powernap: Disabled to reduce display activity"
+        echo " • Standby delay: 5 minutes"
+        echo " • Hibernate mode: Disabled"
+        echo " • Powernap: Disabled to reduce display activity"
     else
         echo "🔋 Laptop power management:"
-        echo "  • Display sleep: 3 min (battery) / 5 min (power)"
-        echo "  • Standby delay: 2 hours"
-        echo "  • Hibernate mode: Safe sleep"
-        echo "  • Powernap: Enabled for background updates"
+        echo " • Display sleep: 3 min (battery) / 5 min (power)"
+        echo " • Standby delay: 2 hours"
+        echo " • Hibernate mode: Safe sleep"
+        echo " • Powernap: Enabled for background updates"
     fi
     
     echo ""

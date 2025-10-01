@@ -127,11 +127,11 @@ case "${1:-all}" in
         echo "Usage: $0 [core-utils|dev-utils|modern-cli|editors|all]"
         echo ""
         echo "Categories:"
-        echo "  core-utils  - Essential CLI utilities (tree, wget, ripgrep, etc.)"
-        echo "  dev-utils   - Development utilities (duti, fswatch, etc.)"
-        echo "  modern-cli  - Modern CLI tools (zoxide, starship, fzf, claude-code)"
-        echo "  editors     - Text editors and IDEs (VS Code, Zed, vim, neovim)"
-        echo "  all         - Install all categories (default)"
+        echo " core-utils  - Essential CLI utilities (tree, wget, ripgrep, etc.)"
+        echo " dev-utils   - Development utilities (duti, fswatch, etc.)"
+        echo " modern-cli  - Modern CLI tools (zoxide, starship, fzf, claude-code)"
+        echo " editors     - Text editors and IDEs (VS Code, Zed, vim, neovim)"
+        echo " all         - Install all categories (default)"
         exit 1
         ;;
 esac

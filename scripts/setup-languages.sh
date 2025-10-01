@@ -222,11 +222,11 @@ setup_flutter() {
     echo "✅ Flutter development environment setup complete!"
     echo ""
     echo "📋 Next steps:"
-    echo "  1. Open Android Studio and complete the setup wizard"
-    echo "  2. Create an Android Virtual Device (AVD) or connect a physical device"
-    echo "  3. Run 'flutter doctor' again to verify setup"
-    echo "  4. For iOS development, run 'xcodebuild -downloadPlatform iOS' (requires Xcode)"
-    echo "  5. Test with: flutter run -d chrome (web) or flutter run -d macos (desktop)"
+    echo " 1. Open Android Studio and complete the setup wizard"
+    echo " 2. Create an Android Virtual Device (AVD) or connect a physical device"
+    echo " 3. Run 'flutter doctor' again to verify setup"
+    echo " 4. For iOS development, run 'xcodebuild -downloadPlatform iOS' (requires Xcode)"
+    echo " 5. Test with: flutter run -d chrome (web) or flutter run -d macos (desktop)"
 
     if command -v log_success >/dev/null 2>&1; then
         log_success "Flutter setup complete"
@@ -295,13 +295,13 @@ case "${1:-all}" in
         echo "Usage: $0 [python|ruby|ruby-gems|postgres|flutter|node|all]"
         echo ""
         echo "Language environments:"
-        echo "  python    - Setup Python 3.11, pyenv, Poetry, and common tools"
-        echo "  ruby      - Setup Ruby via RVM with configuration files"
-        echo "  ruby-gems - Install Ruby gems from Gemfile"
-        echo "  postgres  - Install PostgreSQL 15 and start service"
-        echo "  flutter   - Setup Flutter SDK with Android and iOS support"
-        echo "  node      - Setup Node.js and npm"
-        echo "  all       - Setup all language environments (except Flutter)"
+        echo " python    - Setup Python 3.11, pyenv, Poetry, and common tools"
+        echo " ruby      - Setup Ruby via RVM with configuration files"
+        echo " ruby-gems - Install Ruby gems from Gemfile"
+        echo " postgres  - Install PostgreSQL 15 and start service"
+        echo " flutter   - Setup Flutter SDK with Android and iOS support"
+        echo " node      - Setup Node.js and npm"
+        echo " all       - Setup all language environments (except Flutter)"
         exit 1
         ;;
 esac

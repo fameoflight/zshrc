@@ -45,11 +45,11 @@ check_full_disk_access() {
         echo "🔒 Your terminal needs Full Disk Access to configure macOS settings."
         echo ""
         echo "📋 Quick Setup:"
-        echo "  1. Open: System Settings → Privacy & Security → Full Disk Access"
-        echo "  2. Click the 🔒 lock and enter your password"
-        echo "  3. Click '+' and add: $(basename "$SHELL") or iTerm2"
-        echo "  4. Ensure it's checked (✅)"
-        echo "  5. Restart your terminal and run the command again"
+        echo " 1. Open: System Settings → Privacy & Security → Full Disk Access"
+        echo " 2. Click the 🔒 lock and enter your password"
+        echo " 3. Click '+' and add: $(basename "$SHELL") or iTerm2"
+        echo " 4. Ensure it's checked (✅)"
+        echo " 5. Restart your terminal and run the command again"
         echo ""
         echo "💡 Alternative: Grant access to your terminal app (iTerm2, Terminal.app, etc.)"
         echo ""
@@ -231,39 +231,39 @@ run_system_doctor() {
     echo "⚙️  ZSH Config: $ZSH_CONFIG"
     echo "🔍 Checking tools:"
 
-    if command -v brew >/dev/null 2>&1; then echo "  🍺 Homebrew: ✅"; else echo "  🍺 Homebrew: ❌"; fi
-    if command -v git >/dev/null 2>&1; then echo "  🐙 Git: ✅"; else echo "  🐙 Git: ❌"; fi
-    if command -v python3 >/dev/null 2>&1; then echo "  🐍 Python: ✅"; else echo "  🐍 Python: ❌"; fi
-    if command -v node >/dev/null 2>&1; then echo "  🟢 Node.js: ✅"; else echo "  🟢 Node.js: ❌"; fi
+    if command -v brew >/dev/null 2>&1; then echo " 🍺 Homebrew: ✅"; else echo " 🍺 Homebrew: ❌"; fi
+    if command -v git >/dev/null 2>&1; then echo " 🐙 Git: ✅"; else echo " 🐙 Git: ❌"; fi
+    if command -v python3 >/dev/null 2>&1; then echo " 🐍 Python: ✅"; else echo " 🐍 Python: ❌"; fi
+    if command -v node >/dev/null 2>&1; then echo " 🟢 Node.js: ✅"; else echo " 🟢 Node.js: ❌"; fi
 
     echo ""
     echo "📊 System Resources:"
-    echo "  💾 Available disk space: $(df -h / | awk 'NR==2 {print $4}')"
-    echo "  🧠 Available memory: $(vm_stat | awk '/free/ {gsub(/\./, "", $3); print $3 * 4096 / 1024 / 1024 " MB"}')"
-    echo "  🔄 System uptime: $(uptime | awk -F'[ ,]+' '{print $3,$4,$5}')"
+    echo " 💾 Available disk space: $(df -h / | awk 'NR==2 {print $4}')"
+    echo " 🧠 Available memory: $(vm_stat | awk '/free/ {gsub(/\./, "", $3); print $3 * 4096 / 1024 / 1024 " MB"}')"
+    echo " 🔄 System uptime: $(uptime | awk -F'[ ,]+' '{print $3,$4,$5}')"
 
     echo "💻 Hardware Information:"
     # CPU detection
     if command -v sysctl >/dev/null 2>&1; then
         local cpu_cores
         cpu_cores=$(sysctl -n hw.ncpu 2>/dev/null || echo "Unknown")
-        echo "  🔥 CPU cores: $cpu_cores"
+        echo " 🔥 CPU cores: $cpu_cores"
 
         # CPU model info (macOS)
         local cpu_model
         cpu_model=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
-        echo "  🔥 CPU model: $cpu_model"
+        echo " 🔥 CPU model: $cpu_model"
     elif [[ -f /proc/cpuinfo ]]; then
         # Linux CPU detection
         local cpu_cores
         cpu_cores=$(grep -c '^processor' /proc/cpuinfo 2>/dev/null || echo "Unknown")
-        echo "  🔥 CPU cores: $cpu_cores"
+        echo " 🔥 CPU cores: $cpu_cores"
 
         local cpu_model
         cpu_model=$(grep 'model name' /proc/cpuinfo | head -1 | cut -d':' -f2 | sed 's/^ *//' 2>/dev/null || echo "Unknown")
-        echo "  🔥 CPU model: $cpu_model"
+        echo " 🔥 CPU model: $cpu_model"
     else
-        echo "  🔥 CPU: Unable to detect"
+        echo " 🔥 CPU: Unable to detect"
     fi
 
     # GPU detection
@@ -271,26 +271,26 @@ run_system_doctor() {
         # macOS GPU detection
         local gpu_count
         gpu_count=$(system_profiler SPDisplaysDataType 2>/dev/null | grep -c "Chipset Model\|VRAM" || echo "Unknown")
-        echo "  🎮 GPU count: $gpu_count"
+        echo " 🎮 GPU count: $gpu_count"
 
         local gpu_info
         gpu_info=$(system_profiler SPDisplaysDataType 2>/dev/null | grep "Chipset Model" | head -1 | cut -d':' -f2 | sed 's/^ *//' || echo "Unknown")
         if [[ "$gpu_info" != "Unknown" ]]; then
-            echo "  🎮 GPU: $gpu_info"
+            echo " 🎮 GPU: $gpu_info"
         fi
     elif command -v lspci >/dev/null 2>&1; then
         # Linux GPU detection
         local gpu_count
         gpu_count=$(lspci 2>/dev/null | grep -c -i "vga\|3d\|display" || echo "Unknown")
-        echo "  🎮 GPU count: $gpu_count"
+        echo " 🎮 GPU count: $gpu_count"
 
         local gpu_info
         gpu_info=$(lspci 2>/dev/null | grep -i "vga\|3d\|display" | head -1 | cut -d':' -f3 | sed 's/^ *//' || echo "Unknown")
         if [[ "$gpu_info" != "Unknown" ]]; then
-            echo "  🎮 GPU: $gpu_info"
+            echo " 🎮 GPU: $gpu_info"
         fi
     else
-        echo "  🎮 GPU: Unable to detect"
+        echo " 🎮 GPU: Unable to detect"
     fi
 
     if command -v log_success >/dev/null 2>&1; then
@@ -461,20 +461,20 @@ case "${1:-help}" in
         echo "Usage: $0 [command]"
         echo ""
         echo "Troubleshooting commands:"
-        echo "  fix-brew-full    - Fix Homebrew with permission changes"
-        echo "  fix-brew-safe    - Fix Homebrew without permission changes (recommended)"
-        echo "  fix-permissions  - Fix Homebrew directory permissions"
-        echo "  brew-doctor      - Run Homebrew diagnostics"
-        echo "  brew-clean       - Clean incomplete Homebrew processes"
-        echo "  brew-relink      - Fix broken Homebrew symlinks"
-        echo "  xcode-update     - Update or install Xcode"
-        echo "  system-doctor    - Run comprehensive system diagnostics"
-        echo "  clean            - Clean temporary files and caches"
-        echo "  update           - Update repository and submodules"
-        echo "  find-orphans     - Find orphaned Makefile targets"
-        echo "  check-issues     - Check for common configuration issues"
-        echo "  all              - Run comprehensive troubleshooting"
-        echo "  help             - Show this help message"
+        echo " fix-brew-full    - Fix Homebrew with permission changes"
+        echo " fix-brew-safe    - Fix Homebrew without permission changes (recommended)"
+        echo " fix-permissions  - Fix Homebrew directory permissions"
+        echo " brew-doctor      - Run Homebrew diagnostics"
+        echo " brew-clean       - Clean incomplete Homebrew processes"
+        echo " brew-relink      - Fix broken Homebrew symlinks"
+        echo " xcode-update     - Update or install Xcode"
+        echo " system-doctor    - Run comprehensive system diagnostics"
+        echo " clean            - Clean temporary files and caches"
+        echo " update           - Update repository and submodules"
+        echo " find-orphans     - Find orphaned Makefile targets"
+        echo " check-issues     - Check for common configuration issues"
+        echo " all              - Run comprehensive troubleshooting"
+        echo " help             - Show this help message"
         exit 1
         ;;
 esac
