@@ -12,6 +12,9 @@ if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
     source "$ZSH_CONFIG/logging.zsh"
 fi
 
+# Source utility functions
+source "$SCRIPT_DIR/utils.sh"
+
 # Import permission check from troubleshooting script
 if [[ -f "$SCRIPT_DIR/troubleshooting.sh" ]]; then
     # Source only the permission check function
@@ -95,17 +98,12 @@ setup_xcode() {
     mkdir -p "${HOME}/Library/Developer/Xcode/UserData/FontAndColorThemes"
     mkdir -p "${HOME}/Library/Developer/Xcode/UserData/KeyBindings"
 
-    if [[ -f "${SETTINGS}/XCode/UserData/FontAndColorThemes/Solarized Dark.dvtcolortheme" ]]; then
-        cp "${SETTINGS}/XCode/UserData/FontAndColorThemes/Solarized Dark.dvtcolortheme" \
-           "${HOME}/Library/Developer/Xcode/UserData/FontAndColorThemes/"
-        echo "✅ Installed Solarized Dark color theme"
-    fi
-
-    if [[ -f "${SETTINGS}/XCode/UserData/KeyBindings/Default.idekeybindings" ]]; then
-        cp "${SETTINGS}/XCode/UserData/KeyBindings/Default.idekeybindings" \
-           "${HOME}/Library/Developer/Xcode/UserData/KeyBindings/"
-        echo "✅ Installed custom key bindings"
-    fi
+    safe_cp "${SETTINGS}/XCode/UserData/FontAndColorThemes/Solarized Dark.dvtcolortheme" \
+           "${HOME}/Library/Developer/Xcode/UserData/FontAndColorThemes/" \
+           "Solarized Dark color theme"
+    safe_cp "${SETTINGS}/XCode/UserData/KeyBindings/Default.idekeybindings" \
+           "${HOME}/Library/Developer/Xcode/UserData/KeyBindings/" \
+           "Custom key bindings"
 
     echo "Setting Solarized Dark as default theme..."
     defaults write com.apple.dt.Xcode DVTFontAndColorCurrentTheme "Solarized Dark.dvtcolortheme" 2>/dev/null || echo "⚠️  Could not set default theme (Xcode may need to be running)"

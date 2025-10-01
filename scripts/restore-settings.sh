@@ -8,6 +8,9 @@ set -euo pipefail
 # Source logging if available
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ZSH_CONFIG="$(dirname "$SCRIPT_DIR")"
+
+# Source utility functions
+source "$SCRIPT_DIR/utils.sh"
 if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
     source "$ZSH_CONFIG/logging.zsh"
 fi
@@ -112,11 +115,9 @@ restore_sublime() {
         echo "Setting up Sublime Text 3 configuration..."
         mkdir -p "${HOME}/Library/Application Support/Sublime Text 3/Packages/User"
 
-        if [[ -f "$SETTINGS/Sublime3/Preferences.sublime-settings" ]]; then
-            cp "$SETTINGS/Sublime3/Preferences.sublime-settings" \
-               "${HOME}/Library/Application Support/Sublime Text 3/Packages/User/"
-            echo "✅ Sublime Text preferences restored"
-        fi
+        safe_cp "$SETTINGS/Sublime3/Preferences.sublime-settings" \
+               "${HOME}/Library/Application Support/Sublime Text 3/Packages/User/" \
+               "Sublime Text preferences"
 
         if [[ -d "$SETTINGS/Sublime3/User" ]]; then
             cp -r "$SETTINGS/Sublime3/User/"* \
@@ -143,13 +144,8 @@ restore_dock() {
     fi
 
     SETTINGS="$ZSH_CONFIG/Settings"
-    if [[ -f "$SETTINGS/dock.plist" ]]; then
-        echo "Restoring Dock configuration..."
-        cp "$SETTINGS/dock.plist" "${HOME}/Library/Preferences/com.apple.dock.plist"
+    if safe_cp "$SETTINGS/dock.plist" "${HOME}/Library/Preferences/com.apple.dock.plist" "Dock configuration"; then
         killall Dock 2>/dev/null || true
-        echo "✅ Dock settings restored and reloaded"
-    else
-        echo "⚠️  Dock settings file not found"
     fi
 
     if command -v log_success >/dev/null 2>&1; then
@@ -170,28 +166,9 @@ restore_ruby_config() {
     SETTINGS="$ZSH_CONFIG/Settings"
     USER_BIN="${HOME}/bin"
 
-    if [[ -f "$SETTINGS/irbrc" ]]; then
-        cp "$SETTINGS/irbrc" "${HOME}/.irbrc"
-        echo "✅ IRB configuration restored"
-    else
-        echo "⚠️  IRB configuration file not found"
-    fi
-
-    if [[ -f "$SETTINGS/gemrc" ]]; then
-        cp "$SETTINGS/gemrc" "${HOME}/.gemrc"
-        echo "✅ Gem configuration restored"
-    else
-        echo "⚠️  Gem configuration file not found"
-    fi
-
-    if [[ -f "$SETTINGS/ctags_for_ruby" ]]; then
-        mkdir -p "$USER_BIN"
-        cp "$SETTINGS/ctags_for_ruby" "$USER_BIN/ctags_for_ruby"
-        chmod +x "$USER_BIN/ctags_for_ruby"
-        echo "✅ Ruby ctags configuration restored"
-    else
-        echo "⚠️  Ruby ctags file not found"
-    fi
+    safe_cp "$SETTINGS/irbrc" "${HOME}/.irbrc" "IRB configuration" || echo "⚠️  IRB configuration file not found"
+    safe_cp "$SETTINGS/gemrc" "${HOME}/.gemrc" "Gem configuration" || echo "⚠️  Gem configuration file not found"
+    safe_cp_exec "$SETTINGS/ctags_for_ruby" "$USER_BIN/ctags_for_ruby" "Ruby ctags configuration" || echo "⚠️  Ruby ctags file not found"
 
     if command -v log_success >/dev/null 2>&1; then
         log_success "Ruby configuration restoration complete"
@@ -294,10 +271,7 @@ setup_claude_gemini() {
     cd gemini-claude-proxy && .venv/bin/pip install -r requirements.txt
     echo "Setting up environment configuration..."
 
-    if [[ -f "gemini-claude-proxy/.env.example" ]]; then
-        cp gemini-claude-proxy/.env.example gemini-claude-proxy/.env
-        echo "✅ Created .env from .env.example"
-    fi
+    safe_cp "gemini-claude-proxy/.env.example" "gemini-claude-proxy/.env" "Environment configuration"
 
     echo "⚠️  Please add your Gemini API key to gemini-claude-proxy/.env"
     echo "ℹ️  Or use: setup-gemini-key 'your-key-here'"

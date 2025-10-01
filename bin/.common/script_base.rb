@@ -314,7 +314,7 @@ class ScriptBase
     script.finalize_session_log
   end
 
-  protected
+  public
 
   # Execute script logic from the original working directory
   def execute_from_original_dir
