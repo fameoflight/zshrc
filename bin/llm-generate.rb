@@ -113,15 +113,17 @@ class LLMGenerator < ScriptBase
   def validate!
     super
 
-    # Initialize LLM service first to check availability
+    # Initialize LLM service with MODEL specification
+    model_spec = @options[:model] || ENV['MODEL'] || 'ollama:llama3:70b'
+
     llm_options = {
+      model: model_spec,
       debug: debug?,
       logger: self,
-      timeout: 60
+      timeout: 60,
+      temperature: @options[:temperature],
+      max_tokens: @options[:max_tokens]
     }
-    llm_options[:model] = @options[:model] if @options[:model]
-    llm_options[:temperature] = @options[:temperature]
-    llm_options[:max_tokens] = @options[:max_tokens]
 
     @llm = LLMService.new(llm_options)
 

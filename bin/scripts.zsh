@@ -189,6 +189,11 @@ llm-generate() {
   _execute_ruby_script "llm-generate.rb" "$@"
 }
 
+# Auto-retry utility that uses local LLM to analyze command failures and determine retry strategies
+auto-retry() {
+  _execute_ruby_script "auto-retry.rb" "$@"
+}
+
 # =============================================================================
 # XCODE PROJECT MANAGEMENT
 # =============================================================================
@@ -256,6 +261,26 @@ list-scripts() {
   echo " 📱 xcode-list-categories - List available Xcode file categories"
   echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
   echo " 📜 list-scripts          - Show this help"
+  echo "  📚 calibre-update        - Update Calibre to the latest version"
+  echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
+  echo "  📄 merge-pdf             - Merge multiple PDF files"
+  echo "  📝 merge-md              - Merge markdown files with their references into a single file"
+  echo "  🎥 youtube-transcript-chat - Download YouTube transcripts and chat with video content using local LLM"
+  echo "  🎬 yt-chat               - Alias for youtube-transcript-chat"
+  echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
+  echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
+  echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
+  echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
+  echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
+  echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
+  echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
+  echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+  echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
+  echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
+  echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
+  echo "  🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
+  echo "  📜 list-scripts          - Show this help"
   echo ""
   
   # Show setup/backup scripts available via Makefile only
@@ -442,6 +467,24 @@ scripts() {
     echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
     echo " 📱 xcode-list-categories - List available Xcode file categories"
     echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
+    echo "  📚 calibre-update        - Update Calibre to the latest version"
+    echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
+    echo "  📄 merge-pdf             - Merge multiple PDF files"
+    echo "  📝 merge-md              - Merge markdown files with their references"
+    echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
+    echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
+    echo "  🔍 comment-only-changes  - Detect files with only comment changes"
+    echo "  🔄 git-commit-renames    - Commit only pure renames after confirmation"
+    echo "  🗑️  git-commit-deletes    - Commit only deletions after confirmation"
+    echo "  🤖 claude-gemini         - Run Claude Code with Gemini API via proxy"
+    echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
+    echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
+    echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
+    echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
+    echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
+    echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
+    echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
+    echo "  🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo " 🛠️  macos-optimize       - Optimize macOS system settings"
@@ -518,6 +561,7 @@ scripts() {
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
+    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry"
   )
   
   for func in "${utility_functions[@]}"; do

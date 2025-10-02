@@ -67,7 +67,9 @@
       "Read(//Users/hemantv/Library/**)",
       "Read(//System/Library/ColorSync/Profiles/**)",
       "Bash(defaults:*)",
-      "Bash(/Users/hemantv/zshrc/bin/youtube-transcript-chat.rb:*)"
+      "Bash(/Users/hemantv/zshrc/bin/youtube-transcript-chat.rb:*)",
+      "Bash(auto-retry:*)",
+      "Bash(ollama pull:*)"
     ],
     "deny": [],
     "additionalDirectories": [

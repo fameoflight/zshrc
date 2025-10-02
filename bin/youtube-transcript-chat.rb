@@ -146,7 +146,15 @@ class YouTubeTranscriptChat < ScriptBase
     @video_info = VideoInfoService.new(logger: self)
 
     if @options[:list_models]
-      @llm = LLMService.new({ logger: self, debug: @options[:verbose] || @options[:debug] })
+      model_spec = @options[:model] || ENV['MODEL'] || 'ollama:llama3:70b'
+
+      llm_options = {
+        logger: self,
+        debug: @options[:verbose] || @options[:debug],
+        model: model_spec
+      }
+
+      @llm = LLMService.new(llm_options)
 
       if @llm.available?
         models = @llm.models
@@ -232,14 +240,16 @@ class YouTubeTranscriptChat < ScriptBase
   private
 
   def initialize_services
-    # Initialize LLM service
+    # Initialize LLM service with MODEL specification
+    model_spec = @options[:model] || ENV['MODEL'] || 'ollama:llama3:70b'
+
     @llm = LLMService.new({
       logger: self,
+      model: model_spec,
       debug: @options[:verbose] || @options[:debug],
       temperature: @options[:temperature],
       max_tokens: @options[:max_tokens],
-      timeout: @options[:timeout],
-      model: @options[:model]
+      timeout: @options[:timeout]
     })
 
     # Initialize cache service
