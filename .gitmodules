@@ -10,3 +10,6 @@
 [submodule "claude-code-proxy"]
 	path = claude-code-proxy
 	url = https://github.com/fuergaosi233/claude-code-proxy.git
+[submodule "mac-utils"]
+	path = mac-utils
+	url = https://github.com/alin23/mac-utils.git

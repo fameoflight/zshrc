@@ -69,7 +69,9 @@
       "Bash(defaults:*)",
       "Bash(/Users/hemantv/zshrc/bin/youtube-transcript-chat.rb:*)",
       "Bash(auto-retry:*)",
-      "Bash(ollama pull:*)"
+      "Bash(ollama pull:*)",
+      "Read(//Users/hemantv/bin/**)",
+      "Bash(ln:*)"
     ],
     "deny": [],
     "additionalDirectories": [

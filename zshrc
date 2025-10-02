@@ -102,5 +102,3 @@ export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
 # End of LM Studio CLI section
 
 
-# rbenv initialization
-eval "$(rbenv init -)"

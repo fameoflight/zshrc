@@ -114,7 +114,7 @@ endif
 # =============================================================================
 
 .PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup-message
-mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-settings app-settings ai-tools setup-hooks post-mac-setup-message find-orphans
+mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-utils mac-settings app-settings ai-tools setup-hooks post-mac-setup-message find-orphans
 
 linux: common linux-packages linux-settings
 
@@ -269,9 +269,19 @@ vscode-setup:
 # macOS APPLICATIONS
 # =============================================================================
 
-.PHONY: mac-apps
+.PHONY: mac-apps mac-utils
 mac-apps: github-tools xcode-setup
 	@bash scripts/setup-macos.sh mac-apps
+
+mac-utils:
+	@echo "🔨 Building mac-utils..."
+	@cd mac-utils && make -j$$(nproc)
+	@echo "📦 Installing mac-utils to $$HOME/bin..."
+	@mkdir -p $$HOME/bin
+	@cp -f mac-utils/bin/* $$HOME/bin/
+	@echo "🔗 Creating convenient symlinks..."
+	@cd $$HOME/bin && ln -sf ToggleHDR toggle-hdr
+	@echo -e "$(BOLD)$(GREEN)✅ mac-utils installed successfully$(NC)"
 
 # =============================================================================
 # SYSTEM SETTINGS
