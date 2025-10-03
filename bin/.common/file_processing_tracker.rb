@@ -17,7 +17,7 @@ class FileProcessingTracker
   def initialize(db_path = nil)
     # Default database path in ZSH config directory
     zsh_config = ENV['ZSH_CONFIG'] || File.expand_path('~/.config/zsh')
-    db_path ||= File.join(zsh_config, 'file_processing.db')
+    db_path ||= File.join(zsh_config, 'file_processing.sqlite.db')
 
     @database = Database.new(db_path)
     setup_database

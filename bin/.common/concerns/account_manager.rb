@@ -45,25 +45,23 @@ module AccountManager
 
   def delete_account(existing_accounts)
     account_to_delete = ask_choice('Which account do you want to delete?', existing_accounts)
-    
+
     if confirm_action("⚠️  Delete account '#{account_to_delete}' and all its data?")
       # Delete token file
       token_file = File.join(TOKEN_DIR, "#{account_to_delete}.yaml")
       File.delete(token_file) if File.exist?(token_file)
-      
+
       # Delete cache file
-      cache_file = File.join(CACHE_DIR, "#{account_to_delete}.db")
+      cache_file = File.join(CACHE_DIR, "#{account_to_delete}.sqlite.db")
       File.delete(cache_file) if File.exist?(cache_file)
-      
+
       log_success("🗑️ Account '#{account_to_delete}' has been deleted")
-      
+
       # Check if there are any accounts left
       remaining_accounts = Dir.glob(File.join(TOKEN_DIR, '*.yaml')).map { |f| File.basename(f, '.yaml') }
-      if remaining_accounts.empty?
-        log_info("No accounts remaining. You'll need to create a new one.")
-      end
+      log_info("No accounts remaining. You'll need to create a new one.") if remaining_accounts.empty?
     else
-      log_info("Account deletion cancelled.")
+      log_info('Account deletion cancelled.')
     end
   end
 
@@ -72,6 +70,6 @@ module AccountManager
   end
 
   def cache_path
-    File.join(CACHE_DIR, "#{@account_name}.db")
+    File.join(CACHE_DIR, "#{@account_name}.sqlite.db")
   end
 end

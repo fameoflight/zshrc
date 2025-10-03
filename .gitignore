@@ -18,9 +18,9 @@ grayscale/bin/*
 .vscode/ipch/*
 /Settings/Claude/projects
 *.log
+*.sqlite.db
 /vendor
 credentials/gmail-token.yaml
-credentials/gmail_cache.db
 /credentials/cache
 /credentials/tokens
 /.models

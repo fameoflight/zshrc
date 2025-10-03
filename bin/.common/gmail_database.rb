@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative 'database'
-require 'set'
 
 # Specialized Gmail database class
 class GmailDatabase < Database
@@ -27,7 +26,6 @@ class GmailDatabase < Database
     FOREIGN KEY(message_id) REFERENCES messages(id)
   SQL
 
-
   MESSAGE_INDEXES = [
     { name: 'from_email', columns: 'from_email' },
     { name: 'date', columns: 'date_received' },
@@ -35,7 +33,7 @@ class GmailDatabase < Database
   ].freeze
 
   def initialize(db_path = nil)
-    default_path = File.expand_path('../../credentials/gmail_cache.db', __dir__)
+    default_path = File.expand_path('../../credentials/gmail_cache.sqlite.db', __dir__)
     super(db_path || default_path)
     setup_schema
   end
@@ -79,13 +77,13 @@ class GmailDatabase < Database
       order: 'COUNT(*) DESC',
       limit: limit
     )
-    
+
     stats = {}
     results.each do |row|
       email = row['from_email']
       name = row['from_name'] || email
       count = row['count']
-      stats[email] = { :name => name, :count => count }
+      stats[email] = { name: name, count: count }
     end
     stats
   end
@@ -141,18 +139,18 @@ class GmailDatabase < Database
         "SELECT id, labels FROM messages WHERE from_email = ? AND labels LIKE '%INBOX%'",
         [email]
       )
-      
+
       messages.each do |message|
         current_labels = message['labels'] || ''
         # Remove INBOX from labels
         new_labels = current_labels.split(',').reject { |label| label.strip == 'INBOX' }.join(',')
-        
+
         db.execute(
-          "UPDATE messages SET labels = ? WHERE id = ?",
+          'UPDATE messages SET labels = ? WHERE id = ?',
           [new_labels, message['id']]
         )
       end
-      
+
       messages.length
     end
   end
@@ -162,41 +160,41 @@ class GmailDatabase < Database
       # Get all messages with email addresses
       sql = <<~SQL
         SELECT from_email, from_name
-        FROM messages 
-        WHERE labels LIKE '%INBOX%' 
-        AND from_email IS NOT NULL 
+        FROM messages#{' '}
+        WHERE labels LIKE '%INBOX%'#{' '}
+        AND from_email IS NOT NULL#{' '}
         AND from_email LIKE '%@%'
       SQL
 
       results = db.execute(sql)
-      
+
       # Process in Ruby to extract domains
       domain_stats = {}
-      
+
       results.each do |row|
         email = row[0]
         name = row[1]
-        
+
         # Extract domain - get everything after @, then get last 2 parts
         # e.g. a@b.linkedin.com -> linkedin.com
         full_domain = email.split('@').last
         domain_parts = full_domain.split('.')
-        
+
         # For domains like linkedin.com or mail.linkedin.com, we want linkedin.com
         # Take the last 2 parts if there are more than 2 parts
-        if domain_parts.length >= 2
-          domain = domain_parts.last(2).join('.')
-        else
-          domain = full_domain
-        end
-        
+        domain = if domain_parts.length >= 2
+                   domain_parts.last(2).join('.')
+                 else
+                   full_domain
+                 end
+
         next if domain.nil? || domain.empty?
-        
+
         domain_stats[domain] ||= { count: 0, names: Set.new }
         domain_stats[domain][:count] += 1
         domain_stats[domain][:names] << name if name && !name.empty?
       end
-      
+
       # Convert to final format and sort
       final_results = domain_stats.map do |domain, stats|
         {
@@ -205,10 +203,10 @@ class GmailDatabase < Database
           sample_names: stats[:names].to_a.first(5).join(', ')
         }
       end.sort_by { |d| -d[:count] }
-      
+
       # Apply limit if specified
       final_results = final_results.first(limit) if limit
-      
+
       final_results
     end
   end
@@ -253,18 +251,18 @@ class GmailDatabase < Database
         "SELECT id, labels FROM messages WHERE (from_email LIKE ? OR from_email LIKE ?) AND labels LIKE '%INBOX%'",
         ["%@#{domain}", "%@%.#{domain}"]
       )
-      
+
       messages.each do |message|
         current_labels = message['labels'] || ''
         # Remove INBOX from labels
         new_labels = current_labels.split(',').reject { |label| label.strip == 'INBOX' }.join(',')
-        
+
         db.execute(
-          "UPDATE messages SET labels = ? WHERE id = ?",
+          'UPDATE messages SET labels = ? WHERE id = ?',
           [new_labels, message['id']]
         )
       end
-      
+
       messages.length
     end
   end
@@ -276,18 +274,18 @@ class GmailDatabase < Database
         "SELECT labels FROM messages WHERE id = ? AND labels LIKE '%INBOX%'",
         [message_id]
       ).first
-      
+
       return 0 unless message
-      
+
       current_labels = message['labels'] || ''
       # Remove INBOX from labels
       new_labels = current_labels.split(',').reject { |label| label.strip == 'INBOX' }.join(',')
-      
+
       db.execute(
-        "UPDATE messages SET labels = ? WHERE id = ?",
+        'UPDATE messages SET labels = ? WHERE id = ?',
         [new_labels, message_id]
       )
-      
+
       1 # Return 1 to indicate one message was updated
     end
   end
@@ -295,7 +293,7 @@ class GmailDatabase < Database
   def search_messages(query, limit: 25)
     select(
       'messages',
-      where: "body LIKE ?",
+      where: 'body LIKE ?',
       params: ["%#{query}%"],
       order: 'date_received DESC',
       limit: limit
@@ -327,16 +325,16 @@ class GmailDatabase < Database
         ORDER BY m.date_received DESC
         LIMIT ?
       SQL
-      
+
       messages = db.execute(message_sql, [limit]).map(&:to_h)
-      
+
       # Then get attachments for each message (within the same connection)
       messages.each do |message|
         attachment_sql = 'SELECT * FROM attachments WHERE message_id = ?'
         attachments = db.execute(attachment_sql, [message['id']]).map(&:to_h)
         message['attachments'] = attachments
       end
-      
+
       messages
     end
   end
@@ -344,25 +342,25 @@ class GmailDatabase < Database
   def attachment_stats
     with_connection do |db|
       results = {}
-      
+
       # Total messages with attachments
       results[:messages_with_attachments] = db.execute(
         'SELECT COUNT(DISTINCT message_id) FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ?',
         ['%INBOX%']
       ).first.first
-      
+
       # Total attachments
       results[:total_attachments] = db.execute(
         'SELECT COUNT(*) FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ?',
         ['%INBOX%']
       ).first.first
-      
+
       # Most common file types
       results[:common_file_types] = db.execute(
         'SELECT mime_type, COUNT(*) as count FROM attachments a INNER JOIN messages m ON a.message_id = m.id WHERE m.labels LIKE ? GROUP BY mime_type ORDER BY count DESC LIMIT 10',
         ['%INBOX%']
       ).map { |row| { mime_type: row[0], count: row[1] } }
-      
+
       results
     end
   end
@@ -375,7 +373,7 @@ class GmailDatabase < Database
       order: 'count DESC',
       limit: limit
     )
-    
+
     results.map do |row|
       {
         email: row['from_email'],
@@ -390,14 +388,16 @@ class GmailDatabase < Database
       info = {}
       info[:total_messages] = db.execute('SELECT COUNT(*) FROM messages').first.first
       info[:inbox_messages] = db.execute("SELECT COUNT(*) FROM messages WHERE labels LIKE '%INBOX%'").first.first
-      info[:messages_with_sender] = db.execute("SELECT COUNT(*) FROM messages WHERE from_email IS NOT NULL").first.first
-      info[:inbox_with_sender] = db.execute("SELECT COUNT(*) FROM messages WHERE labels LIKE '%INBOX%' AND from_email IS NOT NULL").first.first
-      info[:messages_without_labels] = db.execute('SELECT COUNT(*) FROM messages WHERE labels IS NULL OR labels = ""').first.first
-      
+      info[:messages_with_sender] = db.execute('SELECT COUNT(*) FROM messages WHERE from_email IS NOT NULL').first.first
+      info[:inbox_with_sender] =
+        db.execute("SELECT COUNT(*) FROM messages WHERE labels LIKE '%INBOX%' AND from_email IS NOT NULL").first.first
+      info[:messages_without_labels] =
+        db.execute('SELECT COUNT(*) FROM messages WHERE labels IS NULL OR labels = ""').first.first
+
       # Sample of label formats
       sample_labels = db.execute('SELECT DISTINCT labels FROM messages LIMIT 10').map { |row| row.first }
       info[:sample_labels] = sample_labels
-      
+
       info
     end
   end

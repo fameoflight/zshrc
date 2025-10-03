@@ -365,7 +365,7 @@ class CleanWallpapers < ScriptBase
     output = execute_zsh_script('upscale-image', image_path, output_path,
                               description: "Upscaling #{File.basename(image_path)}")
 
-    if output && $?.success?
+    if output && File.exist?(output_path)
       log_success "Upscaled: #{File.basename(image_path)} -> #{File.basename(output_path)}"
       return output_path
     else
@@ -459,9 +459,8 @@ class CleanWallpapers < ScriptBase
           if upscaled_path
             # Replace original if requested and upscaling succeeded
             if @replace_originals && upscaled_path && File.exist?(upscaled_path)
-              File.rename(file[:path], "#{file[:path]}.backup")
+              remove_file(file[:path])
               File.rename(upscaled_path, file[:path])
-              File.delete("#{file[:path]}.backup")
               log_success "Upscaled and replaced: #{File.basename(file[:path])}"
             else
               log_success "Upscaled: #{File.basename(file[:path])}"

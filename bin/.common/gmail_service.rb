@@ -42,7 +42,7 @@ class GmailService
       @token_dir,
       File.dirname(@token_dir) # Ensure parent directory exists
     ]
-    
+
     dirs.each do |dir|
       FileUtils.mkdir_p(dir) unless Dir.exist?(dir)
     end
@@ -179,29 +179,29 @@ class GmailService
 
   def handle_auth_failure(error)
     # Only handle authentication errors
-    if error.is_a?(Google::Apis::AuthorizationError) || 
-       (error.is_a?(Google::Apis::ClientError) && (error.status_code == 401 || error.status_code == 403))
-      
+    if error.is_a?(Google::Apis::AuthorizationError) ||
+       (error.is_a?(Google::Apis::ClientError) && [401, 403].include?(error.status_code))
+
       log_warning("🔒 Authentication failed: #{error.message}")
-      
+
       # Try to refresh the token first
       if try_token_refresh
-        log_info("✅ Token refreshed successfully, retrying operation")
+        log_info('✅ Token refreshed successfully, retrying operation')
         return :retry
       end
-      
+
       # If refresh failed, clear everything
-      log_error("❌ Token refresh failed")
-      log_info("🧹 Clearing invalid token and cache...")
-      
+      log_error('❌ Token refresh failed')
+      log_info('🧹 Clearing invalid token and cache...')
+
       # Clear token file
       File.delete(token_path) if File.exist?(token_path)
-      
+
       # Clear cache if we have access to it
-      cache_file = File.join(File.dirname(@token_dir), 'cache', "#{@account_name}.db")
+      cache_file = File.join(File.dirname(@token_dir), 'cache', "#{@account_name}.sqlite.db")
       File.delete(cache_file) if File.exist?(cache_file)
-      
-      log_error("❌ Please run the command again to re-authenticate")
+
+      log_error('❌ Please run the command again to re-authenticate')
       exit 1
     else
       # Re-raise other errors
@@ -210,23 +210,23 @@ class GmailService
   end
 
   def try_token_refresh
-    log_debug("🔄 Attempting to refresh token...")
-    
+    log_debug('🔄 Attempting to refresh token...')
+
     # Get fresh credentials from the authorizer
     client_id = Google::Auth::ClientId.from_file(@credentials_path)
     token_store = Google::Auth::Stores::FileTokenStore.new(file: token_path)
     authorizer = Google::Auth::UserAuthorizer.new(client_id, SCOPE, token_store)
-    
+
     # Try to get credentials (this should trigger refresh if possible)
     fresh_credentials = authorizer.get_credentials(@account_name)
-    
+
     if fresh_credentials
       # Update the service with fresh credentials
       @service.authorization = fresh_credentials
-      log_debug("✅ Successfully refreshed credentials")
+      log_debug('✅ Successfully refreshed credentials')
       true
     else
-      log_debug("❌ Could not get fresh credentials")
+      log_debug('❌ Could not get fresh credentials')
       false
     end
   rescue StandardError => e
@@ -450,14 +450,14 @@ class GmailService
         begin
           current_msg = thread_service.get_user_message(user_id, message.id, format: 'minimal')
           current_labels = current_msg.label_ids || []
-          
+
           # Update labels in cache if they've changed
           gmail_db.update_message_labels(message.id, current_labels.join(','))
         rescue StandardError => e
           # If we can't get current labels, skip this optimization
           log_debug("Couldn't check labels for existing message #{message.id}: #{e.message}")
         end
-        
+
         progress_mutex.synchronize { progress.advance(1) }
         next
       end

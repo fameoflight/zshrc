@@ -23,10 +23,12 @@ class SimilarImageSearch:
 
     def __init__(self, db_file: str = None):
         if db_file is None:
-            db_file = str(Path.home() / '.config' / 'zsh' / 'similar_images.db')
+            db_file = str(Path.home() / '.config' / 'zsh' /
+                          'similar_images.sqlite.db')
 
         self.db_file = db_file
-        self.supported_formats = {'.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp'}
+        self.supported_formats = {
+            '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.webp'}
 
     def init_database(self):
         """Initialize SQLite database for image features"""
@@ -60,9 +62,12 @@ class SimilarImageSearch:
         ''')
 
         # Create indexes for performance
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_images_path ON images (file_path)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_features_image_id ON features (image_id)')
-        cursor.execute('CREATE INDEX IF NOT EXISTS idx_features_type ON features (feature_type)')
+        cursor.execute(
+            'CREATE INDEX IF NOT EXISTS idx_images_path ON images (file_path)')
+        cursor.execute(
+            'CREATE INDEX IF NOT EXISTS idx_features_image_id ON features (image_id)')
+        cursor.execute(
+            'CREATE INDEX IF NOT EXISTS idx_features_type ON features (feature_type)')
 
         conn.commit()
         conn.close()
@@ -101,7 +106,8 @@ class SimilarImageSearch:
                 from skimage.feature import local_binary_pattern
                 radius = 3
                 n_points = 8 * radius
-                lbp = local_binary_pattern(gray, n_points, radius, method='uniform')
+                lbp = local_binary_pattern(
+                    gray, n_points, radius, method='uniform')
                 lbp_hist, _ = np.histogram(lbp.ravel(), bins=n_points + 2)
                 lbp_hist = lbp_hist.astype(float)
                 lbp_hist /= (lbp_hist.sum() + 1e-7)
@@ -122,7 +128,8 @@ class SimilarImageSearch:
             features['edge_density'] = float(edge_density)
 
             # 4. Shape descriptors using contours
-            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            contours, _ = cv2.findContours(
+                edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             if contours:
                 # Find largest contour
                 largest_contour = max(contours, key=cv2.contourArea)
@@ -161,7 +168,8 @@ class SimilarImageSearch:
         # Filter by minimum size
         valid_files = [f for f in image_files if f.stat().st_size >= min_size]
 
-        print(f"📊 Found {len(valid_files)} image files (min size: {min_size} bytes)")
+        print(
+            f"📊 Found {len(valid_files)} image files (min size: {min_size} bytes)")
 
         if not valid_files:
             print("⚠️  No valid image files found")
@@ -181,7 +189,8 @@ class SimilarImageSearch:
             file_path = str(image_file)
 
             # Check if already exists
-            cursor.execute('SELECT id FROM images WHERE file_path = ?', (file_path,))
+            cursor.execute(
+                'SELECT id FROM images WHERE file_path = ?', (file_path,))
             if cursor.fetchone():
                 skipped_count += 1
                 continue
@@ -316,14 +325,16 @@ class SimilarImageSearch:
 
         for image_id, file_path in cursor.fetchall():
             # Get features for this image
-            cursor.execute('SELECT feature_type, feature_data FROM features WHERE image_id = ?', (image_id,))
+            cursor.execute(
+                'SELECT feature_type, feature_data FROM features WHERE image_id = ?', (image_id,))
             db_features = {}
 
             for feature_type, feature_data in cursor.fetchall():
                 db_features[feature_type] = json.loads(feature_data)
 
             if db_features:
-                similarity = self.calculate_similarity(query_features, db_features)
+                similarity = self.calculate_similarity(
+                    query_features, db_features)
                 if similarity >= threshold:
                     results.append((file_path, similarity))
 
@@ -349,7 +360,8 @@ class SimilarImageSearch:
         cursor.execute('SELECT COUNT(DISTINCT feature_type) FROM features')
         feature_types = cursor.fetchone()[0]
 
-        cursor.execute('SELECT AVG(width), AVG(height), MIN(width), MIN(height), MAX(width), MAX(height) FROM images')
+        cursor.execute(
+            'SELECT AVG(width), AVG(height), MIN(width), MIN(height), MAX(width), MAX(height) FROM images')
         res_stats = cursor.fetchone()
 
         # Database size
@@ -365,7 +377,8 @@ class SimilarImageSearch:
         if res_stats[0]:
             print("Resolution Statistics:")
             print(f"  • Average: {res_stats[0]:.0f}×{res_stats[1]:.0f}")
-            print(f"  • Range:   {res_stats[2]}×{res_stats[3]} to {res_stats[4]}×{res_stats[5]}")
+            print(
+                f"  • Range:   {res_stats[2]}×{res_stats[3]} to {res_stats[4]}×{res_stats[5]}")
 
         conn.close()
 
@@ -385,14 +398,22 @@ Examples:
         """
     )
 
-    parser.add_argument('query_image', nargs='?', help='Query image for similarity search')
-    parser.add_argument('--add', metavar='DIRECTORY', help='Add directory to image database')
-    parser.add_argument('--results', type=int, default=10, help='Maximum results to return (default: 10)')
-    parser.add_argument('--threshold', type=float, default=0.3, help='Similarity threshold (0.0-1.0, default: 0.3)')
-    parser.add_argument('--stats', action='store_true', help='Show database statistics')
-    parser.add_argument('--rebuild', action='store_true', help='Rebuild database (delete existing)')
-    parser.add_argument('--min-size', type=int, default=10240, help='Minimum file size in bytes (default: 10KB)')
-    parser.add_argument('--db', metavar='FILE', help='Custom database file path')
+    parser.add_argument('query_image', nargs='?',
+                        help='Query image for similarity search')
+    parser.add_argument('--add', metavar='DIRECTORY',
+                        help='Add directory to image database')
+    parser.add_argument('--results', type=int, default=10,
+                        help='Maximum results to return (default: 10)')
+    parser.add_argument('--threshold', type=float, default=0.3,
+                        help='Similarity threshold (0.0-1.0, default: 0.3)')
+    parser.add_argument('--stats', action='store_true',
+                        help='Show database statistics')
+    parser.add_argument('--rebuild', action='store_true',
+                        help='Rebuild database (delete existing)')
+    parser.add_argument('--min-size', type=int, default=10240,
+                        help='Minimum file size in bytes (default: 10KB)')
+    parser.add_argument('--db', metavar='FILE',
+                        help='Custom database file path')
 
     args = parser.parse_args()
 
@@ -424,7 +445,8 @@ Examples:
         )
 
         if results:
-            print(f"\n🎯 Found {len(results)} similar images (threshold: {args.threshold}):")
+            print(
+                f"\n🎯 Found {len(results)} similar images (threshold: {args.threshold}):")
             print("=" * 80)
 
             for i, (file_path, similarity) in enumerate(results, 1):

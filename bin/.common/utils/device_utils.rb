@@ -24,15 +24,15 @@ module DeviceUtils
 
     # Calculate workers based on CPU
     cpu_workers = case task_type
-                 when :cpu_intensive
-                   [cpu_cores - 1, 1].max # Leave one core free
-                 when :io_intensive
-                   cpu_cores * 2 # I/O bound tasks can use more workers than cores
-                 when :mixed
-                   cpu_cores
-                 else
-                   cpu_cores
-                 end
+                  when :cpu_intensive
+                    [cpu_cores - 4, 1].max # Leave one core free
+                  when :io_intensive
+                    cpu_cores * 2 # I/O bound tasks can use more workers than cores
+                  when :mixed
+                    [cpu_cores - 2, 1].max
+                  else
+                    [cpu_cores - 2, 1].max
+                  end
 
     # Calculate workers based on memory constraints
     memory_workers = memory_per_worker > 0 ? (available_memory_mb / memory_per_worker).to_i : Float::INFINITY
@@ -43,9 +43,7 @@ module DeviceUtils
     # Choose the most restrictive constraint
     optimal_workers = [cpu_workers, memory_workers].min
     optimal_workers = (optimal_workers * load_factor).round
-    optimal_workers = [optimal_workers, 1].max
-
-    optimal_workers
+    [optimal_workers, 1].max
   end
 
   # Get processor count with detailed detection
@@ -61,7 +59,7 @@ module DeviceUtils
     else
       4 # Reasonable fallback
     end
-  rescue
+  rescue StandardError
     4 # Fallback if detection fails
   end
 
@@ -75,10 +73,10 @@ module DeviceUtils
     when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
       windows_cpu_info
     else
-      { model: "Unknown", cores: processor_count, frequency: nil }
+      { model: 'Unknown', cores: processor_count, frequency: nil }
     end
-  rescue
-    { model: "Unknown", cores: processor_count, frequency: nil }
+  rescue StandardError
+    { model: 'Unknown', cores: processor_count, frequency: nil }
   end
 
   # Get memory information
@@ -93,7 +91,7 @@ module DeviceUtils
     else
       { total: nil, available: nil, used: nil }
     end
-  rescue
+  rescue StandardError
     { total: nil, available: nil, used: nil }
   end
 
@@ -123,7 +121,7 @@ module DeviceUtils
     else
       { avg_1min: 0, avg_5min: 0, avg_15min: 0 }
     end
-  rescue
+  rescue StandardError
     { avg_1min: 0, avg_5min: 0, avg_15min: 0 }
   end
 
@@ -147,7 +145,7 @@ module DeviceUtils
     else
       false
     end
-  rescue
+  rescue StandardError
     false
   end
 
@@ -167,8 +165,7 @@ module DeviceUtils
   def recommended_batch_size(total_items, worker_count: nil)
     worker_count ||= optimal_worker_count
     # Aim for 2-4 batches per worker for optimal load balancing
-    batch_size = [total_items / (worker_count * 3), 1].max
-    batch_size
+    [total_items / (worker_count * 3), 1].max
   end
 
   private
@@ -197,14 +194,22 @@ module DeviceUtils
   end
 
   def darwin_cpu_info
-    model = `sysctl -n machdep.cpu.brand_string`.strip rescue "Unknown Apple Silicon"
-    frequency = `sysctl -n hw.cpufrequency`.to_i / 1_000_000 rescue nil # Convert to MHz
+    model = begin
+      `sysctl -n machdep.cpu.brand_string`.strip
+    rescue StandardError
+      'Unknown Apple Silicon'
+    end
+    frequency = begin
+      `sysctl -n hw.cpufrequency`.to_i / 1_000_000
+    rescue StandardError
+      nil
+    end # Convert to MHz
 
     {
       model: model,
       cores: darwin_processor_count,
       frequency: frequency,
-      architecture: apple_silicon? ? "ARM64" : "x86_64"
+      architecture: apple_silicon? ? 'ARM64' : 'x86_64'
     }
   end
 
@@ -226,7 +231,7 @@ module DeviceUtils
       available: available_mb * 1024 * 1024,
       used: used_mb * 1024 * 1024
     }
-  rescue
+  rescue StandardError
     # Fallback with reasonable defaults for Apple Silicon
     {
       total: 128 * 1024 * 1024 * 1024, # 128GB fallback
@@ -247,8 +252,12 @@ module DeviceUtils
   end
 
   def linux_cpu_info
-    cpuinfo = File.read('/proc/cpuinfo') rescue ''
-    model = cpuinfo[/model name\s*:\s*(.+)/, 1] || "Unknown"
+    cpuinfo = begin
+      File.read('/proc/cpuinfo')
+    rescue StandardError
+      ''
+    end
+    model = cpuinfo[/model name\s*:\s*(.+)/, 1] || 'Unknown'
     cores = cpuinfo.scan(/^processor\s*:/).length
 
     {
@@ -259,7 +268,11 @@ module DeviceUtils
   end
 
   def linux_memory_info
-    meminfo = File.read('/proc/meminfo') rescue ''
+    meminfo = begin
+      File.read('/proc/meminfo')
+    rescue StandardError
+      ''
+    end
 
     total_kb = meminfo[/MemTotal:\s*(\d+)/, 1].to_i
     available_kb = meminfo[/MemAvailable:\s*(\d+)/, 1].to_i
@@ -273,7 +286,11 @@ module DeviceUtils
   end
 
   def system_load_unix
-    loadavg = File.read('/proc/loadavg') rescue '0 0 0'
+    loadavg = begin
+      File.read('/proc/loadavg')
+    rescue StandardError
+      '0 0 0'
+    end
     loads = loadavg.split.map(&:to_f)
 
     {
@@ -299,8 +316,12 @@ module DeviceUtils
   end
 
   def windows_cpu_info
-    cpuinfo = `wmic cpu get name /value` rescue ''
-    model = cpuinfo[/Name=(.+)/, 1] || "Unknown"
+    cpuinfo = begin
+      `wmic cpu get name /value`
+    rescue StandardError
+      ''
+    end
+    model = cpuinfo[/Name=(.+)/, 1] || 'Unknown'
 
     {
       model: model.strip,
@@ -310,7 +331,11 @@ module DeviceUtils
   end
 
   def windows_memory_info
-    meminfo = `wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value` rescue ''
+    meminfo = begin
+      `wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value`
+    rescue StandardError
+      ''
+    end
 
     total_kb = meminfo[/TotalVisibleMemorySize=(\d+)/, 1].to_i
     free_kb = meminfo[/FreePhysicalMemory=(\d+)/, 1].to_i
@@ -327,22 +352,38 @@ module DeviceUtils
     # Check for DirectX 12+ support
     `dxdiag /t dxdiag_output.txt 2>/dev/null && grep -i "direct.*12" dxdiag_output.txt`
     result = $?.success?
-    File.delete('dxdiag_output.txt') rescue nil
+    begin
+      File.delete('dxdiag_output.txt')
+    rescue StandardError
+      nil
+    end
     result
   end
 
   def os_version
     case RbConfig::CONFIG['host_os']
     when /darwin/
-      `sw_vers -productVersion`.strip rescue "Unknown"
+      begin
+        `sw_vers -productVersion`.strip
+      rescue StandardError
+        'Unknown'
+      end
     when /linux/
-      `lsb_release -rs 2>/dev/null || cat /etc/os-release | grep VERSION_ID | cut -d= -f2`.strip rescue "Unknown"
+      begin
+        `lsb_release -rs 2>/dev/null || cat /etc/os-release | grep VERSION_ID | cut -d= -f2`.strip
+      rescue StandardError
+        'Unknown'
+      end
     when /mswin|msys|mingw|cygwin|bccwin|wince|emc/
-      `ver`.strip rescue "Unknown"
+      begin
+        `ver`.strip
+      rescue StandardError
+        'Unknown'
+      end
     else
-      "Unknown"
+      'Unknown'
     end
-  rescue
-    "Unknown"
+  rescue StandardError
+    'Unknown'
   end
 end
