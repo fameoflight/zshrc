@@ -39,7 +39,7 @@
       "Bash(curl:*)",
       "Bash(pmset:*)",
       "Bash(./bin/oled-optimize.sh:*)",
-      "Read(//Users/hemantv/workspace/inbox/**)",
+
       "Bash(flutter doctor:*)",
       "Bash(sudo gem uninstall:*)",
       "Bash(pod:*)",
@@ -60,22 +60,18 @@
       "Bash(defaults delete:*)",
       "Bash(rvm use:*)",
       "Bash(rvm list:*)",
-      "Read(//Users/hemantv/workspace/upscaler pro/**)",
+      "Read(//Users/hemantv/**)",
       "Bash(xcode-icon-generator:*)",
       "Bash(BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby:*)",
       "Bash(claude config:*)",
-      "Read(//Users/hemantv/Library/**)",
-      "Read(//System/Library/ColorSync/Profiles/**)",
       "Bash(defaults:*)",
       "Bash(/Users/hemantv/zshrc/bin/youtube-transcript-chat.rb:*)",
       "Bash(auto-retry:*)",
       "Bash(ollama pull:*)",
-      "Read(//Users/hemantv/bin/**)",
-      "Bash(ln:*)"
+      "Bash(ln:*)",
+      "Bash(ioreg:*)"
     ],
     "deny": [],
-    "additionalDirectories": [
-      "/tmp"
-    ]
+    "additionalDirectories": ["/tmp"]
   }
 }

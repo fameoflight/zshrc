@@ -30,7 +30,7 @@ USER_BIN := ${HOME}/bin
 
 # Project Paths
 ZSH := ${HOME}/zshrc
-SETTINGS := ${ZSH}/Settings
+SETTINGS := ${ZSH}/Settingstogg
 
 # User Information
 NAME := Hemant Verma

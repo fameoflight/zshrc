@@ -74,9 +74,9 @@ configure_input() {
     log_info "Disabling press-and-hold for keys in favor of key repeat"
     defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
     
-    log_info "Setting fast keyboard repeat rate"
-    defaults write NSGlobalDomain KeyRepeat -int 1
-    defaults write NSGlobalDomain InitialKeyRepeat -int 10
+    log_info "Setting comfortable keyboard repeat rate"
+    defaults write NSGlobalDomain KeyRepeat -int 6
+    defaults write NSGlobalDomain InitialKeyRepeat -int 25
     
     log_info "Setting trackpad and mouse speed"
     defaults write -g com.apple.trackpad.scaling 2
@@ -274,12 +274,7 @@ configure_security() {
     log_info "Disabling remote apple events"
     sudo systemsetup -setremoteappleevents off 2>/dev/null || true
 
-    log_info "Disabling remote login"
-    sudo systemsetup -setremotelogin off 2>/dev/null || true
-
-    log_info "Disabling wake-on-lan"
-    sudo systemsetup -setwakeonnetworkaccess off 2>/dev/null || true
-
+  
     configure_terminal_access
 
     log_success "Security optimizations complete"

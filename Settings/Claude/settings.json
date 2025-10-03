@@ -14,7 +14,8 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(ruby:*)",
-      "Bash(gem:*)"
+      "Bash(gem:*)",
+      "Read(//Users/hemantv/**)"
     ]
   },
   "alwaysThinkingEnabled": false,
