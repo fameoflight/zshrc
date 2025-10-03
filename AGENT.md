@@ -12,6 +12,7 @@ Modular ZSH configuration system originated from Sebastian Tramp's configuration
 make install          # Full installation with symlinks
 make mac             # Complete macOS setup
 make github-setup    # Configure Git
+make pytorch-setup   # Setup PyTorch models for image upscaling
 make update          # Update repository and submodules
 ```
 
@@ -86,6 +87,8 @@ setup-gemini-key "AIzaSyYour-gemini-key-here"
 ## Custom Scripts System
 
 Three-tier Ruby-based scripts system with centralized dependency management and shared utilities.
+
+**Architecture**: Executables in `bin/` directory, setup scripts in `scripts/` directory
 
 ### Script Categories
 
@@ -191,6 +194,132 @@ log_info "Script started"
 - Verifying implementations across multiple files
 - Understanding project-wide patterns
 - Context exceeds Claude's limits
+
+## PyTorch Image Inference
+
+### Overview
+Modular PyTorch inference framework for image processing with support for multiple model types. Located in `bin/python-cli/` package with CLI script at `bin/pytorch_inference.py`.
+
+### Model Setup
+
+**PyTorch Models Setup Script:**
+
+Automated setup for PyTorch models with Apple Silicon CoreML conversion. Uses external configuration files for easy maintenance.
+
+```bash
+make pytorch-setup    # Run PyTorch models setup script
+```
+
+**Configuration Files:**
+- `scripts/requirements.txt` - Python dependencies for PyTorch environment
+- `scripts/pytorch-models.json` - Model definitions with URLs and descriptions
+
+**Setup Process:**
+1. Creates isolated Python environment in `~/.config/zsh/.models/venv`
+2. Installs dependencies from requirements.txt
+3. Downloads PyTorch models from JSON configuration
+4. Converts models to CoreML format for Apple Silicon optimization
+5. Generates configuration file with available models
+
+**Adding New Models:**
+Update `scripts/pytorch-models.json`:
+```json
+{
+  "ModelName": {
+    "url": "https://example.com/model.pth",
+    "filename": "model.pth",
+    "description": "Model description"
+  }
+}
+```
+
+### Features
+- **Smart Auto-Optimization**: Automatically determines optimal tile size, batch size, and worker count based on image size and device capabilities
+- **Multi-Device Support**: CUDA GPU, Apple Silicon (MPS), and CPU with automatic device detection
+- **Memory-Efficient Processing**: Tiled inference and streaming mode for large images
+- **Extensible Architecture**: Easy to add new model types beyond ESRGAN
+
+### Usage
+
+**Basic Usage (Recommended - Auto-Optimized):**
+```bash
+python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth
+```
+
+**Advanced Usage:**
+```bash
+# Override specific parameters
+python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth --tile 256
+
+# Manual control
+python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth --tile 512 --batch-size 4 --workers 2
+
+# Different scale factors
+python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth --scale 2
+```
+
+### Auto-Optimization Logic
+
+The system analyzes image dimensions and available device memory to determine optimal parameters:
+
+**CUDA GPU:**
+- Larger tiles (256-1024px) for better parallelization
+- Higher batch sizes (2-8)
+- Multiple workers (2-4) based on image size
+
+**Apple Silicon (MPS):**
+- Moderate tiles (100-400px) due to memory constraints
+- Smaller batches (1-4)
+- Single worker to prevent memory issues
+
+**CPU:**
+- Smaller tiles (75-350px) to avoid memory pressure
+- Small batches (1-4)
+- Single worker to avoid oversubscription
+
+### Architecture
+
+**`python_cli/utils.py`** - Base inference framework:
+- `BaseImageInference` class for generic PyTorch models
+- Device detection and memory optimization
+- Tiled and streaming inference methods
+- Image preprocessing and postprocessing
+
+**`python_cli/esrgan.py`** - ESRGAN-specific implementation:
+- RRDBNet architecture definitions
+- ESRGAN model loading logic
+- Factory methods for easy instantiation
+
+**`pytorch_inference.py`** - CLI interface:
+- Command-line argument parsing
+- Model type selection
+- Error handling with helpful suggestions
+
+### Adding New Model Types
+
+To add support for new PyTorch models:
+
+1. Create model class in `python_cli/my_model.py`
+2. Inherit from `BaseImageInference`
+3. Implement `load_model()` method
+4. Update CLI script to support new model type
+
+```python
+from python_cli.utils import BaseImageInference
+
+class MyModelInference(BaseImageInference):
+    def load_model(self, model_path):
+        # Custom model loading logic
+        pass
+```
+
+### Memory Management
+
+The framework includes automatic memory management:
+- Estimates memory requirements based on image size and scale factor
+- Falls back to streaming mode for very large images
+- Provides helpful error messages with optimization suggestions
+- Handles device-specific memory constraints
 
 ## Git Integration
 

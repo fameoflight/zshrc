@@ -39,7 +39,6 @@
       "Bash(curl:*)",
       "Bash(pmset:*)",
       "Bash(./bin/oled-optimize.sh:*)",
-
       "Bash(flutter doctor:*)",
       "Bash(sudo gem uninstall:*)",
       "Bash(pod:*)",
@@ -69,9 +68,13 @@
       "Bash(auto-retry:*)",
       "Bash(ollama pull:*)",
       "Bash(ln:*)",
-      "Bash(ioreg:*)"
+      "Bash(ioreg:*)",
+      "Bash(mkdir:*)",
+      "Bash(bin/upscale-image:*)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }

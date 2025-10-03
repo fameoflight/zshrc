@@ -23,3 +23,6 @@ credentials/gmail-token.yaml
 credentials/gmail_cache.db
 /credentials/cache
 /credentials/tokens
+/.models
+/bin/python-cli/python_cli.egg-info
+/bin/python-cli/python_cli/__pycache__

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-cli"
+version = "1.0.0"
+description = "Python CLI for PyTorch models with CoreML optimization"
+authors = [{name = "Hemant Verma", email = "fameoflight@gmail.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "typer[all]>=0.9.0",
+    "pillow>=10.0.0",
+    "numpy>=1.21.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+coreml = [
+    "coremltools>=7.0.0",
+]
+
+[project.scripts]
+python-cli = "python_cli.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["python_cli*"]
+
+[tool.setuptools.package-data]
+python_cli = ["py.typed"]

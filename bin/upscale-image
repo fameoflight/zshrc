@@ -1,0 +1,417 @@
+#!/bin/bash
+
+# upscale-image - Upscale images using PyTorch models with CoreML optimization
+# Usage: upscale-image <input> [output] [--model <model_name>]
+
+set -euo pipefail
+
+# Source logging functions
+source "$ZSH_CONFIG/logging.zsh"
+
+# Configuration
+MODELS_DIR="${ZSH_CONFIG}/.models"
+CONFIG_FILE="${MODELS_DIR}/config.json"
+DEFAULT_MODEL="RealESRGAN_x4plus"
+
+# Show usage information
+show_usage() {
+    echo "Usage: upscale-image <input> [output] [--model <model_name>] [--tile <size>] [--workers <count>] [--batch-size <size>] [--auto-tile]"
+    echo ""
+    echo "Options:"
+    echo "  input          Input image path"
+    echo "  output         Output image path (optional: auto-generates)"
+    echo "  --model        Model name (default: ${DEFAULT_MODEL})"
+    echo "  --tile         Tile size for large images (default: 256)"
+    echo "  --workers      Number of parallel workers (default: auto)"
+    echo "  --batch-size   Batch size for processing (default: 4)"
+    echo "  --auto-tile    Automatically optimize tile size for performance"
+    echo "  --list-models  List available models"
+    echo "  --help         Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  upscale-image photo.jpg"
+    echo "  upscale-image photo.jpg --model RealESRGAN_x4plus"
+    echo "  upscale-image photo.jpg result.jpg --tile 512"
+    echo "  upscale-image photo.jpg result.jpg --model RealESRGAN_x4plus --tile 128 --workers 2"
+    echo "  upscale-image photo.jpg --auto-tile --batch-size 8"
+    echo "  upscale-image huge-image.jpg --auto-tile --batch-size 16"
+}
+
+# Check dependencies
+check_dependencies() {
+    local models_dir="${MODELS_DIR}"
+    local venv_path="${models_dir}/venv"
+    local python_cmd="${venv_path}/bin/python"
+
+    if [[ ! -f "$python_cmd" ]]; then
+        log_error "Python environment not found: $python_cmd"
+        log_info "Run 'make pytorch-setup' to set up models and environment"
+        exit 1
+    fi
+
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_error "Models configuration not found: $CONFIG_FILE"
+        log_info "Run 'make pytorch-setup' to set up models"
+        exit 1
+    fi
+
+    echo "$python_cmd"
+}
+
+# List available models
+list_models() {
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_error "Models configuration not found. Run 'make pytorch-setup' first."
+        exit 1
+    fi
+
+    log_section "Available Models"
+
+    # Use python to parse JSON and list models
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    $python_cmd -c "
+import json
+import sys
+
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        config = json.load(f)
+
+    models = config.get('models', {})
+    default = config.get('default_model', '$DEFAULT_MODEL')
+
+    if not models:
+        print('No models found. Run setup first.')
+        sys.exit(1)
+
+    print('Available models:')
+    for name, info in models.items():
+        status = '✅' if name == default else '  '
+        coreml_exists = 'CoreML' if 'coreml_path' in info and info['coreml_path'] else 'PyTorch'
+        print(f'{status} {name} ({coreml_exists})')
+
+    print(f'')
+    print(f'Default model: {default}')
+
+except Exception as e:
+    print(f'Error reading configuration: {e}')
+    sys.exit(1)
+"
+}
+
+# Generate output filename if not provided
+generate_output_path() {
+    local input_path="$1"
+    local base_name="${input_path%.*}"
+    local extension="${input_path##*.}"
+    echo "${base_name}_upscaled.${extension}"
+}
+
+# Run image upscaling
+run_upscale() {
+    local input_path="$1"
+    local output_path="$2"
+    local model_name="$3"
+    local python_cmd="$4"
+
+    # Validate input file
+    if [[ ! -f "$input_path" ]]; then
+        log_error "Input file not found: $input_path"
+        exit 1
+    fi
+
+    # Get model info
+    local model_info
+    model_info=$($python_cmd -c "
+import json
+
+with open('$CONFIG_FILE', 'r') as f:
+    config = json.load(f)
+
+models = config.get('models', {})
+if '$model_name' not in models:
+    print('MODEL_NOT_FOUND')
+    exit(1)
+
+model = models['$model_name']
+if 'coreml_path' in model and model['coreml_path']:
+    print(model['coreml_path'])
+else:
+    print(model['pytorch_path'])
+")
+
+    if [[ "$model_info" == "MODEL_NOT_FOUND" ]]; then
+        log_error "Model '$model_name' not found"
+        log_info "Use --list-models to see available models"
+        exit 1
+    fi
+
+    # Prefer PyTorch model for flexibility
+    local use_coreml=false
+    local model_path="$model_info"
+    local pytorch_path="$model_info"
+
+    if [[ "$model_info" == *".mlmodel" ]] || [[ "$model_info" == *".mlpackage"* ]]; then
+        # Use PyTorch fallback if available - extract pytorch path from config
+        pytorch_path=$($python_cmd -c "
+import json
+with open('$CONFIG_FILE', 'r') as f:
+    config = json.load(f)
+model = config.get('models', {}).get('$model_name', {})
+print(model.get('pytorch_path', ''))
+")
+        if [[ -n "$pytorch_path" ]] && [[ -f "$pytorch_path" ]]; then
+            use_coreml=false
+            model_path="$pytorch_path"
+            log_info "Using PyTorch model (CoreML available but PyTorch preferred): $model_name"
+        else
+            # Fallback to CoreML if PyTorch not available
+            use_coreml=true
+            log_info "Using CoreML model: $model_name"
+        fi
+    else
+        use_coreml=false
+        log_info "Using PyTorch model: $model_name"
+    fi
+
+    log_progress "Upscaling $input_path using $model_name..."
+
+    # Use PyTorch inference for flexibility (handles any image size)
+    if [[ "$use_coreml" != "true" ]]; then
+        run_pytorch_inference "$input_path" "$output_path" "$pytorch_path" "$python_cmd"
+    else
+        run_coreml_inference "$input_path" "$output_path" "$model_path" "$python_cmd"
+    fi
+}
+
+# Run CoreML inference
+run_coreml_inference() {
+    local input_path="$1"
+    local output_path="$2"
+    local model_path="$3"
+    local python_cmd="$4"
+
+    # Create CoreML inference script
+    $python_cmd -c "
+import coremltools as ct
+import numpy as np
+from PIL import Image
+import cv2
+
+def load_and_preprocess_image(image_path, target_size=None):
+    # Load image
+    img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError(f'Could not load image: {image_path}')
+
+    # Convert BGR to RGB
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+    # Get original dimensions
+    original_height, original_width = img.shape[:2]
+
+    # Resize to target size if specified (for model compatibility)
+    if target_size is not None:
+        img = cv2.resize(img, (target_size, target_size), interpolation=cv2.INTER_LANCZOS4)
+        print(f'Resized image from {original_width}x{original_height} to {target_size}x{target_size}')
+
+    # Convert to float32 and normalize to [0, 1]
+    img = img.astype(np.float32) / 255.0
+
+    # Add batch dimension
+    img = np.transpose(img, (2, 0, 1))  # HWC -> CHW
+    img = np.expand_dims(img, axis=0)    # Add batch dimension
+
+    return img, (original_width, original_height)
+
+def save_output_image(output_array, output_path, original_size):
+    # Remove batch dimension and transpose
+    img = output_array.squeeze(0)  # Remove batch
+    img = np.transpose(img, (1, 2, 0))  # CHW -> HWC
+
+    # Clip values to [0, 1] and convert to uint8
+    img = np.clip(img, 0, 1) * 255.0
+    img = img.astype(np.uint8)
+
+    # Get output dimensions
+    output_height, output_width = img.shape[:2]
+
+    # Resize back to original aspect ratio (4x upscaling)
+    original_width, original_height = original_size
+    target_width = original_width * 4
+    target_height = original_height * 4
+
+    if (output_width != target_width) or (output_height != target_height):
+        img = cv2.resize(img, (target_width, target_height), interpolation=cv2.INTER_LANCZOS4)
+        print(f'Resized output from {output_width}x{output_height} to {target_width}x{target_height}')
+
+    # Save using PIL
+    Image.fromarray(img).save(output_path)
+    print(f'Saved upscaled image to: {output_path}')
+
+try:
+    # Load the CoreML model
+    model = ct.models.MLModel('$model_path')
+
+    # Try to get expected input size from model description
+    input_spec = model.input_description
+    expected_size = 512  # Default size for RealESRGAN models
+
+    # Load and preprocess input image with target size
+    input_data, original_size = load_and_preprocess_image('$input_path', expected_size)
+
+    print(f'Input shape: {input_data.shape}')
+    print(f'Original image size: {original_size}')
+
+    # Make prediction
+    output_dict = model.predict({'input': input_data})
+
+    # Get output (assuming single output)
+    output_key = list(output_dict.keys())[0]
+    output_data = output_dict[output_key]
+
+    print(f'Output shape: {output_data.shape}')
+
+    # Save result
+    save_output_image(output_data, '$output_path', original_size)
+
+except Exception as e:
+    print(f'CoreML inference failed: {e}')
+    exit(1)
+"
+}
+
+# Run PyTorch inference (preferred method)
+run_pytorch_inference() {
+    local input_path="$1"
+    local output_path="$2"
+    local model_path="$3"
+    local python_cmd="$4"
+
+    local inference_script="$ZSH_CONFIG/bin/pytorch_inference.py"
+
+    if [[ ! -f "$inference_script" ]]; then
+        log_error "PyTorch inference script not found: $inference_script"
+        exit 1
+    fi
+
+    log_info "Running PyTorch inference with flexible input size..."
+
+    # Use the standalone Python inference script
+    local script_args=""
+    if [[ -n "$workers" ]]; then
+        script_args="$script_args --workers $workers"
+    fi
+    script_args="$script_args --batch-size $batch_size"
+    if [[ "$auto_tile" == true ]]; then
+        script_args="$script_args --auto-tile"
+    fi
+
+    "$python_cmd" "$inference_script" \
+        --input "$input_path" \
+        --output "$output_path" \
+        --model "$model_path" \
+        --scale 4 \
+        --tile "$tile_size" \
+        $script_args
+}
+
+# Main execution
+main() {
+    local input_path=""
+    local output_path=""
+    local model_name="$DEFAULT_MODEL"
+    local tile_size="256"
+    local workers=""
+    local batch_size="4"
+    local auto_tile=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help)
+                show_usage
+                exit 0
+                ;;
+            --list-models)
+                list_models
+                exit 0
+                ;;
+            --model)
+                model_name="$2"
+                shift 2
+                ;;
+            --tile)
+                tile_size="$2"
+                shift 2
+                ;;
+            --workers)
+                workers="$2"
+                shift 2
+                ;;
+            --batch-size)
+                batch_size="$2"
+                shift 2
+                ;;
+            --auto-tile)
+                auto_tile=true
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+            *)
+                if [[ -z "$input_path" ]]; then
+                    input_path="$1"
+                elif [[ -z "$output_path" ]]; then
+                    output_path="$1"
+                else
+                    log_error "Too many arguments"
+                    show_usage
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate arguments
+    if [[ -z "$input_path" ]]; then
+        log_error "Input path is required"
+        show_usage
+        exit 1
+    fi
+
+    # Generate output path if not provided
+    if [[ -z "$output_path" ]]; then
+        output_path=$(generate_output_path "$input_path")
+    fi
+
+    # Check dependencies
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    # Run upscaling
+    log_banner "Image Upscaling"
+    log_info "Input: $input_path"
+    log_info "Output: $output_path"
+    log_info "Model: $model_name"
+    log_info "Tile size: $tile_size"
+    log_info "Workers: $workers"
+    log_info "Batch size: $batch_size"
+    log_info "Auto-tile: $auto_tile"
+
+    if run_upscale "$input_path" "$output_path" "$model_name" "$python_cmd"; then
+        log_success "Upscaling completed successfully!"
+        log_info "Result saved to: $output_path"
+    else
+        log_error "Upscaling failed"
+        exit 1
+    fi
+}
+
+main "$@"
