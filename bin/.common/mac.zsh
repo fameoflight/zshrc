@@ -259,7 +259,7 @@ mac_configure_desktop_power() {
 # Configure hot corners with simple, clean setup
 mac_configure_hot_corners() {
     log_section "Hot Corners Configuration"
-    
+
     log_info "Setting hot corners: Mission Control, Desktop, Lock Screen, Disabled"
     defaults write com.apple.dock wvous-tl-corner -int 2   # Mission Control
     defaults write com.apple.dock wvous-tl-modifier -int 0
@@ -269,8 +269,129 @@ mac_configure_hot_corners() {
     defaults write com.apple.dock wvous-bl-modifier -int 0
     defaults write com.apple.dock wvous-br-corner -int 0   # Disabled
     defaults write com.apple.dock wvous-br-modifier -int 0
-    
+
     log_success "Hot corners configured"
+}
+
+# Disable all hot corners
+mac_disable_hot_corners() {
+    log_section "Disabling Hot Corners"
+
+    log_info "Disabling all hot corners"
+    defaults write com.apple.dock wvous-tl-corner -int 0   # Disabled
+    defaults write com.apple.dock wvous-tl-modifier -int 0
+    defaults write com.apple.dock wvous-tr-corner -int 0   # Disabled
+    defaults write com.apple.dock wvous-tr-modifier -int 0
+    defaults write com.apple.dock wvous-bl-corner -int 0   # Disabled
+    defaults write com.apple.dock wvous-bl-modifier -int 0
+    defaults write com.apple.dock wvous-br-corner -int 0   # Disabled
+    defaults write com.apple.dock wvous-br-modifier -int 0
+
+    log_info "Restarting Dock to apply hot corner changes..."
+    killall Dock 2>/dev/null || true
+    sleep 1
+
+    log_success "All hot corners disabled"
+}
+
+# Save current hot corners configuration
+mac_save_hot_corners_config() {
+    local config_file="${1:-$HOME/.config/zsh/.saved_hot_corners.plist}"
+    local config_dir
+    config_dir="$(dirname "$config_file")"
+
+    # Ensure config directory exists
+    mkdir -p "$config_dir"
+
+    log_info "Saving current hot corners configuration to $config_file"
+
+    # Create a property list with current hot corner settings
+    cat > "$config_file" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>timestamp</key>
+    <string>$(date -u +"%Y-%m-%dT%H:%M:%SZ")</string>
+    <key>hot_corners</key>
+    <dict>
+        <key>top_left</key>
+        <dict>
+            <key>action</key>
+            <integer>$(defaults read com.apple.dock wvous-tl-corner 2>/dev/null || echo 0)</integer>
+            <key>modifier</key>
+            <integer>$(defaults read com.apple.dock wvous-tl-modifier 2>/dev/null || echo 0)</integer>
+        </dict>
+        <key>top_right</key>
+        <dict>
+            <key>action</key>
+            <integer>$(defaults read com.apple.dock wvous-tr-corner 2>/dev/null || echo 0)</integer>
+            <key>modifier</key>
+            <integer>$(defaults read com.apple.dock wvous-tr-modifier 2>/dev/null || echo 0)</integer>
+        </dict>
+        <key>bottom_left</key>
+        <dict>
+            <key>action</key>
+            <integer>$(defaults read com.apple.dock wvous-bl-corner 2>/dev/null || echo 0)</integer>
+            <key>modifier</key>
+            <integer>$(defaults read com.apple.dock wvous-bl-modifier 2>/dev/null || echo 0)</integer>
+        </dict>
+        <key>bottom_right</key>
+        <dict>
+            <key>action</key>
+            <integer>$(defaults read com.apple.dock wvous-br-corner 2>/dev/null || echo 0)</integer>
+            <key>modifier</key>
+            <integer>$(defaults read com.apple.dock wvous-br-modifier 2>/dev/null || echo 0)</integer>
+        </dict>
+    </dict>
+</dict>
+</plist>
+EOF
+
+    log_success "Hot corners configuration saved"
+}
+
+# Restore hot corners configuration from saved file
+mac_restore_hot_corners_config() {
+    local config_file="${1:-$HOME/.config/zsh/.saved_hot_corners.plist}"
+
+    if [[ ! -f "$config_file" ]]; then
+        log_warning "No saved hot corners configuration found at $config_file"
+        log_info "Using default productivity configuration"
+        mac_configure_hot_corners
+        return 0
+    fi
+
+    log_info "Restoring hot corners configuration from $config_file"
+
+    # Read values from plist and restore them
+    local tl_action tl_modifier tr_action tr_modifier
+    local bl_action bl_modifier br_action br_modifier
+
+    tl_action=$(/usr/libexec/PlistBuddy -c "print :hot_corners:top_left:action" "$config_file" 2>/dev/null || echo 2)
+    tl_modifier=$(/usr/libexec/PlistBuddy -c "print :hot_corners:top_left:modifier" "$config_file" 2>/dev/null || echo 0)
+    tr_action=$(/usr/libexec/PlistBuddy -c "print :hot_corners:top_right:action" "$config_file" 2>/dev/null || echo 4)
+    tr_modifier=$(/usr/libexec/PlistBuddy -c "print :hot_corners:top_right:modifier" "$config_file" 2>/dev/null || echo 0)
+    bl_action=$(/usr/libexec/PlistBuddy -c "print :hot_corners:bottom_left:action" "$config_file" 2>/dev/null || echo 13)
+    bl_modifier=$(/usr/libexec/PlistBuddy -c "print :hot_corners:bottom_left:modifier" "$config_file" 2>/dev/null || echo 0)
+    br_action=$(/usr/libexec/PlistBuddy -c "print :hot_corners:bottom_right:action" "$config_file" 2>/dev/null || echo 0)
+    br_modifier=$(/usr/libexec/PlistBuddy -c "print :hot_corners:bottom_right:modifier" "$config_file" 2>/dev/null || echo 0)
+
+    # Restore the hot corners
+    defaults write com.apple.dock wvous-tl-corner -int "$tl_action"
+    defaults write com.apple.dock wvous-tl-modifier -int "$tl_modifier"
+    defaults write com.apple.dock wvous-tr-corner -int "$tr_action"
+    defaults write com.apple.dock wvous-tr-modifier -int "$tr_modifier"
+    defaults write com.apple.dock wvous-bl-corner -int "$bl_action"
+    defaults write com.apple.dock wvous-bl-modifier -int "$bl_modifier"
+    defaults write com.apple.dock wvous-br-corner -int "$br_action"
+    defaults write com.apple.dock wvous-br-modifier -int "$br_modifier"
+
+    log_info "Restarting Dock to apply hot corner changes..."
+    killall Dock 2>/dev/null || true
+    sleep 1
+
+    log_success "Hot corners configuration restored"
 }
 
 # Show detailed hardware information
@@ -432,6 +553,9 @@ export -f mac_confirm_changes
 export -f mac_restart_apps
 export -f mac_configure_desktop_power
 export -f mac_configure_hot_corners
+export -f mac_disable_hot_corners
+export -f mac_save_hot_corners_config
+export -f mac_restore_hot_corners_config
 export -f mac_show_hardware_info
 export -f mac_show_system_info
 export -f mac_parse_common_args

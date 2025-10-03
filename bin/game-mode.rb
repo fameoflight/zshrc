@@ -331,6 +331,9 @@ class GameMode < ScriptBase
 
       # Then enable HDR on the configured gaming display
       enable_hdr
+
+      # Disable hot corners for gaming
+      disable_hot_corners_for_gaming
     end
 
     return unless dry_run?
@@ -360,6 +363,9 @@ class GameMode < ScriptBase
 
         # Disable HDR first (restore normal mode)
         disable_hdr
+
+        # Restore hot corners configuration
+        restore_hot_corners_configuration
 
         # Run stack-monitors to arrange them properly
         stacked_monitor_script = File.expand_path('stacked-monitor.rb', __dir__)
@@ -715,6 +721,64 @@ class GameMode < ScriptBase
 
   def debug_mode?
     @options[:debug] || ENV['DEBUG'] == '1'
+  end
+
+  # Disable hot corners for gaming to prevent accidental activations
+  def disable_hot_corners_for_gaming
+    log_info('🎮 Disabling hot corners for gaming...')
+
+    if dry_run?
+      log_info('[Dry Run] Would save current hot corners configuration and disable all hot corners')
+      return
+    end
+
+    # Source the mac utilities and handle hot corners
+    mac_utils_file = File.expand_path('.common/mac.zsh', __dir__)
+
+    if File.exist?(mac_utils_file)
+      # First save the current configuration
+      log_info('💾 Saving current hot corners configuration...')
+      save_cmd = "source '#{mac_utils_file}' && mac_save_hot_corners_config"
+      execute_cmd?(save_cmd, description: 'Saving hot corners configuration')
+
+      # Then disable hot corners
+      log_info('🔧 Disabling all hot corners for gaming...')
+      disable_cmd = "source '#{mac_utils_file}' && mac_disable_hot_corners"
+
+      if execute_cmd?(disable_cmd, description: 'Disabling hot corners')
+        log_success('✅ Hot corners disabled for gaming')
+      else
+        log_warning('⚠️  Could not disable hot corners automatically')
+      end
+    else
+      log_warning('⚠️  macOS utilities not found - cannot disable hot corners')
+    end
+  end
+
+  # Restore hot corners configuration
+  def restore_hot_corners_configuration
+    log_info('🔄 Restoring hot corners configuration...')
+
+    if dry_run?
+      log_info('[Dry Run] Would restore hot corners configuration')
+      return
+    end
+
+    # Source the mac utilities and restore hot corners
+    mac_utils_file = File.expand_path('.common/mac.zsh', __dir__)
+
+    if File.exist?(mac_utils_file)
+      # Use bash to source the utilities and call the function
+      cmd = "source '#{mac_utils_file}' && mac_restore_hot_corners_config"
+
+      if execute_cmd?(cmd, description: 'Restoring hot corners')
+        log_success('✅ Hot corners configuration restored')
+      else
+        log_warning('⚠️  Could not restore hot corners automatically')
+      end
+    else
+      log_warning('⚠️  macOS utilities not found - cannot restore hot corners')
+    end
   end
 
   def show_examples

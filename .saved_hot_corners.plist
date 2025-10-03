@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>timestamp</key>
+    <string>2025-10-03T10:22:27Z</string>
+    <key>hot_corners</key>
+    <dict>
+        <key>top_left</key>
+        <dict>
+            <key>action</key>
+            <integer>2</integer>
+            <key>modifier</key>
+            <integer>0</integer>
+        </dict>
+        <key>top_right</key>
+        <dict>
+            <key>action</key>
+            <integer>4</integer>
+            <key>modifier</key>
+            <integer>0</integer>
+        </dict>
+        <key>bottom_left</key>
+        <dict>
+            <key>action</key>
+            <integer>13</integer>
+            <key>modifier</key>
+            <integer>0</integer>
+        </dict>
+        <key>bottom_right</key>
+        <dict>
+            <key>action</key>
+            <integer>0</integer>
+            <key>modifier</key>
+            <integer>0</integer>
+        </dict>
+    </dict>
+</dict>
+</plist>

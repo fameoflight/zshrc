@@ -74,7 +74,10 @@
       "Bash(ZSH_CONFIG=/Users/hemantv/.config/zsh zsh -c:*)",
       "Bash(find-similar-images:*)",
       "Bash(xargs:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(bin/game-mode.rb:*)",
+      "Bash(BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec bin/game-mode.rb:*)",
+      "Bash(mac_disable_hot_corners)"
     ],
     "deny": [],
     "additionalDirectories": [
