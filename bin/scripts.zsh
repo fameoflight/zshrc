@@ -49,6 +49,11 @@ stack-monitors() {
   _execute_ruby_script "stacked-monitor.rb" "$@"
 }
 
+# Game mode script - enable only LG OLED monitor with HDR
+game-mode() {
+  _execute_ruby_script "game-mode.rb" "$@"
+}
+
 # Test LLM element detection functionality
 test-llm-detection() {
   _execute_ruby_script "test-llm-detection.rb" "$@"
@@ -314,6 +319,7 @@ list-scripts() {
   echo "🐚 ZSH Utility Functions (interactive use):"
   echo " 📚 calibre-update        - Update Calibre to the latest version"
   echo " 🖥️  stack-monitors        - Configure stacked monitor setup"
+  echo " 🎮 game-mode            - Enable game mode (LG OLED only with HDR)"
   echo " 📄 merge-pdf             - Merge multiple PDF files"
   echo " 📝 merge-md              - Merge markdown files with their references into a single file"
   echo " 🎥 youtube-transcript-chat - Download YouTube transcripts and chat with video content using local LLM"
@@ -527,6 +533,7 @@ scripts() {
     echo -e "\033[1m🐚 Available ZSH Utility Functions:\033[0m"
     echo " 📚 calibre-update        - Update Calibre to the latest version"
     echo " 🖥️  stack-monitors        - Configure stacked monitor setup"
+  echo " 🎮 game-mode            - Enable game mode (LG OLED only with HDR)"
     echo " 📄 merge-pdf             - Merge multiple PDF files"
     echo " 📝 merge-md              - Merge markdown files with their references"
     echo " ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
@@ -553,6 +560,7 @@ scripts() {
     echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
     echo "  📚 calibre-update        - Update Calibre to the latest version"
     echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
+    echo "  🎮 game-mode            - Enable game mode (LG OLED only with HDR)"
     echo "  📄 merge-pdf             - Merge multiple PDF files"
     echo "  📝 merge-md              - Merge markdown files with their references"
     echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
@@ -586,6 +594,8 @@ scripts() {
     echo " scripts make                          # Show all Makefile targets"
     echo " scripts merge-pdf output.pdf *.pdf    # Merge PDF files"
     echo " scripts stack-monitors --dry-run      # Test monitor setup"
+    echo " scripts game-mode                     # Enable game mode for gaming"
+    echo " scripts game-mode --restore          # Restore all monitors"
     echo " scripts spotlight-manage --status     # Check Spotlight status"
     echo " scripts uninstall-app Docker          # Uninstall application"
     echo " scripts macos-optimize --dry-run      # Preview macOS optimizations"
@@ -640,7 +650,7 @@ scripts() {
   
   # First, check if it's a ZSH utility function
   local utility_functions=(
-    "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
+    "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human" "find-similar-images" "find-duplicate-images"
