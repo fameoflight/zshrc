@@ -71,7 +71,10 @@
       "Bash(ioreg:*)",
       "Bash(mkdir:*)",
       "Bash(bin/upscale-image:*)",
-      "Bash(ZSH_CONFIG=/Users/hemantv/.config/zsh zsh -c:*)"
+      "Bash(ZSH_CONFIG=/Users/hemantv/.config/zsh zsh -c:*)",
+      "Bash(find-similar-images:*)",
+      "Bash(xargs:*)",
+      "Bash(awk:*)"
     ],
     "deny": [],
     "additionalDirectories": [

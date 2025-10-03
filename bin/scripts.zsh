@@ -236,6 +236,40 @@ detect-human() {
   bash "$script_path" "$@"
 }
 
+# Similar image search using computer vision
+find-similar-images() {
+  local script_path="$ZSH_CONFIG/bin/find-similar-images.py"
+
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Similar image search script not found at $script_path"
+    return 1
+  fi
+
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making find-similar-images.py executable..."
+    chmod +x "$script_path"
+  fi
+
+  python3 "$script_path" "$@"
+}
+
+# Find duplicate images in a folder
+find-duplicate-images() {
+  local script_path="$ZSH_CONFIG/bin/find-duplicate-images.py"
+
+  if [[ ! -f "$script_path" ]]; then
+    log_error "Duplicate image finder script not found at $script_path"
+    return 1
+  fi
+
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making find-duplicate-images.py executable..."
+    chmod +x "$script_path"
+  fi
+
+  python3 "$script_path" "$@"
+}
+
 # =============================================================================
 # XCODE PROJECT MANAGEMENT
 # =============================================================================
@@ -300,6 +334,8 @@ list-scripts() {
   echo " 🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
   echo " 🖼️  upscale-image        - Upscale images using PyTorch models with CoreML"
   echo " 👤 detect-human          - Detect humans in images using YOLOv8"
+  echo " 🔍 find-similar-images  - Find similar images using computer vision"
+  echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
   echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
   echo " 📱 xcode-view-files      - View files in Xcode project by category"
   echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -508,6 +544,8 @@ scripts() {
     echo " 🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
     echo " 👤 detect-human          - Detect humans in images using YOLOv8"
+    echo " 🔍 find-similar-images  - Find similar images using computer vision"
+    echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
     echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
     echo " 📱 xcode-view-files      - View files in Xcode project by category"
     echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -605,7 +643,7 @@ scripts() {
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
-    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human"
+    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human" "find-similar-images" "find-duplicate-images"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )
   

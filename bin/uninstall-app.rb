@@ -601,7 +601,8 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
     @discovery_results[:kernel_extensions].each do |kext|
       kext_name = File.basename(kext)
       execute_cmd("sudo kextunload '#{kext}'", description: "Unloading #{kext_name}")
-      execute_cmd("sudo rm -rf '#{kext}'", description: "Removing #{kext_name}")
+      log_warning "System-level deletion required for kernel extension: #{kext_name}"
+      execute_cmd("sudo rm -rf '#{kext}'", description: "Removing #{kext_name} (SYSTEM FILE)")
     end
 
     execute_cmd('sudo kextcache -system-prelinked-kernel', description: 'Rebuilding kernel cache')
@@ -665,7 +666,8 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
     if @discovery_results[:network_items][:dns_files].any?
       log_warning('Removing DNS resolver files (requires sudo)')
       @discovery_results[:network_items][:dns_files].each do |file|
-        execute_cmd("sudo rm -f '#{file}'", description: "Removing DNS resolver: #{File.basename(file)}")
+        log_warning "System-level deletion required for DNS resolver: #{File.basename(file)}"
+        execute_cmd("sudo rm -f '#{file}'", description: "Removing DNS resolver: #{File.basename(file)} (SYSTEM FILE)")
       end
     end
     puts

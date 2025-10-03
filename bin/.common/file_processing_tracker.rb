@@ -3,6 +3,13 @@
 require_relative 'database'
 require 'digest'
 
+# Try to require tty-progressbar, but don't fail if it's not available
+begin
+  require 'tty-progressbar'
+rescue LoadError
+  # Gem not available, will handle gracefully
+end
+
 # Track file processing operations to avoid redundant work
 class FileProcessingTracker
   attr_reader :database
@@ -56,6 +63,82 @@ class FileProcessingTracker
     end
 
     needs_processing
+  end
+
+  # Analyze files and categorize them as cached, new, or needing reprocessing
+  def analyze_files(file_paths, operation, options = {})
+    analysis = {
+      cached: [],
+      needs_processing: [],
+      total: file_paths.length
+    }
+
+    # Show progress for large batches if enabled
+    if file_paths.length > 50 && options[:show_progress] != false
+      # Calculate progress update interval (update every 10% or every 50 files, whichever is smaller)
+      update_interval = [50, (file_paths.length / 10.0).ceil].min
+
+      file_paths.each_with_index do |file_path, index|
+        begin
+          if needs_processing?(file_path, operation, options)
+            analysis[:needs_processing] << file_path
+          else
+            analysis[:cached] << file_path
+          end
+        rescue => e
+          # If there's an error checking the file, mark it as needing processing
+          analysis[:needs_processing] << file_path
+        end
+
+        # Show progress at intervals
+        if (index + 1) % update_interval == 0 || index == file_paths.length - 1
+          percent = ((index + 1).to_f / file_paths.length * 100).round(1)
+          print "\r🔍 Analyzing files: #{percent}% (#{index + 1}/#{file_paths.length})"
+          $stdout.flush
+        end
+      end
+
+      puts # New line after progress
+    else
+      # Process silently for small batches
+      file_paths.each do |file_path|
+        begin
+          if needs_processing?(file_path, operation, options)
+            analysis[:needs_processing] << file_path
+          else
+            analysis[:cached] << file_path
+          end
+        rescue => e
+          # If there's an error checking the file, mark it as needing processing
+          analysis[:needs_processing] << file_path
+        end
+      end
+    end
+
+    analysis
+  end
+
+  # Analyze files and return summary statistics (for initial reporting)
+  def get_processing_summary(file_paths, operation, options = {})
+    analysis = analyze_files(file_paths, operation, options.merge(show_progress: false))
+
+    {
+      total_files: file_paths.length,
+      cached_files: analysis[:cached].length,
+      new_files: analysis[:needs_processing].length,
+      operation: operation,
+      cache_enabled: !options[:force] && analysis[:cached].length > 0
+    }
+  end
+
+  # Print a standardized processing summary
+  def print_processing_summary(summary, operation_description = "processing")
+    if summary[:cache_enabled] && summary[:cached_files] > 0
+      puts "📋 Using cached #{operation_description} for #{summary[:cached_files]} files"
+      puts "🔍 Will analyze #{summary[:new_files]} new files"
+    else
+      puts "🔍 Will analyze #{summary[:total_files]} files"
+    end
   end
 
   # Record that a file has been processed

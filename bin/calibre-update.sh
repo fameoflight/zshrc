@@ -62,7 +62,7 @@ download_calibre() {
     log_info "Downloading Calibre from $CALIBRE_DOWNLOAD_URL..."
     
     # Clean up any existing download
-    [[ -f "$TMP_DMG" ]] && rm -f "$TMP_DMG"
+    [[ -f "$TMP_DMG" ]] && rmtrash -f "$TMP_DMG"
     
     # Download with progress bar and proper error handling
     if ! curl -L --progress-bar --fail --output "$TMP_DMG" "$CALIBRE_DOWNLOAD_URL"; then
@@ -158,7 +158,7 @@ cleanup_dmg() {
     fi
     
     # Remove temporary DMG
-    [[ -f "$TMP_DMG" ]] && rm -f "$TMP_DMG"
+    [[ -f "$TMP_DMG" ]] && rmtrash -f "$TMP_DMG"
 }
 
 # Launch Calibre

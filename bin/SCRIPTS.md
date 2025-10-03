@@ -346,6 +346,126 @@ choices = prompt_multiselect("Select multiple:", ["A", "B", "C"])
 - Query execution with error handling
 - Connection pooling and cleanup
 
+### FileFilter (`file_filter.rb`)
+
+**Purpose**: Common file filtering utilities for dimensions, extensions, and custom criteria.
+
+**Key Features**:
+- Filter files by extensions (case-insensitive)
+- Filter images by dimensions with min/max constraints
+- Chain multiple filters together
+- Handle filtering errors gracefully
+- Return structured results with accepted/rejected files
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/file_filter'
+
+# Filter by extensions
+image_files = FileFilter.filter_by_extensions(all_files, %w[.jpg .jpeg .png .webp])
+
+# Filter images by dimensions
+filtered = FileFilter.filter_images_by_dimensions(
+  image_files,
+  min_width: 200,
+  min_height: 200,
+  max_width: 8000,
+  max_height: 6000
+)
+# => { accepted: [...], rejected: [...], errors: [...] }
+
+# Chain multiple filters
+result = FileFilter.filter_chain(
+  files,
+  { type: :extensions, extensions: %w[.jpg .png] },
+  { type: :dimensions, min_width: 1024, min_height: 768 },
+  { type: :custom, criteria: ->(path) { !path.include?('temp') } }
+)
+```
+
+### WorkflowProcessor (`workflow_processor.rb`)
+
+**Purpose**: Multi-pass workflow processing with intelligent caching and progress reporting.
+
+**Key Features**:
+- Process files through multiple passes with different operations
+- Automatic caching for each pass with FileProcessingTracker integration
+- Filter files between passes
+- Progress reporting that accounts for cached vs new files
+- Error handling and recovery
+- Workflow summary and statistics
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/workflow_processor'
+
+processor = WorkflowProcessor.new(
+  tracker: FileProcessingTracker.new,
+  logger: self
+)
+
+passes = [
+  {
+    name: "Human Detection",
+    operation_name: "detect_humans",
+    enable_cache: true,
+    cache_description: "human detection results",
+    show_progress: true,
+    filter_proc: ->(path) { image_is_large_enough?(path) },
+    process_proc: ->(path) { detect_humans_in_image(path) },
+    filter_remaining: true
+  },
+  {
+    name: "Resolution Analysis",
+    operation_name: "check_resolution",
+    enable_cache: true,
+    process_proc: ->(path) { analyze_image_resolution(path) }
+  }
+]
+
+result = processor.process_workflow(image_files, passes)
+```
+
+### ImageWorkflow (`image_workflow.rb`)
+
+**Purpose**: Specialized workflow processor for common image processing operations.
+
+**Key Features**:
+- Pre-built image analysis workflows
+- Human detection integration
+- Resolution analysis and upscaling
+- Image dimension filtering
+- Image-specific statistics and reporting
+- Configurable processing pipelines
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/image_workflow'
+
+# Create image workflow processor
+workflow = ImageWorkflow.new(tracker: FileProcessingTracker.new)
+
+# Process images with standard workflow
+result = workflow.process_images(
+  image_files,
+  human_detection: true,
+  human_threshold: 60.0,
+  upscaling: true,
+  min_resolution: 3840,
+  min_height: 2160,
+  dry_run: false
+)
+
+# Or build custom workflow
+config = workflow.build_image_workflow_config(
+  human_detection: true,
+  min_width: 200,
+  min_height: 200,
+  upscaling: true
+)
+result = workflow.process_workflow(image_files, config)
+```
+
 ### FileProcessingTracker (`file_processing_tracker.rb`)
 
 **Purpose**: Track file processing status across multiple runs to prevent duplicate processing.
@@ -356,6 +476,7 @@ choices = prompt_multiselect("Select multiple:", ["A", "B", "C"])
 - Prevent reprocessing of already completed files
 - Resume interrupted batch operations
 - Track processing errors and retry counts
+- Analyze files to separate cached vs new processing needs
 
 **Usage Pattern**:
 ```ruby
@@ -377,6 +498,16 @@ if tracker.needs_processing?(file_path)
   process_file(file_path)
 end
 
+# Analyze multiple files to separate cached from new processing
+# Returns: { cached: [...], needs_processing: [...], total: N }
+analysis = tracker.analyze_files(file_paths, 'detect_humans', params: { threshold: 60.0 })
+puts "Using cached results for #{analysis[:cached].length} files"
+puts "Processing #{analysis[:needs_processing].length} new files"
+
+# Or use the convenience methods for reporting
+summary = tracker.get_processing_summary(file_paths, 'detect_humans', params: { threshold: 60.0 })
+tracker.print_processing_summary(summary, "human detection results")
+
 # Get all pending files
 pending = tracker.pending_files
 
@@ -384,6 +515,35 @@ pending = tracker.pending_files
 stats = tracker.stats
 # => { total: 100, pending: 20, processing: 5, completed: 70, failed: 5 }
 ```
+
+**Progress Tracking Best Practices**:
+For scripts that process many files with caching support, use the FileProcessingTracker's built-in reporting methods:
+
+```ruby
+# Before processing, analyze and report file status
+file_paths = Dir.glob('*.jpg')
+operation_params = { threshold: 70.0 }
+
+# Get processing summary and print standardized report
+summary = tracker.get_processing_summary(file_paths, 'detect_objects', params: operation_params)
+tracker.print_processing_summary(summary, "object detection results")
+
+# Process only the files that actually need work
+if summary[:new_files] > 0
+  analysis = tracker.analyze_files(file_paths, 'detect_objects',
+                                  params: operation_params,
+                                  show_progress: true)
+
+  process_in_parallel(analysis[:needs_processing]) do |file|
+    # Process file
+  end
+end
+```
+
+**Standardized Output Format**:
+The `print_processing_summary()` method provides consistent, user-friendly output:
+- With cache: `📋 Using cached object detection results for 823 files` and `🔍 Will analyze 176 new files`
+- Without cache: `🔍 Will analyze 999 files`
 
 ### ImageUtils (`image_utils.rb`)
 
@@ -1540,6 +1700,9 @@ This section provides a complete inventory of all utilities available in `bin/.c
 - **view.rb** - UI display utilities, progress indicators, menu formatting
 - **database.rb** - SQLite database operations and management
 - **file_processing_tracker.rb** - Track file processing status across runs
+- **file_filter.rb** - File filtering utilities for dimensions, extensions, custom criteria
+- **workflow_processor.rb** - Multi-pass workflow processing with caching support
+- **image_workflow.rb** - Specialized image processing workflows with common patterns
 - **image_utils.rb** - Image manipulation using ChunkyPNG
 - **xcode_project.rb** - Xcode project file manipulation
 
@@ -1605,6 +1768,9 @@ This section provides a complete inventory of all utilities available in `bin/.c
 - **Handle errors** → Include `ErrorUtils` mixin
 - **Process files in parallel** → Use `ParallelUtils`
 - **Track file processing** → Use `FileProcessingTracker`
+- **Filter files by criteria** → Use `FileFilter` for dimensions, extensions, custom filters
+- **Process multi-pass workflows** → Use `WorkflowProcessor` for complex file processing pipelines
+- **Process images with common patterns** → Use `ImageWorkflow` for human detection, upscaling, etc.
 - **Work with images** → Use `ImageUtils` or `ImageProcessor`
 - **Call AI/LLM APIs** → Use `LLMService` or `UnifiedLLMService`
 - **Cache results** → Use `FileCacheService` or `Cacheable` concern

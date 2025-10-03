@@ -718,6 +718,74 @@ class ScriptBase
     ]
   end
 
+  # =========================================================================
+  # SAFE FILE DELETION UTILITIES - Always use trash instead of permanent deletion
+  # =========================================================================
+
+  # Safely remove a file by moving it to trash
+  def safe_remove_file(file_path)
+    file_path = Pathname.new(file_path) unless file_path.is_a?(Pathname)
+
+    return true unless file_path.exist?
+
+    begin
+      # Try to use rmtrash if available
+      if system('which rmtrash > /dev/null 2>&1')
+        result = system("rmtrash #{Shellwords.escape(file_path.to_s)}")
+        if result
+          log_info "🗑️  Moved to trash: #{file_path}"
+          return true
+        end
+      end
+    rescue StandardError => e
+      log_warning "Failed to use rmtrash: #{e}"
+    end
+
+    # Fallback: use FileUtils with warning
+    begin
+      log_warning "⚠️  Permanently deleting (trash unavailable): #{file_path}"
+      FileUtils.rm_f(file_path)
+      return true
+    rescue StandardError => e
+      log_error "Failed to delete file: #{e}"
+      return false
+    end
+  end
+
+  # Safely remove a directory by moving it to trash
+  def safe_remove_directory(dir_path)
+    dir_path = Pathname.new(dir_path) unless dir_path.is_a?(Pathname)
+
+    return true unless dir_path.exist?
+
+    begin
+      # Try to use rmtrash if available
+      if system('which rmtrash > /dev/null 2>&1')
+        result = system("rmtrash -rf #{Shellwords.escape(dir_path.to_s)}")
+        if result
+          log_info "🗑️  Moved directory to trash: #{dir_path}"
+          return true
+        end
+      end
+    rescue StandardError => e
+      log_warning "Failed to use rmtrash: #{e}"
+    end
+
+    # Fallback: use FileUtils with warning
+    begin
+      log_warning "⚠️  Permanently deleting directory (trash unavailable): #{dir_path}"
+      FileUtils.rm_rf(dir_path)
+      return true
+    rescue StandardError => e
+      log_error "Failed to delete directory: #{e}"
+      return false
+    end
+  end
+
+  # Backward compatibility aliases
+  alias safe_remove safe_remove_file
+  alias safe_rmtree safe_remove_directory
+
   # Override this to handle script-specific setting changes
   def handle_setting_change(setting_key, menu_service)
     # Default implementation - subclasses should override

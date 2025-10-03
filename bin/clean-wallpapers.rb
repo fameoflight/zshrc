@@ -6,11 +6,14 @@ require_relative '.common/utils/progress_utils'
 require_relative '.common/utils/parallel_utils'
 require_relative '.common/utils/device_utils'
 require_relative '.common/file_processing_tracker'
+require_relative '.common/file_filter'
+require_relative '.common/image_workflow'
 
 class CleanWallpapers < ScriptBase
   include ProgressUtils
   include ParallelUtils
   include DeviceUtils
+
   def script_title
     "Wallpaper Cleanup Tool"
   end
@@ -31,6 +34,7 @@ class CleanWallpapers < ScriptBase
     @files_to_upscale = []
     @tracker = FileProcessingTracker.new
     @worker_count = nil
+    @workflow = nil
 
     super
   end
@@ -94,6 +98,9 @@ class CleanWallpapers < ScriptBase
   end
 
   def execute_cleanup
+    # Initialize workflow with worker count after options are parsed
+    @workflow = ImageWorkflow.new(@tracker, options: { worker_count: @worker_count, disable_tracking: @disable_tracking, force_reprocess: @force_reprocess })
+
     log_banner script_title
     log_info "Scanning directory: #{@wallpapers_dir}"
     log_info "Human detection threshold: #{@human_threshold}%"
@@ -134,17 +141,74 @@ class CleanWallpapers < ScriptBase
       log_info "Limited to first #{@max_files} files (was #{original_count} total)"
     end
 
-    log_info "Processing #{image_files.length} image files"
-    puts
-
     if image_files.empty?
       log_warning "No image files found in the directory"
       return
     end
 
-    # PASS 1: Human Detection
-    log_section "PASS 1: Human Detection Analysis"
-    detect_humans_in_files(image_files)
+    # Pre-filter small images to avoid processing overhead
+    filtered_result = FileFilter.filter_images_by_dimensions(
+      image_files,
+      min_width: 200,
+      min_height: 200
+    )
+
+    log_info "Found #{image_files.length} image files"
+    log_info "Accepted after filtering: #{filtered_result[:accepted].length}"
+    log_info "Rejected after filtering: #{filtered_result[:rejected].length}"
+    log_info "Errors during filtering: #{filtered_result[:errors].length}"
+
+    if filtered_result[:rejected].any?
+      log_info "Skipped #{filtered_result[:rejected].length} small images (< 200x200)"
+    end
+
+    if filtered_result[:errors].any?
+      log_warning "Errors during filtering: #{filtered_result[:errors].length}"
+      if @options[:debug]
+        filtered_result[:errors].first(5).each do |error|
+          log_debug "Error: #{error[:path]} - #{error[:error]}"
+        end
+      end
+    end
+
+    # Create custom workflow for this script
+    workflow_config = [
+      {
+        name: "Human Detection Analysis",
+        operation_name: "detect_humans",
+        enable_cache: true,
+        cache_description: "human detection results",
+        show_progress: true,
+        parallel_processing: true,
+        progress_description: "files for human detection",
+        filter_proc: ->(path) { true }, # Already filtered by size above
+        process_proc: ->(path) { detect_humans_in_image(path) },
+        filter_remaining: true
+      }
+    ]
+
+    # Add resolution analysis pass if upscaling is enabled
+    if @upscale_small
+      workflow_config << {
+        name: "Resolution Analysis & Upscaling",
+        operation_name: "analyze_resolution",
+        enable_cache: true,
+        cache_description: "resolution analysis results",
+        show_progress: true,
+        parallel_processing: true,
+        progress_description: "files for resolution analysis",
+        process_proc: ->(path) { analyze_image_resolution(path) }
+      }
+    end
+
+    # Process workflow
+    workflow_result = @workflow.process_workflow(
+      filtered_result[:accepted].map { |f| f[:path] },
+      workflow_config
+    )
+
+    # Extract results from workflow
+    extract_results_from_workflow(workflow_result)
 
     # Show deletion candidates and ask for confirmation
     if @files_to_delete.any?
@@ -156,17 +220,12 @@ class CleanWallpapers < ScriptBase
 
     puts
 
-    # PASS 2: Resolution Analysis & Upscaling
-    if @upscale_small
-      log_section "PASS 2: Resolution Analysis & Upscaling"
-      analyze_resolution(image_files)
-
-      if @files_to_upscale.any?
-        show_upscale_candidates
-        confirm_upscaling unless @options[:dry_run] || @options[:force]
-      else
-        log_success "No images need upscaling"
-      end
+    # Show upscaling candidates and ask for confirmation
+    if @files_to_upscale.any?
+      show_upscale_candidates
+      confirm_upscaling unless @options[:dry_run] || @options[:force]
+    else
+      log_success "No images need upscaling"
     end
 
     # Final summary
@@ -189,178 +248,84 @@ class CleanWallpapers < ScriptBase
     find_files_by_extensions(@wallpapers_dir, %w[.jpg .jpeg .png .webp .bmp .tiff .tif])
   end
 
-  def detect_humans_in_files(image_files)
-    found_count = 0
-    error_count = 0
-    skipped_count = 0
-    cached_count = 0
-
-    # Pre-filter small images to avoid parallel processing overhead
-    large_images = []
-    small_images = []
-
-    image_files.each do |image_path|
-      begin
-        width, height = get_image_dimensions(image_path)
-        if width < 200 || height < 200
-          small_images << { path: image_path, width: width, height: height }
-        else
-          large_images << { path: image_path, width: width, height: height }
-        end
-      rescue => e
-        error_count += 1
-        log_debug "Error getting dimensions for #{File.basename(image_path)}: #{e.message}" if @options[:debug]
-      end
-    end
-
-    skipped_count = small_images.size
-
-    if large_images.any?
-      # Process large images in parallel
-      operation_params = { threshold: @human_threshold }
-
-      results = process_in_parallel(
-        large_images,
-        worker_count: @worker_count,
-        task_type: :io_intensive, # External process calls
-        memory_per_worker: 50, # Estimated memory per worker for human detection
-        progress_message: "Detecting humans (parallel)",
-        verbose: @options[:debug]
-      ) do |image_info|
-        process_single_image_human_detection(image_info, operation_params)
-      end
-
-      # Process results
-      results.each do |result|
-        next if result.nil?
-
-        if result[:cached]
-          cached_count += 1
-        end
-
-        if result[:human_percentage] > 0
-          found_count += 1
-        end
-
-        if result[:human_percentage] > @human_threshold
-          @files_to_delete << {
-            path: result[:path],
-            human_percentage: result[:human_percentage],
-            width: result[:width],
-            height: result[:height]
-          }
-        end
-
-        if result[:error]
-          error_count += 1
-        end
-      end
-    end
-
-    log_info "Found #{found_count} images with human content"
-    log_info "Skipped #{skipped_count} small images"
-    log_info "Used cached results: #{cached_count}" if cached_count > 0
-    log_info "Errors encountered: #{error_count}" if error_count > 0
-
-    if large_images.any?
-      log_info "Processed #{large_images.size} images with parallel workers"
-    end
-  end
-
-  def process_single_image_human_detection(image_info, operation_params)
-    image_path = image_info[:path]
-    width = image_info[:width]
-    height = image_info[:height]
-
-    begin
-      human_percentage = nil
-
-      # Check if we already have cached results
-      if !@disable_tracking && !@force_reprocess
-        if !@tracker.needs_processing?(image_path, 'detect_humans', params: operation_params)
-          # Get cached result
-          record = @tracker.get_processing_record(image_path, 'detect_humans')
-          if record && record['result']
-            human_percentage = JSON.parse(record['result'])['human_percentage']
-            return {
-              path: image_path,
-              width: width,
-              height: height,
-              human_percentage: human_percentage,
-              cached: true,
-              error: false
+  def extract_results_from_workflow(workflow_result)
+    # Extract human detection results
+    if workflow_result[:pass_results].any?
+      human_detection_pass = workflow_result[:pass_results].find { |p| p[:pass_name]&.include?("Human Detection") }
+      if human_detection_pass
+        human_detection_pass[:results].each do |result|
+          data = result[:data]
+          if data[:human_percentage] && data[:human_percentage] > @human_threshold
+            @files_to_delete << {
+              path: result[:path],
+              human_percentage: data[:human_percentage],
+              width: data[:width],
+              height: data[:height]
             }
           end
         end
       end
 
-      # Only run detection if needed
-      if human_percentage.nil?
-        human_percentage = detect_humans(image_path)
-
-        # Cache the result
-        if !@disable_tracking
-          result_data = { human_percentage: human_percentage }
-          @tracker.record_processed(image_path, 'detect_humans',
-                                    result_data.to_json,
-                                    params: operation_params)
-        end
-      end
-
-      {
-        path: image_path,
-        width: width,
-        height: height,
-        human_percentage: human_percentage,
-        cached: false,
-        error: false
-      }
-
-    rescue => e
-      log_debug "Error processing #{File.basename(image_path)}: #{e.message}" if @options[:debug]
-      {
-        path: image_path,
-        width: width,
-        height: height,
-        human_percentage: 0.0,
-        cached: false,
-        error: true
-      }
-    end
-  end
-
-  def analyze_resolution(image_files)
-    # Filter out files that are already marked for deletion
-    remaining_files = image_files - @files_to_delete.map { |f| f[:path] }
-
-    with_step_progress("Checking resolution", remaining_files.length) do |progress|
-      remaining_files.each do |image_path|
-        begin
-          width, height = get_image_dimensions(image_path)
-
-          if width < @min_resolution || height < @min_height
+      # Extract upscaling results
+      upscaling_pass = workflow_result[:pass_results].find { |p| p[:pass_name]&.include?("Resolution") }
+      if upscaling_pass
+        upscaling_pass[:results].each do |result|
+          data = result[:data]
+          if data[:needs_upscale]
             @files_to_upscale << {
-              path: image_path,
-              width: width,
-              height: height
+              path: result[:path],
+              width: data[:width],
+              height: data[:height]
             }
           end
-        rescue => e
-          # Silently skip errors
         end
-
-        progress.call(remaining_files.index(image_path) + 1)
       end
     end
   end
 
-  def get_image_dimensions(image_path)
-    dims = ImageUtils::General.get_dimensions(image_path)
-    if dims[:width] > 0 && dims[:height] > 0
-      [dims[:width], dims[:height]]
-    else
-      raise "Failed to get image dimensions"
+  def detect_humans_in_image(image_path)
+    dimensions = ImageUtils::General.get_dimensions(image_path)
+    width = dimensions[:width]
+    height = dimensions[:height]
+    human_percentage = detect_humans(image_path)
+
+    result = {
+      width: width,
+      height: height,
+      human_percentage: human_percentage,
+      needs_upscale: width < @min_resolution || height < @min_height
+    }
+
+    # Mark for exclusion if human content exceeds threshold
+    result[:exclude_from_next_pass] = human_percentage > @human_threshold
+
+    result
+  end
+
+  def analyze_image_resolution(image_path)
+    dimensions = ImageUtils::General.get_dimensions(image_path)
+    width = dimensions[:width]
+    height = dimensions[:height]
+    needs_upscale = width < @min_resolution || height < @min_height
+
+    # Debug output to see what's being analyzed
+    if @options[:debug]
+      log_debug "Analyzing: #{File.basename(image_path)} - #{width}x#{@min_resolution} x #{height}x#{@min_height} -> needs_upscale: #{needs_upscale}"
     end
+
+    result = {
+      width: width,
+      height: height,
+      needs_upscale: needs_upscale,
+      min_width: @min_resolution,
+      min_height: @min_height
+    }
+
+    # Note: Actual upscaling is done during confirmation step
+    # This just marks images that need upscaling
+    result[:upscale_needed] = needs_upscale
+
+    result
   end
 
   def detect_humans(image_path)
@@ -387,6 +352,25 @@ class CleanWallpapers < ScriptBase
     else
       log_debug "detect-human command failed" if @options[:debug]
       return 0.0
+    end
+  end
+
+  def upscale_image(image_path)
+    # Generate output path
+    base_name = File.basename(image_path, ".*")
+    extension = File.extname(image_path)
+    output_path = File.join(File.dirname(image_path), "#{base_name}_upscaled#{extension}")
+
+    # Call the upscale-image script using the ScriptBase utility method
+    output = execute_zsh_script('upscale-image', image_path, output_path,
+                              description: "Upscaling #{File.basename(image_path)}")
+
+    if output && $?.success?
+      log_success "Upscaled: #{File.basename(image_path)} -> #{File.basename(output_path)}"
+      return output_path
+    else
+      log_error "Failed to upscale #{File.basename(image_path)}"
+      return nil
     end
   end
 
@@ -451,101 +435,64 @@ class CleanWallpapers < ScriptBase
     if confirm_action("Do you want to upscale these images?")
       log_section "Upscaling Images"
 
-      @files_to_upscale.each_with_index do |file, index|
-        print "\r🖼️  Upscaling: #{index + 1}/#{@files_to_upscale.length}"
-        $stdout.flush
+      # Determine optimal worker count for upscaling (CPU intensive task)
+      worker_count = @worker_count || optimal_worker_count(task_type: :cpu_intensive, memory_per_worker: 500)
+      worker_count = [worker_count, @files_to_upscale.length].min
 
+      log_info "Using #{worker_count} parallel workers for upscaling"
+
+      success_count = 0
+      failure_count = 0
+      results_mutex = Mutex.new
+
+      # Process images in parallel
+      results = process_in_parallel(
+        @files_to_upscale,
+        worker_count: worker_count,
+        task_type: :cpu_intensive,
+        memory_per_worker: 500,
+        progress_message: "Upscaling images",
+        verbose: @options[:debug]
+      ) do |file|
         begin
-          upscale_image(file)
-          log_success "Upscaled: #{File.basename(file[:path])}"
+          upscaled_path = upscale_image(file[:path])
+          if upscaled_path
+            # Replace original if requested and upscaling succeeded
+            if @replace_originals && upscaled_path && File.exist?(upscaled_path)
+              File.rename(file[:path], "#{file[:path]}.backup")
+              File.rename(upscaled_path, file[:path])
+              File.delete("#{file[:path]}.backup")
+              log_success "Upscaled and replaced: #{File.basename(file[:path])}"
+            else
+              log_success "Upscaled: #{File.basename(file[:path])}"
+            end
+            { success: true, file: file, path: upscaled_path }
+          else
+            log_error "Failed to upscale #{File.basename(file[:path])}"
+            { success: false, file: file, error: "Upscaling failed" }
+          end
         rescue => e
           log_error "Failed to upscale #{File.basename(file[:path])}: #{e.message}"
+          { success: false, file: file, error: e.message }
         end
       end
 
-      puts "\n"
-      log_success "Successfully upscaled #{@files_to_upscale.length} images"
+      # Count successes and failures
+      results.each do |result|
+        if result && result[:success]
+          results_mutex.synchronize { success_count += 1 }
+        else
+          results_mutex.synchronize { failure_count += 1 }
+        end
+      end
+
+      log_success "Successfully upscaled #{success_count} images"
+      if failure_count > 0
+        log_warning "Failed to upscale #{failure_count} images"
+      end
     else
       log_info "Upscaling cancelled by user"
       @files_to_upscale.clear
-    end
-  end
-
-  def upscale_image(file)
-    image_path = file[:path]
-    operation_params = {
-      min_resolution: @min_resolution,
-      min_height: @min_height,
-      replace_originals: @replace_originals
-    }
-
-    base_name = File.basename(image_path, File.extname(image_path))
-    extension = File.extname(image_path)
-
-    if @replace_originals
-      # When replacing originals, upscale to a temporary file first
-      temp_path = File.join(File.dirname(image_path), "#{base_name}_temp_upscale#{extension}")
-
-      # Call the upscale-image script using the ScriptBase utility method
-      result = execute_zsh_script?('upscale-image', image_path, temp_path,
-                                  description: "Upscaling #{File.basename(image_path)}")
-
-      if result
-        if !@options[:dry_run]
-          # Create backup of original
-          backup_path = File.join(File.dirname(image_path), "#{base_name}_original#{extension}")
-          require 'fileutils'
-          FileUtils.mv(image_path, backup_path)
-
-          # Move upscaled version to original location
-          FileUtils.mv(temp_path, image_path)
-
-          # Track successful upscaling
-          if !@disable_tracking
-            result_data = {
-              upscaled: true,
-              backup_path: backup_path,
-              original_resolution: "#{file[:width]}x#{file[:height]}",
-              method: 'replace_original'
-            }
-            @tracker.record_processed(image_path, 'upscale_image',
-                                      result_data.to_json,
-                                      params: operation_params)
-          end
-
-          log_success "Upscaled and replaced: #{File.basename(image_path)} (backup: #{File.basename(backup_path)})"
-        else
-          log_warning "[DRY RUN] Would replace: #{File.basename(image_path)}"
-        end
-      else
-        raise "Upscaling process failed"
-      end
-    else
-      # Original behavior: keep both files
-      upscaled_path = File.join(File.dirname(image_path), "#{base_name}_upscaled#{extension}")
-
-      # Call the local upscale-image script using the ScriptBase utility method
-      result = execute_zsh_script?('upscale-image', image_path, upscaled_path,
-                                  description: "Upscaling #{File.basename(image_path)}")
-
-      if result
-        # Track successful upscaling
-        if !@options[:dry_run] && !@disable_tracking
-          result_data = {
-            upscaled: true,
-            upscaled_path: upscaled_path,
-            original_resolution: "#{file[:width]}x#{file[:height]}",
-            method: 'keep_both'
-          }
-          @tracker.record_processed(image_path, 'upscale_image',
-                                    result_data.to_json,
-                                    params: operation_params)
-        end
-
-        log_success "Upscaled: #{File.basename(image_path)} -> #{File.basename(upscaled_path)}"
-      else
-        raise "Upscaling process failed"
-      end
     end
   end
 end

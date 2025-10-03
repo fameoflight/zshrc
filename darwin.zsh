@@ -66,7 +66,7 @@ dmginstall() {
 
   if [[ -z "$mount_point" ]]; then
     echo "Failed to find mount point"
-    rm "$tmp_file"
+    rmtrash "$tmp_file"
     return 1
   fi
 
@@ -82,7 +82,7 @@ dmginstall() {
 
   echo "Cleaning up..."
   hdiutil unmount "$mount_point" -quiet
-  rm "$tmp_file"
+  rmtrash "$tmp_file"
   echo "Done!"
 }
 
@@ -93,7 +93,8 @@ join-pdf() {
 postgres-reset() {
   local postgres_data="$(brew --prefix)/var/postgres"
   if [[ -d "$postgres_data" ]]; then
-    rm -rf "$postgres_data"
+    echo -e "${COLOR_YELLOW}🗑️  Moving PostgreSQL data directory to trash instead of permanent deletion${COLOR_NC}"
+    rmtrash -rf "$postgres_data"
   fi
   initdb -D "$postgres_data"
   brew services restart postgresql

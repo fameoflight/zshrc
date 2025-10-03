@@ -68,7 +68,7 @@ git-move-file() {
   git commit -m "Move $file from $current_branch to $branch"
   git checkout "$current_branch"
   
-  rm -f "$temp_file"
+  rmtrash -f "$temp_file"
   echo "File '$file' moved to branch '$branch'"
 }
 
@@ -214,7 +214,7 @@ require_clean_work_tree() {
 git-clean-repo() {
   if [[ -d .git ]]; then
     log_clean "repository (keeping .git)"
-    find . -path ./.git -prune -o -type f -exec rm -f {} \; 2>/dev/null
+    find . -path ./.git -prune -o -type f -exec rmtrash -f {} \; 2>/dev/null
     find . -path ./.git -prune -o -type d -empty -exec rmdir {} \; 2>/dev/null
     log_success "Repository cleaned (keeping .git)"
   else

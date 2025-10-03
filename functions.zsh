@@ -3,6 +3,25 @@
 #
 # functions and key bindings
 
+# SAFE RM FUNCTION - Always uses rmtrash instead of rm
+# This function prevents permanent deletion and moves files to trash
+rm() {
+  # Check if rmtrash is available
+  if ! command -v rmtrash >/dev/null 2>&1; then
+    echo -e "${COLOR_BOLD}${COLOR_RED}⚠️  rmtrash not found! Please install with: brew install rmtrash${COLOR_NC}"
+    echo -e "${COLOR_YELLOW}Falling back to standard rm - USE WITH CAUTION!${COLOR_NC}"
+    command rm "$@"
+    return $?
+  fi
+
+  # Log the operation for safety
+  echo -e "${COLOR_BOLD}${COLOR_YELLOW}🗑️  Moving to trash instead of permanent deletion:${COLOR_NC}"
+  echo -e "${COLOR_CYAN}Files: $@${COLOR_NC}"
+
+  # Use rmtrash instead of rm
+  rmtrash "$@"
+}
+
 # Key bindings
 # Ctrl+X,S adds sudo to the line
 run-with-sudo() { LBUFFER="sudo $LBUFFER" }
@@ -146,7 +165,7 @@ massmove() {
     sed 's/^/mv "/' "$temp_ren" | sed 's/\t/" "/' | sed 's/$/"/' | bash
   fi
   
-  rm -f "$temp_ls" "$temp_ren"
+  rmtrash -f "$temp_ls" "$temp_ren"
 }
 
 # Display utilities

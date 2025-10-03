@@ -126,7 +126,7 @@ backup_vscode_settings() {
         if [ -d "$source_path" ]; then
             log_info "Backing up $dir directory..."
             if [ "$DRY_RUN" = false ]; then
-                rm -rf "$dest_path" 2>/dev/null || true
+                rmtrash -rf "$dest_path" 2>/dev/null || true
                 cp -r "$source_path" "$dest_path"
             fi
             log_success "$dir directory backed up"
@@ -166,7 +166,7 @@ backup_vscode_settings() {
         
         for item in "${unwanted_items[@]}"; do
             if [ -e "$item" ]; then
-                rm -rf "$item"
+                rmtrash -rf "$item"
                 log_info "Removed unwanted item: $(basename "$item")"
             fi
         done

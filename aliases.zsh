@@ -30,7 +30,7 @@ alias cd....='....'
 alias bfg='java -jar ~/zshrc/bfg-1.13.2.jar'
 
 # alias to create a next-link in your home to tag the current workingdir
-alias linkthis='rm -f ~/next; ln -s $PWD ~/next'
+alias linkthis='rmtrash -f ~/next; ln -s $PWD ~/next'
 
 ##### global aliases
 # zsh buch s.82 (z.B. find / ... NE)
@@ -397,7 +397,7 @@ function start-notebook() {
 function clean-pyc() {
   log_clean "Python bytecode files (.pyc)"
   local count=$(find . -name "*.pyc" | wc -l)
-  find . -name "*.pyc" -exec rm -f {} \;
+  find . -name "*.pyc" -exec rmtrash -f {} \;
   log_success "Removed $count .pyc files"
 }
 

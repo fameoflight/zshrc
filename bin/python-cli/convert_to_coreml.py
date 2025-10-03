@@ -10,6 +10,7 @@ import numpy as np
 import os
 import sys
 import math
+from python_cli.utils import safe_remove_directory, safe_remove_file
 
 class ResidualDenseBlock(torch.nn.Module):
     def __init__(self, num_feat=64, num_grow_ch=32):
@@ -229,7 +230,7 @@ def save_as_mlpackage(mlmodel, output_path, model_info):
 
     # Remove existing directory if it exists
     if os.path.exists(output_path):
-        shutil.rmtree(output_path)
+        safe_remove_directory(output_path)
 
     print(f"Creating MLPackage at: {output_path}")
 
@@ -259,7 +260,7 @@ def save_as_mlpackage(mlmodel, output_path, model_info):
 
         # Clean up temp file
         if os.path.exists(temp_mlmodel_path):
-            os.remove(temp_mlmodel_path)
+            safe_remove_file(temp_mlmodel_path)
 
         return output_path
 

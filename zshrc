@@ -40,6 +40,12 @@ sources+="/etc/zsh_command_not_found"
 systemFile=`uname -s | tr "[:upper:]" "[:lower:]"`
 sources+="$ZSH_CONFIG/$systemFile.zsh"
 
+# SAFE RM OVERRIDE - Must be loaded after functions.zsh to ensure our rm() function takes precedence
+if command -v rmtrash >/dev/null 2>&1; then
+else
+  log_warning "⚠️  rmtrash not found - install with 'brew install rmtrash' for safe file deletion"
+fi
+
 # Private aliases and adoptions
 sources+="$ZSH_CONFIG/private.zsh"
 

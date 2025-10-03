@@ -104,7 +104,7 @@ backup_xcode_settings() {
         if [ -e "$source_path" ]; then
             log_info "Backing up $item..."
             if [ "$DRY_RUN" = false ]; then
-                rm -rf "$dest_path" 2>/dev/null || true
+                rmtrash -rf "$dest_path" 2>/dev/null || true
                 cp -r "$source_path" "$dest_path"
             fi
             log_success "$item backed up"
@@ -139,7 +139,7 @@ backup_xcode_settings() {
         
         for dir in "${unwanted_dirs[@]}"; do
             if [ -d "$dir" ]; then
-                rm -rf "$dir"
+                rmtrash -rf "$dir"
                 log_info "Removed unwanted directory: $(basename "$dir")"
             fi
         done

@@ -262,7 +262,7 @@ update_proxy_config() {
     sed -i.bak "s/^BIG_MODEL=.*/BIG_MODEL=\"$model_name\"/" "$env_file"
     sed -i.bak "s/^MIDDLE_MODEL=.*/MIDDLE_MODEL=\"$model_name\"/" "$env_file"
     sed -i.bak "s/^SMALL_MODEL=.*/SMALL_MODEL=\"$model_name\"/" "$env_file"
-    rm -f "$env_file.bak"
+    rmtrash -f "$env_file.bak"
 }
 
 # Kill existing proxy process
@@ -277,7 +277,7 @@ kill_existing_proxy() {
                 kill -KILL "$pid" 2>/dev/null || true
             fi
         fi
-        rm -f "$SERVER_PID_FILE"
+        rmtrash -f "$SERVER_PID_FILE"
     fi
     
     # Kill any process on port
@@ -310,7 +310,7 @@ start_proxy_server() {
     
     # Clean up log file
     local log_file="$PROXY_DIR/server.log"
-    [[ -f "$log_file" ]] && rm -f "$log_file"
+    [[ -f "$log_file" ]] && rmtrash -f "$log_file"
     
     # Start server in background
     source "$VENV_DIR/bin/activate"

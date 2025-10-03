@@ -139,7 +139,7 @@ backup_iterm_settings() {
     if [[ -d "$dynamic_profiles_source" ]]; then
         if [[ "$DRY_RUN" == false ]]; then
             # Remove existing backup directory to avoid nested structure
-            rm -rf "$dynamic_profiles_dest" 2>/dev/null || true
+            rmtrash -rf "$dynamic_profiles_dest" 2>/dev/null || true
             # Copy the directory properly
             cp -R "$dynamic_profiles_source" "$dynamic_profiles_dest"
             log_success "Backed up: DynamicProfiles directory"
@@ -158,7 +158,7 @@ backup_iterm_settings() {
         )
         
         for pattern in "${cleanup_patterns[@]}"; do
-            rm -rf $pattern 2>/dev/null || true
+            rmtrash -rf $pattern 2>/dev/null || true
         done
     fi
     

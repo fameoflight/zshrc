@@ -348,7 +348,7 @@ show_server_logs() {
 
 # Cleanup PID file
 cleanup_pid_file() {
-    [[ -f "$SERVER_PID_FILE" ]] && rm -f "$SERVER_PID_FILE"
+    [[ -f "$SERVER_PID_FILE" ]] && rmtrash -f "$SERVER_PID_FILE"
 }
 
 # Main execution

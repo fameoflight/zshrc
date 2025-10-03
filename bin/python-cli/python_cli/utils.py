@@ -537,4 +537,106 @@ class BaseImageInference:
         # Save result
         self.save_output_image(output_tensor, output_path)
 
-        return output_tensor
+
+# Safe File Deletion Utilities
+import shutil
+import subprocess
+import tempfile
+from pathlib import Path
+
+
+def safe_remove_file(file_path):
+    """
+    Safely remove a file by moving it to trash instead of permanent deletion.
+
+    Args:
+        file_path: Path to the file to remove (str or Path object)
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    file_path = Path(file_path)
+
+    if not file_path.exists():
+        return True
+
+    try:
+        # Try to use rmtrash if available
+        result = subprocess.run(['rmtrash', str(file_path)],
+                              capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            print(f"🗑️  Moved to trash: {file_path}")
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Fallback to send2trash if available
+    try:
+        import send2trash
+        send2trash.send2trash(str(file_path))
+        print(f"🗑️  Moved to trash: {file_path}")
+        return True
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"⚠️  Failed to move to trash: {e}")
+
+    # Final fallback - use os.remove with warning
+    try:
+        print(f"⚠️  Permanently deleting (trash unavailable): {file_path}")
+        os.remove(file_path)
+        return True
+    except Exception as e:
+        print(f"❌ Failed to delete file: {e}")
+        return False
+
+
+def safe_remove_directory(dir_path):
+    """
+    Safely remove a directory by moving it to trash instead of permanent deletion.
+
+    Args:
+        dir_path: Path to the directory to remove (str or Path object)
+
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    dir_path = Path(dir_path)
+
+    if not dir_path.exists():
+        return True
+
+    # For directories, try to use rmtrash
+    try:
+        result = subprocess.run(['rmtrash', '-rf', str(dir_path)],
+                              capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            print(f"🗑️  Moved directory to trash: {dir_path}")
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    # Fallback to send2trash if available
+    try:
+        import send2trash
+        send2trash.send2trash(str(dir_path))
+        print(f"🗑️  Moved directory to trash: {dir_path}")
+        return True
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"⚠️  Failed to move directory to trash: {e}")
+
+    # Final fallback - use shutil.rmtree with warning
+    try:
+        print(f"⚠️  Permanently deleting directory (trash unavailable): {dir_path}")
+        shutil.rmtree(dir_path)
+        return True
+    except Exception as e:
+        print(f"❌ Failed to delete directory: {e}")
+        return False
+
+
+# Backward compatibility aliases
+safe_remove = safe_remove_file
+safe_rmtree = safe_remove_directory
