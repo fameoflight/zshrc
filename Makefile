@@ -134,24 +134,15 @@ python-models: pytorch-setup
 # PLATFORM-SPECIFIC TARGETS
 # =============================================================================
 
-.PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup-message
-mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-utils mac-settings app-settings ai-tools setup-hooks post-mac-setup-message find-orphans
+.PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup
+mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-utils mac-settings app-settings ai-tools setup-hooks post-mac-setup
 
 linux: common linux-packages linux-settings
 
 common: install github-setup
 
-post-mac-setup-message:
-	@echo -e "$(BOLD)$(GREEN)✅ Complete macOS setup finished successfully!$(NC)"
-	@echo ""
-	@echo -e "$(BOLD)$(CYAN)🎉 Your development environment is now fully configured.$(NC)"
-	@echo ""
-	@echo -e "$(BOLD)$(YELLOW)💡 Suggested next steps:$(NC)"
-	@echo -e "  - $(GREEN)Restart your terminal$(NC) to apply all changes."
-	@echo -e "  - Run $(CYAN)make help$(NC) to see all available commands."
-	@echo -e "  - Customize your setup further by editing $(YELLOW)private.zsh$(NC)."
-	@echo -e "  - If you use an OLED display, consider running $(CYAN)make macos-oled-optimize$(NC)."
-	@echo ""
+post-mac-setup:
+	@bash scripts/post-mac-setup.sh
 
 # =============================================================================
 # REQUIREMENTS & VALIDATION
@@ -276,8 +267,6 @@ iterm-setup:
 
 .PHONY: claude-setup claude-link
 claude-setup: claude-link
-	@mkdir -p ${SETTINGS}/claude
-	@mkdir -p ${SETTINGS}/claude/projects
 	@bash scripts/restore-settings.sh claude
 
 # Create symlink for Claude binary to expected native installation path
