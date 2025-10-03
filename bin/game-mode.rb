@@ -81,7 +81,9 @@ class GameMode < ScriptBase
     end
 
     # Parse displayplacer output for current configuration
-    displayplacer_displays = displayplacer_output.split("\n\n").select { |block| block.include?('Persistent screen id:') }
+    displayplacer_displays = displayplacer_output.split("\n\n").select do |block|
+      block.include?('Persistent screen id:')
+    end
     parsed_displays = displayplacer_displays.map { |display| parse_display_info(display) }
 
     log_debug("Found #{parsed_displays.length} displays")
@@ -124,7 +126,7 @@ class GameMode < ScriptBase
       when /^\w+:/
         key, value = line.split(':', 2).map(&:strip)
         current_display[key.downcase.gsub(' ', '_')] = value
-      when /^\s+/  # Indented lines (continuation of previous value)
+      when /^\s+/ # Indented lines (continuation of previous value)
         next
       end
     end
@@ -154,14 +156,14 @@ class GameMode < ScriptBase
       matching_display = merged.find do |dp_display|
         display_type = system_display['display_type'] || system_display['type']
         dp_display[:type].downcase.include?(display_type&.downcase || '') ||
-        dp_display[:resolution] == system_display['resolution']
+          dp_display[:resolution] == system_display['resolution']
       end
 
-      unless matching_display
-        # Create a new display entry for system-detected display
-        new_display = create_display_from_system_profiler(system_display)
-        merged << new_display if new_display
-      end
+      next if matching_display
+
+      # Create a new display entry for system-detected display
+      new_display = create_display_from_system_profiler(system_display)
+      merged << new_display if new_display
     end
 
     merged
@@ -182,7 +184,7 @@ class GameMode < ScriptBase
       scaling: 'on',
       origin: nil,
       rotation: '0',
-      enabled: false  # Assume disabled if not in displayplacer
+      enabled: false # Assume disabled if not in displayplacer
     }
   end
 
@@ -193,12 +195,12 @@ class GameMode < ScriptBase
       contextual_id: index.to_s,
       main: false,
       type: "External Display #{index}",
-      resolution: "1920x1080",  # Default resolution
-      hertz: "60",
-      color_depth: "8",
-      scaling: "on",
+      resolution: '1920x1080', # Default resolution
+      hertz: '60',
+      color_depth: '8',
+      scaling: 'on',
       origin: nil,
-      rotation: "0",
+      rotation: '0',
       enabled: false
     }
   end
@@ -233,7 +235,7 @@ class GameMode < ScriptBase
     simple_config = {
       timestamp: Time.now.iso8601,
       display_ids: displays_info.map { |d| d[:persistent_id] },
-      displays: displays_info.map { |d|
+      displays: displays_info.map do |d|
         {
           id: d[:persistent_id],
           type: d[:type],
@@ -243,7 +245,7 @@ class GameMode < ScriptBase
           rotation: d[:rotation],
           origin: d[:origin]
         }
-      },
+      end,
       total_displays: displays_info.length,
       version: '1.0'
     }
@@ -266,7 +268,7 @@ class GameMode < ScriptBase
       log_debug("Saved #{config_data['total_displays']} displays")
 
       # Convert back to display format
-      displays = config_data['displays'].map do |display|
+      config_data['displays'].map do |display|
         {
           persistent_id: display['id'],
           type: display['type'],
@@ -276,11 +278,9 @@ class GameMode < ScriptBase
           scaling: display['scaling'],
           rotation: display['rotation'],
           origin: display['origin'],
-          enabled: true  # Assume we want to enable them
+          enabled: true # Assume we want to enable them
         }
       end
-
-      displays
     rescue JSON::ParserError => e
       log_error("Failed to parse saved configuration: #{e.message}")
       nil
@@ -310,15 +310,12 @@ class GameMode < ScriptBase
     end
 
     display_name = if @options[:display]
-      "Display ##{@options[:display]}"
-    else
-      "Auto-detected display"
-    end
+                     "Display ##{@options[:display]}"
+                   else
+                     'Auto-detected display'
+                   end
 
     log_success("✅ Using #{display_name}: #{target_display[:type]} (#{target_display[:resolution]})")
-
-    # Enable HDR
-    enable_hdr
 
     # Disable other displays one by one (don't fail if command fails)
     unless dry_run?
@@ -327,16 +324,20 @@ class GameMode < ScriptBase
         command = build_disable_command(display)
         execute_cmd?(command, description: "Disabling #{display[:type]}")
       end
-    end
 
-    # Configure target display
-    command = build_target_display_command(target_display)
-
-    if dry_run?
-      show_dry_run(command, target_display, other_displays, 'Game Mode')
-    else
+      # Configure target display first
+      command = build_target_display_command(target_display)
       execute_display_command(command, target_display, other_displays, 'Game Mode')
+
+      # Then enable HDR on the configured gaming display
+      enable_hdr
     end
+
+    return unless dry_run?
+
+    # Show dry run output
+    command = build_target_display_command(target_display)
+    show_dry_run(command, target_display, other_displays, 'Game Mode')
   end
 
   def restore_all_displays(displays_info)
@@ -346,26 +347,29 @@ class GameMode < ScriptBase
     display_current_config(displays_info)
 
     unless dry_run?
-      # Disable HDR first (restore normal mode)
-      disable_hdr
 
       # Use Python script to restore all displays
       enable_displays_script = File.expand_path('enable_displays.py', __dir__)
 
       if File.exist?(enable_displays_script)
         log_info('🔄 Using Python script to enable all displays...')
-        execute_cmd("python3 #{enable_displays_script}", description: "Enabling all displays")
+        execute_cmd("python3 #{enable_displays_script}", description: 'Enabling all displays')
 
         log_progress('⏳ Waiting for displays to initialize...')
-        execute_cmd('sleep 3', description: "Waiting for display initialization")
+        execute_cmd('sleep 3', description: 'Waiting for display initialization')
+
+        # Disable HDR first (restore normal mode)
+        disable_hdr
 
         # Run stack-monitors to arrange them properly
         stacked_monitor_script = File.expand_path('stacked-monitor.rb', __dir__)
         if File.exist?(stacked_monitor_script)
           log_info('🖥️  Running stack-monitors to arrange monitors...')
-          success = execute_cmd?("BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby #{stacked_monitor_script}", description: 'Running stack-monitors')
+          stack_cmd = "BUNDLE_GEMFILE=/Users/hemantv/zshrc/Gemfile bundle exec ruby #{stacked_monitor_script}"
+          success = execute_cmd?(stack_cmd)
           if success
             log_success('✅ Stack monitors configuration applied')
+            log_info(execute_cmd(stack_cmd))
           else
             log_warning('⚠️  Could not run stack-monitors automatically')
           end
@@ -378,12 +382,12 @@ class GameMode < ScriptBase
     end
 
     # Show final configuration
-    if !dry_run?
-      log_info('🔍 Checking final display configuration...')
-      sleep(1)
-      final_displays = get_display_info
-      display_current_config(final_displays)
-    end
+    return if dry_run?
+
+    log_info('🔍 Checking final display configuration...')
+    sleep(1)
+    final_displays = get_display_info
+    display_current_config(final_displays)
   end
 
   def try_enable_display(display)
@@ -393,12 +397,12 @@ class GameMode < ScriptBase
 
     if execute_cmd?(command, description: "Enabling display #{display[:type]}")
       log_success("✅ Successfully enabled #{display[:type]}")
-      return true
+      true
     else
       log_warning("⚠️  Failed to enable #{display[:type]} - trying USB power cycle")
-      return try_enable_with_usb_reset(display)
+      try_enable_with_usb_reset(display)
     end
-  rescue => e
+  rescue StandardError => e
     log_warning("⚠️  Error enabling #{display[:type]}: #{e.message}")
     false
   end
@@ -406,8 +410,8 @@ class GameMode < ScriptBase
   def try_enable_with_usb_reset(display)
     # Try Core Graphics display reset first (more reliable)
     if try_core_graphics_reset
-      log_progress("⏳ Waiting for displays to re-detect...")
-      execute_cmd('sleep 2', description: "Waiting for display detection")
+      log_progress('⏳ Waiting for displays to re-detect...')
+      execute_cmd('sleep 2', description: 'Waiting for display detection')
 
       # Try to enable the display again after CG reset
       command = build_display_command(display)
@@ -421,11 +425,11 @@ class GameMode < ScriptBase
 
     # Fallback to USB power cycling if Core Graphics reset failed
     if System.command?('uhubctl')
-      log_info("🔄 Trying USB power cycle as fallback...")
+      log_info('🔄 Trying USB power cycle as fallback...')
 
-      if execute_cmd?('uhubctl --action cycle --delay 2', description: "USB power cycle")
-        log_progress("⏳ Waiting for displays to re-detect...")
-        execute_cmd('sleep 3', description: "Waiting for display detection")
+      if execute_cmd?('uhubctl --action cycle --delay 2', description: 'USB power cycle')
+        log_progress('⏳ Waiting for displays to re-detect...')
+        execute_cmd('sleep 3', description: 'Waiting for display detection')
 
         # Try to enable the display again after USB reset
         command = build_display_command(display)
@@ -436,12 +440,12 @@ class GameMode < ScriptBase
           log_warning("⚠️  Still unable to enable #{display[:type]} after USB reset")
         end
       else
-        log_warning("⚠️  USB power cycle failed")
+        log_warning('⚠️  USB power cycle failed')
       end
     end
 
-    return false
-  rescue => e
+    false
+  rescue StandardError => e
     log_warning("⚠️  Display reset error: #{e.message}")
     false
   end
@@ -450,14 +454,14 @@ class GameMode < ScriptBase
     enable_displays_script = File.expand_path('enable_displays.py', __dir__)
 
     if File.exist?(enable_displays_script)
-      log_info("🔄 Using Core Graphics to reset displays...")
-      result = execute_cmd("python3 #{enable_displays_script}", description: "Core Graphics display reset")
-      return result && result.include?("Successfully enabled")
+      log_info('🔄 Using Core Graphics to reset displays...')
+      result = execute_cmd("python3 #{enable_displays_script}", description: 'Core Graphics display reset')
+      result && result.include?('Successfully enabled')
     else
       log_debug("Core Graphics reset script not found at #{enable_displays_script}")
-      return false
+      false
     end
-  rescue => e
+  rescue StandardError => e
     log_debug("Core Graphics reset error: #{e.message}")
     false
   end
@@ -469,9 +473,7 @@ class GameMode < ScriptBase
     # Build command to enable just this display
     command = "displayplacer \"id:#{display_id} res:#{display[:resolution]} hz:#{display[:hertz]} color_depth:#{display[:color_depth]} scaling:#{display[:scaling]} origin:(#{origin}) degree:#{display[:rotation]} enabled:true\""
 
-    if dry_run?
-      log_info("[Dry Run] Would try: #{command}")
-    end
+    log_info("[Dry Run] Would try: #{command}") if dry_run?
 
     command
   end
@@ -481,6 +483,7 @@ class GameMode < ScriptBase
     if @options[:display]
       display_index = @options[:display].to_i - 1 # Convert to 0-based index
       return displays_info[display_index] if display_index >= 0 && display_index < displays_info.length
+
       log_error("Display index #{@options[:display]} is out of range")
       return nil
     end
@@ -488,17 +491,18 @@ class GameMode < ScriptBase
     # Auto-detect: First try to find by name (LG OLED/Ultrafine)
     by_name = displays_info.find do |display|
       display[:type].downcase.include?('lg') &&
-      (display[:type].downcase.include?('oled') || display[:type].downcase.include?('ultrafine'))
+        (display[:type].downcase.include?('oled') || display[:type].downcase.include?('ultrafine'))
     end
 
     return by_name if by_name
 
     # Fallback: identify by resolution patterns common for gaming monitors
     gaming_candidates = displays_info.select do |display|
-      ['3200x1800', '3840x2160', '4096x2304', '5120x2880', '3840x1600', '3440x1440', '2560x1440'].include?(display[:resolution]) ||
-      (display[:resolution].include?('3840') && display[:resolution].include?('2160')) ||
-      (display[:resolution].include?('5120') && display[:resolution].include?('2880')) ||
-      (display[:resolution].include?('3200') && display[:resolution].include?('1800'))
+      %w[3200x1800 3840x2160 4096x2304 5120x2880 3840x1600 3440x1440
+         2560x1440].include?(display[:resolution]) ||
+        (display[:resolution].include?('3840') && display[:resolution].include?('2160')) ||
+        (display[:resolution].include?('5120') && display[:resolution].include?('2880')) ||
+        (display[:resolution].include?('3200') && display[:resolution].include?('1800'))
     end
 
     # If multiple candidates, prefer the main display or the largest one
@@ -506,10 +510,10 @@ class GameMode < ScriptBase
     return main_candidate if main_candidate
 
     # Otherwise, prefer the largest resolution
-    gaming_candidates.max_by { |display|
+    gaming_candidates.max_by do |display|
       width, height = display[:resolution].split('x').map(&:to_i)
       width * height
-    }
+    end
   end
 
   def build_disable_command(display)
@@ -520,13 +524,13 @@ class GameMode < ScriptBase
     enabled_display = target_display.merge(origin: '0,0') # Position at origin
 
     command = "displayplacer \"id:#{enabled_display[:persistent_id]} " +
-      "res:#{enabled_display[:resolution]} " +
-      "hz:#{enabled_display[:hertz]} " +
-      "color_depth:#{enabled_display[:color_depth]} " +
-      "scaling:#{enabled_display[:scaling]} " +
-      "origin:(#{enabled_display[:origin]}) " +
-      "degree:#{enabled_display[:rotation]} " +
-      "enabled:true\""
+              "res:#{enabled_display[:resolution]} " +
+              "hz:#{enabled_display[:hertz]} " +
+              "color_depth:#{enabled_display[:color_depth]} " +
+              "scaling:#{enabled_display[:scaling]} " +
+              "origin:(#{enabled_display[:origin]}) " +
+              "degree:#{enabled_display[:rotation]} " +
+              'enabled:true"'
 
     log_debug("Target display command: #{command}")
     command
@@ -546,7 +550,7 @@ class GameMode < ScriptBase
           "scaling:#{display[:scaling]} " +
           "origin:(#{origin}) " +
           "degree:#{display[:rotation]} " +
-          "enabled:true"
+          'enabled:true'
       else
         # Use safe defaults for disabled displays
         safe_origin = calculate_safe_origin(display, displays_info)
@@ -557,14 +561,14 @@ class GameMode < ScriptBase
           "scaling:#{display[:scaling]} " +
           "origin:(#{safe_origin}) " +
           "degree:#{display[:rotation]} " +
-          "enabled:true"
+          'enabled:true'
       end
     end
 
     'displayplacer ' + command_parts.map { |part| "\"#{part}\"" }.join(' ')
   end
 
-  def calculate_safe_origin(display, all_displays)
+  def calculate_safe_origin(_display, all_displays)
     # Calculate a safe position for newly enabled displays
     # Place them to the right of existing displays to avoid overlap
 
@@ -600,34 +604,34 @@ class GameMode < ScriptBase
 
   def display_current_config(displays_info)
     puts "\n🖥️  Current Display Configuration:"
-    puts "┌" + "─" * 78 + "┐"
+    puts '┌' + '─' * 78 + '┐'
 
     displays_info.each_with_index do |display, index|
       label = (index + 1).to_s
-      name = display[:type] || "Unknown Display"
-      resolution = display[:resolution] || "Unknown"
-      status = display[:enabled] ? "✅ ON " : "❌ OFF"
-      main_indicator = display[:main] ? "👑" : "  "
-      position = display[:origin] ? " at (#{display[:origin]})" : ""
+      name = display[:type] || 'Unknown Display'
+      resolution = display[:resolution] || 'Unknown'
+      status = display[:enabled] ? '✅ ON ' : '❌ OFF'
+      main_indicator = display[:main] ? '👑' : '  '
+      position = display[:origin] ? " at (#{display[:origin]})" : ''
 
       line_content = "#{label}. #{main_indicator} #{status} #{name} - #{resolution}#{position}"
       padding = 76 - line_content.length
       padding = [0, padding].max
 
-      puts "│ #{line_content}" + " " * padding + " │"
+      puts "│ #{line_content}" + ' ' * padding + ' │'
     end
 
-    puts "└" + "─" * 78 + "┘"
+    puts '└' + '─' * 78 + '┘'
   end
 
   def show_dry_run(command, enabled_display, disabled_displays, mode_name)
     puts "\n🔍 Dry Run Mode - #{mode_name}"
-    puts "=" * 50
+    puts '=' * 50
 
     if enabled_display
       puts "\n✅ Display to enable:"
       puts "  📺 #{enabled_display[:type]} (#{enabled_display[:resolution]})"
-      puts "  📍 Position: (0,0)"
+      puts '  📍 Position: (0,0)'
     end
 
     if disabled_displays && !disabled_displays.empty?
@@ -642,7 +646,7 @@ class GameMode < ScriptBase
     puts "\nRun without --dry-run to execute automatically"
   end
 
-  def execute_display_command(command, enabled_display, disabled_displays, mode_name)
+  def execute_display_command(command, enabled_display, _disabled_displays, mode_name)
     puts "\n🔄 #{mode_name} - Applying configuration..."
     log_debug("Command: #{command}")
 
@@ -653,7 +657,7 @@ class GameMode < ScriptBase
       if enabled_display
         log_success("🎮 Game Mode Active: #{enabled_display[:type]}")
       else
-        log_success("🔄 All displays restored")
+        log_success('🔄 All displays restored')
       end
     else
       log_error("Failed to execute #{mode_name} configuration")
@@ -669,15 +673,17 @@ class GameMode < ScriptBase
       return
     end
 
-    unless dry_run?
-      success = execute_cmd?('toggle-hdr all on', description: 'Enabling HDR')
-      if success
-        log_success("✅ HDR enabled successfully")
-      else
-        log_warning("⚠️  Could not enable HDR automatically")
-      end
+    if dry_run?
+      log_info('[Dry Run] Would run: toggle-hdr all on')
     else
-      log_info("[Dry Run] Would run: toggle-hdr all on")
+      result = execute_cmd('toggle-hdr all on', description: 'Enabling HDR')
+      log_debug("toggle-hdr output: #{result}")
+
+      if result && (result.include?('Enabling HDR') || result.include?('HDR is already enabled') || result.include?('true'))
+        log_success('✅ HDR enabled successfully')
+      else
+        log_warning('⚠️  Could not enable HDR automatically')
+      end
     end
   end
 
@@ -689,15 +695,17 @@ class GameMode < ScriptBase
       return
     end
 
-    unless dry_run?
-      success = execute_cmd?('toggle-hdr all off', description: 'Disabling HDR')
-      if success
-        log_success("✅ HDR disabled successfully")
-      else
-        log_warning("⚠️  Could not disable HDR automatically")
-      end
+    if dry_run?
+      log_info('[Dry Run] Would run: toggle-hdr all off')
     else
-      log_info("[Dry Run] Would run: toggle-hdr all off")
+      result = execute_cmd('toggle-hdr all off', description: 'Disabling HDR')
+      log_debug("toggle-hdr output: #{result}")
+
+      if result && (result.include?('Disabling HDR') || result.include?('HDR is already disabled') || result.include?('false'))
+        log_success('✅ HDR disabled successfully')
+      else
+        log_warning('⚠️  Could not disable HDR automatically')
+      end
     end
   end
 
