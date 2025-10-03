@@ -1,6 +1,12 @@
 # Scripts System Documentation
 
-This document provides comprehensive documentation for the Ruby-based scripts system in the ZSH configuration repository. **Consult this documentation before writing any scripts or commands** to understand the available utilities and patterns.
+This document provides comprehensive documentation for the Ruby-based scripts system in the ZSH configuration repository.
+
+⚠️ **IMPORTANT: ALWAYS read this documentation BEFORE writing any new scripts or commands** to understand:
+- Available base classes and utilities
+- Existing services and helpers
+- Common patterns and best practices
+- How to avoid duplicating existing functionality
 
 ## Table of Contents
 
@@ -339,6 +345,103 @@ choices = prompt_multiselect("Select multiple:", ["A", "B", "C"])
 - Schema migrations and versioning
 - Query execution with error handling
 - Connection pooling and cleanup
+
+### FileProcessingTracker (`file_processing_tracker.rb`)
+
+**Purpose**: Track file processing status across multiple runs to prevent duplicate processing.
+
+**Key Features**:
+- SQLite-based file processing state tracking
+- Track files by path, hash, and processing status
+- Prevent reprocessing of already completed files
+- Resume interrupted batch operations
+- Track processing errors and retry counts
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/file_processing_tracker'
+
+tracker = FileProcessingTracker.new(db_path: 'my_script.db')
+
+# Mark file as being processed
+tracker.mark_processing(file_path)
+
+# Mark file as completed
+tracker.mark_completed(file_path)
+
+# Mark file as failed with error
+tracker.mark_failed(file_path, error_message)
+
+# Check if file needs processing
+if tracker.needs_processing?(file_path)
+  process_file(file_path)
+end
+
+# Get all pending files
+pending = tracker.pending_files
+
+# Get statistics
+stats = tracker.stats
+# => { total: 100, pending: 20, processing: 5, completed: 70, failed: 5 }
+```
+
+### ImageUtils (`image_utils.rb`)
+
+**Purpose**: Image manipulation and information utilities using ChunkyPNG.
+
+**Key Features**:
+- PNG image reading and writing
+- Image dimensions and metadata
+- Pixel manipulation
+- Color analysis
+- Alpha channel handling
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/image_utils'
+
+# Read image dimensions
+width, height = ImageUtils.dimensions(image_path)
+
+# Check if image has transparency
+has_alpha = ImageUtils.has_alpha?(image_path)
+
+# Get dominant colors
+colors = ImageUtils.dominant_colors(image_path, count: 5)
+
+# Resize image
+ImageUtils.resize(image_path, output_path, width: 800, height: 600)
+```
+
+### XcodeProject (`xcode_project.rb`)
+
+**Purpose**: Xcode project file (.xcodeproj) manipulation and management.
+
+**Key Features**:
+- Parse and modify Xcode project files
+- Add/remove files and groups
+- Manage build phases and targets
+- Update project settings
+- Handle file references and build configurations
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/xcode_project'
+
+project = XcodeProject.new('MyApp.xcodeproj')
+
+# Add file to project
+project.add_file('Source/NewFile.swift', target: 'MyApp')
+
+# Create group
+project.create_group('Features/NewFeature')
+
+# Get all source files
+sources = project.source_files
+
+# Save changes
+project.save
+```
 
 ## Services (Stateful)
 
@@ -807,6 +910,65 @@ measure_time(operation_name, &block)
 - Timestamp generation and parsing
 - Time zone handling
 - Relative time calculations ("2 minutes ago")
+
+### ParallelUtils (`utils/parallel_utils.rb`)
+
+**Purpose**: Parallel processing and concurrent execution utilities.
+
+**Key Features**:
+- Thread-safe parallel processing of collections
+- Worker pool management
+- Progress tracking for parallel operations
+- Error handling in concurrent contexts
+- Automatic CPU core detection and optimal worker count
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/utils/parallel_utils'
+
+# Process items in parallel
+results = ParallelUtils.parallel_map(items, workers: 4) do |item|
+  process_item(item)
+end
+
+# Parallel each with error handling
+ParallelUtils.parallel_each(files, workers: 8) do |file|
+  process_file(file)
+end
+
+# Get optimal worker count
+workers = ParallelUtils.optimal_workers
+```
+
+### DeviceUtils (`utils/device_utils.rb`)
+
+**Purpose**: Device detection and capability utilities for Apple Silicon and other platforms.
+
+**Key Features**:
+- Apple Silicon (M1/M2/M3) detection
+- GPU availability detection
+- Memory and core count queries
+- CoreML availability detection
+- Metal support detection
+
+**Usage Pattern**:
+```ruby
+require_relative '.common/utils/device_utils'
+
+# Check if running on Apple Silicon
+if DeviceUtils.apple_silicon?
+  log_info("Running on Apple Silicon")
+end
+
+# Get device capabilities
+cores = DeviceUtils.cpu_cores
+memory = DeviceUtils.total_memory_gb
+
+# Check ML framework availability
+if DeviceUtils.coreml_available?
+  log_info("CoreML available for inference")
+end
+```
 
 ### InteractiveSettingsUtils (`utils/interactive_settings_utils.rb`)
 
@@ -1358,6 +1520,101 @@ LOG_SESSIONS=1 bundle exec ruby bin/my-script.rb
 # Or use the flag
 bundle exec ruby bin/my-script.rb --log-session
 ```
+
+---
+
+## Complete Reference: All .common Utilities
+
+This section provides a complete inventory of all utilities available in `bin/.common/` for quick reference.
+
+### Base Classes
+- **script_base.rb** - Universal script foundation with CLI parsing, settings, logging
+- **interactive_script_base.rb** - Interactive menu-driven script foundation
+- **git_commit_script_base.rb** - Git workflow automation base
+- **file_merger_base.rb** - File merging operations base
+
+### Core Utilities (Stateless)
+- **logger.rb** - Centralized logging with emoji indicators and colors
+- **system.rb** - System command execution, platform detection, process management
+- **format.rb** - Text formatting, table generation, size/duration formatting
+- **view.rb** - UI display utilities, progress indicators, menu formatting
+- **database.rb** - SQLite database operations and management
+- **file_processing_tracker.rb** - Track file processing status across runs
+- **image_utils.rb** - Image manipulation using ChunkyPNG
+- **xcode_project.rb** - Xcode project file manipulation
+
+### Gmail Integration
+- **gmail_service.rb** - Gmail API integration for email operations
+- **gmail_database.rb** - Gmail data persistence and caching
+- **gmail_archive_handler.rb** - Email archiving workflows
+
+### Services (Stateful - in services/)
+- **base_service.rb** - Foundation for all stateful services
+- **settings_service.rb** - Settings persistence and loading
+- **interactive_menu_service.rb** - Interactive menu UI systems
+- **llm_service.rb** - AI/LLM integration (OpenAI, Anthropic)
+- **unified_llm_service.rb** - Multi-provider LLM with fallbacks
+- **lm_studio_service.rb** - LM Studio local AI integration
+- **ollama_service.rb** - Ollama local AI integration
+- **browser_service.rb** - Browser automation (Chrome, Firefox)
+- **file_cache_service.rb** - File caching system
+- **markdown_renderer.rb** - Markdown processing
+- **text_chunking_service.rb** - Text processing and chunking
+- **video_info_service.rb** - Video metadata extraction
+- **media_transcript_service.rb** - Media transcription
+- **configuration_display_service.rb** - Configuration display formatting
+- **conversation_service.rb** - Chat and conversation management
+- **element_analyzer.rb** - Web element analysis
+- **element_detector_service.rb** - DOM element detection
+- **epub_generator.rb** - EPUB e-book generation
+- **image_processor.rb** - Image processing and manipulation
+- **interactive_chat_service.rb** - Interactive chat interfaces
+- **llm_chain_processor.rb** - LLM request chaining
+- **page_fetcher.rb** - Web page fetching and parsing
+- **summary_generation_service.rb** - Content summarization
+- **transcript_parsing_service.rb** - Transcript processing
+- **url_collector.rb** - URL collection and management
+- **url_validation_service.rb** - URL validation and sanitization
+
+### Utils (Helper Modules - in utils/)
+- **error_utils.rb** - Error handling patterns, retries, validation
+- **progress_utils.rb** - Progress indicators, timing, feedback
+- **time_utils.rb** - Time formatting and calculations
+- **interactive_settings_utils.rb** - Settings UI helpers
+- **parallel_utils.rb** - Parallel processing and threading
+- **device_utils.rb** - Device detection (Apple Silicon, GPU, etc.)
+
+### Concerns (Mixins - in concerns/)
+- **macos_utils.rb** - macOS system integration
+- **tcc_utils.rb** - macOS privacy permissions (TCC)
+- **process_utils.rb** - Process management and control
+- **cacheable.rb** - Caching behavior mixin
+- **account_manager.rb** - Account and credential management
+- **icloud_storage.rb** - iCloud integration
+- **article_detector.rb** - Article content detection from web pages
+- **gmail_view.rb** - Gmail UI display helpers
+
+### Quick Reference Guide
+
+**When you need to...**
+
+- **Parse CLI arguments** → Use `ScriptBase`
+- **Create interactive menus** → Use `InteractiveScriptBase` + `InteractiveMenuService`
+- **Log messages** → Use global functions from `logger.rb` (`log_info`, `log_success`, etc.)
+- **Execute commands** → Use `System.execute` from `system.rb`
+- **Handle errors** → Include `ErrorUtils` mixin
+- **Process files in parallel** → Use `ParallelUtils`
+- **Track file processing** → Use `FileProcessingTracker`
+- **Work with images** → Use `ImageUtils` or `ImageProcessor`
+- **Call AI/LLM APIs** → Use `LLMService` or `UnifiedLLMService`
+- **Cache results** → Use `FileCacheService` or `Cacheable` concern
+- **Process web pages** → Use `PageFetcher` or `BrowserService`
+- **Create EPUBs** → Use `EpubGenerator`
+- **Work with Xcode** → Use `XcodeProject`
+- **Manage settings** → Use `SettingsService` (auto-included in `ScriptBase`)
+- **Show progress** → Use `ProgressUtils` or `with_progress` from `InteractiveMenuService`
+- **Work with Gmail** → Use `GmailService`, `GmailDatabase`, `GmailArchiveHandler`
+- **Detect device capabilities** → Use `DeviceUtils`
 
 ---
 

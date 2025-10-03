@@ -4,6 +4,14 @@
 
 # Note: Color logging functions are loaded from logging.zsh
 
+# ⚠️  IMPORTANT FOR DEVELOPERS:
+# Before creating any new script, ALWAYS read /Users/hemantv/zshrc/bin/SCRIPTS.md
+# It contains comprehensive documentation on:
+# - Available base classes and utilities
+# - Existing services you can reuse
+# - Common patterns and best practices
+# This will help you avoid duplicating functionality and follow established patterns.
+
 # =============================================================================
 # COMMON UTILITY FUNCTIONS
 # =============================================================================

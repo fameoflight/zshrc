@@ -364,6 +364,74 @@ class ScriptBase
     System.execute?(command, description: description, dry_run: dry_run?, verbose: verbose?)
   end
 
+  # Execute ZSH script with proper environment loading
+  def execute_zsh_script(script_name, *args, description: nil)
+    zsh_config = ENV['ZSH_CONFIG'] || File.expand_path('~/.config/zsh')
+
+    # Check if script exists in ZSH config bin directory first
+    script_path = File.join(zsh_config, 'bin', script_name)
+
+    # If not found there, check relative to current script directory
+    unless File.exist?(script_path)
+      script_path = File.join(File.dirname(__FILE__), script_name)
+    end
+
+    unless File.exist?(script_path)
+      raise "ZSH script not found: #{script_name}"
+    end
+
+    command = "ZSH_CONFIG=#{zsh_config} #{script_path} #{args.map { |arg| "\"#{arg}\"" }.join(' ')}"
+    execute_cmd(command, description: description)
+  end
+
+  # Execute ZSH script and return boolean result
+  def execute_zsh_script?(script_name, *args, description: nil)
+    zsh_config = ENV['ZSH_CONFIG'] || File.expand_path('~/.config/zsh')
+
+    # Check if script exists in ZSH config bin directory first
+    script_path = File.join(zsh_config, 'bin', script_name)
+
+    # If not found there, check relative to current script directory
+    unless File.exist?(script_path)
+      script_path = File.join(File.dirname(__FILE__), script_name)
+    end
+
+    unless File.exist?(script_path)
+      raise "ZSH script not found: #{script_name}"
+    end
+
+    command = "ZSH_CONFIG=#{zsh_config} #{script_path} #{args.map { |arg| "\"#{arg}\"" }.join(' ')}"
+    execute_cmd?(command, description: description)
+  end
+
+  # Find files in directory by extension pattern
+  def find_files_by_extensions(directory, extensions)
+    extensions = Array(extensions).map { |ext| ext.downcase.start_with?('.') ? ext : ".#{ext}" }
+
+    Dir.glob(File.join(directory, "**/*")).select do |file|
+      File.file?(file) && extensions.include?(File.extname(file).downcase)
+    end
+  end
+
+  # Validate directory argument exists and is readable
+  def validate_directory_arg(directory_name = "directory")
+    if args.empty?
+      log_error "#{directory_name} is required"
+      puts
+      puts option_parser
+      exit 1
+    end
+
+    dir_path = File.expand_path(args.first)
+
+    unless Dir.exist?(dir_path)
+      log_error "Directory not found: #{dir_path}"
+      exit 1
+    end
+
+    dir_path
+  end
+
   # File operations with logging
   def remove_file(path)
     return log_info("[DRY-RUN] Would remove: #{path}") if dry_run?

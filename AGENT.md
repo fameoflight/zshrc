@@ -90,6 +90,12 @@ Three-tier Ruby-based scripts system with centralized dependency management and 
 
 **Architecture**: Executables in `bin/` directory, setup scripts in `scripts/` directory
 
+⚠️ **BEFORE WRITING ANY NEW SCRIPT**: Always read `/Users/hemantv/zshrc/bin/SCRIPTS.md` first to understand:
+- Available base classes (ScriptBase, InteractiveScriptBase, etc.)
+- Existing utilities (Logger, System, ErrorUtils, etc.)
+- Services you can reuse (LLMService, FileCache, etc.)
+- Common patterns and best practices
+
 ### Script Categories
 
 #### 🐚 Utility Scripts (ZSH Functions)
@@ -129,6 +135,13 @@ make find-orphans      # Find orphaned Makefile targets
 
 ### Ruby Script Development
 
+⚠️ **MANDATORY FIRST STEP**: Read `/Users/hemantv/zshrc/bin/SCRIPTS.md` before writing any script. This comprehensive documentation covers:
+- All available base classes and utilities
+- Complete service catalog with usage examples
+- Helper modules and mixins
+- Common patterns and best practices
+- Quick reference guide for "when you need to..."
+
 **Install dependencies:**
 
 ```bash
@@ -137,26 +150,29 @@ make ruby-gems
 
 **Available gems:** tty-prompt, tty-progressbar, pastel, sqlite3, rexml, chunky_png, oily_png
 
-**Script template:**
+**Script template** (see SCRIPTS.md for complete patterns):
 
 ```ruby
 #!/usr/bin/env ruby
 require_relative '.common/script_base'
 
 class MyUtilityScript < ScriptBase
-  def banner_text
-    "Usage: #{script_name} [OPTIONS] <arguments>"
-  end
+  def script_emoji; '🔧'; end
+  def script_title; 'My Utility Tool'; end
+  def script_description; 'Does something useful'; end
+  def script_arguments; '[OPTIONS] <arguments>'; end
 
   def run
-    log_banner("Starting #{script_name}")
+    log_banner(script_title)
     # Implementation here
-    show_completion(script_name)
+    show_completion(script_title)
   end
 end
 
 MyUtilityScript.execute if __FILE__ == $0
 ```
+
+**For detailed patterns and examples**, consult `/Users/hemantv/zshrc/bin/SCRIPTS.md`
 
 ## Centralized Logging System
 

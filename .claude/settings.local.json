@@ -70,7 +70,8 @@
       "Bash(ln:*)",
       "Bash(ioreg:*)",
       "Bash(mkdir:*)",
-      "Bash(bin/upscale-image:*)"
+      "Bash(bin/upscale-image:*)",
+      "Bash(ZSH_CONFIG=/Users/hemantv/.config/zsh zsh -c:*)"
     ],
     "deny": [],
     "additionalDirectories": [
