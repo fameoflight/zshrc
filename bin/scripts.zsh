@@ -211,6 +211,23 @@ upscale-image() {
   bash "$script_path" "$@"
 }
 
+# Human detection utility using YOLOv8 models
+detect-human() {
+  local script_path="$ZSH_CONFIG/bin/detect-human"
+
+  if [[ ! -f "$script_path" ]]; then
+    log_error "detect-human script not found at $script_path"
+    return 1
+  fi
+
+  if [[ ! -x "$script_path" ]]; then
+    log_info "Making detect-human script executable..."
+    chmod +x "$script_path"
+  fi
+
+  bash "$script_path" "$@"
+}
+
 # =============================================================================
 # XCODE PROJECT MANAGEMENT
 # =============================================================================
@@ -274,6 +291,7 @@ list-scripts() {
   echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
   echo " 🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
   echo " 🖼️  upscale-image        - Upscale images using PyTorch models with CoreML"
+  echo " 👤 detect-human          - Detect humans in images using YOLOv8"
   echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
   echo " 📱 xcode-view-files      - View files in Xcode project by category"
   echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -481,6 +499,7 @@ scripts() {
     echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo " 🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
+    echo " 👤 detect-human          - Detect humans in images using YOLOv8"
     echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
     echo " 📱 xcode-view-files      - View files in Xcode project by category"
     echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -578,7 +597,7 @@ scripts() {
     "calibre-update" "stack-monitors" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "claude-gemini" "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
-    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image"
+    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )
   

@@ -3,7 +3,9 @@ Utility functions for python-cli.
 """
 
 import os
+import json
 from pathlib import Path
+from typing import Optional, List
 
 
 def get_models_dir() -> Path:
@@ -31,6 +33,98 @@ def get_python_executable() -> Path:
         f"Python executable not found: {venv_python}\n"
         "Ensure upscaler-pro-models is set up with 'make pytorch-setup'"
     )
+
+
+def find_model_file(model_name_or_path: str, model_type: str = "pytorch") -> Path:
+    """
+    Find a model file by name or return the path if it's already a full path.
+
+    Search order:
+    1. If model_name_or_path is a file path and exists, return it
+    2. Check config.json for the model
+    3. Search in standard model directories
+
+    Args:
+        model_name_or_path: Model name (e.g., "YOLOv8n") or full path to model file
+        model_type: Type of model - "pytorch" or "coreml" (default: "pytorch")
+
+    Returns:
+        Path to the model file
+
+    Raises:
+        FileNotFoundError: If model cannot be found
+    """
+    # If it's already a path and exists, return it
+    model_path = Path(model_name_or_path)
+    if model_path.exists() and model_path.is_file():
+        return model_path
+
+    # Get models directory
+    models_dir = get_models_dir()
+
+    # Try config.json first
+    config_file = models_dir / "config.json"
+    if config_file.exists():
+        try:
+            with open(config_file, 'r') as f:
+                config = json.load(f)
+
+            models = config.get('models', {})
+            if model_name_or_path in models:
+                model_info = models[model_name_or_path]
+
+                # Prefer pytorch, fallback to coreml
+                if model_type == "pytorch" and 'pytorch_path' in model_info:
+                    path = Path(model_info['pytorch_path'])
+                    if path.exists():
+                        return path
+                elif model_type == "coreml" and 'coreml_path' in model_info:
+                    path = Path(model_info['coreml_path'])
+                    if path.exists():
+                        return path
+        except (json.JSONDecodeError, KeyError):
+            pass  # Fall through to directory search
+
+    # Search common locations (both original case and lowercase)
+    search_locations: List[Path] = []
+
+    model_name_lower = model_name_or_path.lower()
+
+    if model_type == "pytorch":
+        search_locations = [
+            models_dir / f"{model_name_or_path}.pt",
+            models_dir / f"{model_name_or_path}.pth",
+            models_dir / "pytorch" / f"{model_name_or_path}.pt",
+            models_dir / "pytorch" / f"{model_name_or_path}.pth",
+            # Try lowercase versions
+            models_dir / f"{model_name_lower}.pt",
+            models_dir / f"{model_name_lower}.pth",
+            models_dir / "pytorch" / f"{model_name_lower}.pt",
+            models_dir / "pytorch" / f"{model_name_lower}.pth",
+        ]
+    elif model_type == "coreml":
+        search_locations = [
+            models_dir / f"{model_name_or_path}.mlmodel",
+            models_dir / "apple-silicon" / f"{model_name_or_path}.mlmodel",
+            models_dir / "apple-silicon" / f"{model_name_or_path}.mlpackage",
+            # Try lowercase versions
+            models_dir / f"{model_name_lower}.mlmodel",
+            models_dir / "apple-silicon" / f"{model_name_lower}.mlmodel",
+            models_dir / "apple-silicon" / f"{model_name_lower}.mlpackage",
+        ]
+
+    # Try each location
+    for location in search_locations:
+        if location.exists() and location.is_file():
+            return location
+
+    # Model not found - raise error with helpful message
+    error_msg = f"Model '{model_name_or_path}' not found.\n\nSearched locations:\n"
+    for location in search_locations:
+        error_msg += f"  • {location}\n"
+    error_msg += "\nRun 'make pytorch-setup' to download models."
+
+    raise FileNotFoundError(error_msg)
 
 
 # PyTorch inference utilities

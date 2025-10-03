@@ -93,7 +93,16 @@ class ESRGANInference(BaseImageInference):
         super().__init__(scale_factor=scale_factor, device=device)
 
     def load_model(self, model_path):
-        """Load ESRGAN model from PyTorch weights"""
+        """Load ESRGAN model from PyTorch weights (supports model name or path)"""
+        # Resolve model path (supports both full paths and model names)
+        from .utils import find_model_file
+        try:
+            resolved_path = find_model_file(model_path, model_type="pytorch")
+            model_path = str(resolved_path)
+        except FileNotFoundError:
+            # If not found via finder, try as-is (might be a direct path)
+            pass
+
         print(f'Loading ESRGAN model from {model_path}...')
 
         # Load weights first to detect architecture

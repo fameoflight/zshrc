@@ -12,6 +12,7 @@ import argparse
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'python-cli'))
 
 from python_cli.esrgan import ESRGANInference
+from python_cli.yolo import YOLOInference
 from python_cli.utils import get_optimal_device
 
 
@@ -25,7 +26,9 @@ def main():
     parser.add_argument('--workers', type=int, default=None, help='Number of parallel workers (default: auto-optimize)')
     parser.add_argument('--batch-size', type=int, default=None, help='Batch size for processing (default: auto-optimize)')
     parser.add_argument('--auto-tile', action='store_true', help='Automatically optimize tile size for performance')
-    parser.add_argument('--model-type', choices=['esrgan'], default='esrgan', help='Model type (default: esrgan)')
+    parser.add_argument('--model-type', choices=['esrgan', 'yolo'], default='esrgan', help='Model type (default: esrgan)')
+    parser.add_argument('--confidence', type=float, default=0.25, help='Confidence threshold for YOLO detection (default: 0.25)')
+    parser.add_argument('--visualize', action='store_true', help='Create visualization with bounding boxes (YOLO only)')
 
     args = parser.parse_args()
 
@@ -35,10 +38,8 @@ def main():
             print(f'❌ Input file not found: {args.input}')
             sys.exit(1)
 
-        # Validate model file
-        if not os.path.exists(args.model):
-            print(f'❌ Model file not found: {args.model}')
-            sys.exit(1)
+        # Note: Model validation is handled by the inference classes
+        # which support both model names (e.g., "YOLOv8n") and full paths
 
         # Determine device
         device = get_optimal_device()
@@ -58,28 +59,52 @@ def main():
         print(f'Device: {device}')
         print('')
 
-        # Create appropriate inference engine
+        # Create appropriate inference engine and process
         if args.model_type == 'esrgan':
             inference_engine = ESRGANInference.create_from_model_path(
                 args.model,
                 scale_factor=args.scale,
                 device=device
             )
+
+            # Process the image with smart auto-optimization
+            output_tensor = inference_engine.process_image(
+                input_path=args.input,
+                output_path=args.output,
+                tile_size=args.tile,
+                max_workers=args.workers,
+                batch_size=args.batch_size
+            )
+
+            print('')
+            print('✅ Processing completed successfully!')
+
+        elif args.model_type == 'yolo':
+            inference_engine = YOLOInference.create_from_model_path(
+                args.model,
+                confidence_threshold=args.confidence,
+                device=device
+            )
+
+            # Run person detection
+            result = inference_engine.detect_persons(
+                image_path=args.input,
+                visualize=args.visualize,
+                output_path=args.output if args.visualize else None
+            )
+
+            print('')
+            print('✅ Detection completed successfully!')
+            print(f'📊 Results:')
+            print(f'   • Has person: {result["has_person"]}')
+            print(f'   • Person count: {result["person_count"]}')
+            if result['confidence_scores']:
+                avg_conf = sum(result['confidence_scores']) / len(result['confidence_scores'])
+                print(f'   • Average confidence: {avg_conf:.2%}')
+
         else:
             print(f'❌ Unsupported model type: {args.model_type}')
             sys.exit(1)
-
-        # Process the image with smart auto-optimization
-        output_tensor = inference_engine.process_image(
-            input_path=args.input,
-            output_path=args.output,
-            tile_size=args.tile,
-            max_workers=args.workers,
-            batch_size=args.batch_size
-        )
-
-        print('')
-        print('✅ Processing completed successfully!')
 
     except Exception as e:
         print(f'❌ Processing failed: {e}')

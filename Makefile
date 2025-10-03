@@ -119,8 +119,8 @@ pytorch-setup:
 	@echo -e "$(BOLD)$(CYAN)🤖 Setting up PyTorch models for Apple Silicon$(NC)"
 	@echo -e "$(DIM)This will download and convert PyTorch models to CoreML format$(NC)"
 	@echo ""
-	@echo -e "$(YELLOW)🧹 Cleaning existing models...$(NC)"
-	@rm -rf ${HOME}/.config/zsh/.models
+	@echo -e "$(YELLOW)🧹 Cleaning existing Apple Silicon models...$(NC)"
+	@rm -rf ${HOME}/.config/zsh/.models/apple-silicon
 	@if [ -f "scripts/setup-pytorch-models.rb" ]; then \
 		ruby scripts/setup-pytorch-models.rb; \
 	else \

@@ -1,0 +1,233 @@
+#!/bin/bash
+
+# detect-human - Detect humans in images using YOLOv8
+# Usage: detect-human <input> [--visualize output] [--confidence 0.25]
+
+set -euo pipefail
+
+# Source logging functions
+source "$ZSH_CONFIG/logging.zsh"
+
+# Configuration
+MODELS_DIR="${ZSH_CONFIG}/.models"
+CONFIG_FILE="${MODELS_DIR}/config.json"
+DEFAULT_MODEL="YOLOv8n"
+DEFAULT_CONFIDENCE=0.25
+
+# Show usage information
+show_usage() {
+    echo "Usage: detect-human <input> [options]"
+    echo ""
+    echo "Options:"
+    echo "  input              Input image path"
+    echo "  --visualize <out>  Create visualization with bounding boxes"
+    echo "  --confidence <val> Confidence threshold (0.0-1.0, default: ${DEFAULT_CONFIDENCE})"
+    echo "  --model <name>     Model name (default: ${DEFAULT_MODEL})"
+    echo "  --list-models      List available models"
+    echo "  --help             Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  detect-human photo.jpg"
+    echo "  detect-human photo.jpg --visualize output.jpg"
+    echo "  detect-human photo.jpg --confidence 0.5"
+    echo "  detect-human photo.jpg --visualize output.jpg --confidence 0.3"
+}
+
+# Check dependencies
+check_dependencies() {
+    local models_dir="${MODELS_DIR}"
+    local venv_path="${models_dir}/venv"
+    local python_cmd="${venv_path}/bin/python"
+
+    if [[ ! -f "$python_cmd" ]]; then
+        log_error "Python environment not found: $python_cmd"
+        log_info "Run 'make pytorch-setup' to set up models and environment"
+        exit 1
+    fi
+
+    echo "$python_cmd"
+}
+
+# List available models
+list_models() {
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_error "Models configuration not found. Run 'make pytorch-setup' first."
+        exit 1
+    fi
+
+    log_section "Available Models"
+
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    $python_cmd -c "
+import json
+import sys
+
+try:
+    with open('$CONFIG_FILE', 'r') as f:
+        config = json.load(f)
+
+    models = config.get('models', {})
+
+    # Filter for YOLO models
+    yolo_models = {k: v for k, v in models.items() if 'yolo' in k.lower()}
+
+    if not yolo_models:
+        print('No YOLO models found. Run setup first.')
+        sys.exit(1)
+
+    print('Available detection models:')
+    for name, info in yolo_models.items():
+        print(f'  • {name}')
+
+    print(f'')
+    print(f'Default model: $DEFAULT_MODEL')
+
+except Exception as e:
+    print(f'Error reading configuration: {e}')
+    sys.exit(1)
+"
+}
+
+# Run human detection
+run_detection() {
+    local input_path="$1"
+    local visualize="$2"
+    local output_path="$3"
+    local confidence="$4"
+    local model_name="$5"
+    local python_cmd="$6"
+
+    # Validate input file
+    if [[ ! -f "$input_path" ]]; then
+        log_error "Input file not found: $input_path"
+        exit 1
+    fi
+
+    # Python code will handle model path resolution automatically
+    # Just pass the model name, it will search config.json and standard locations
+    local model_path="$model_name"
+
+    local inference_script="$ZSH_CONFIG/bin/pytorch_inference.py"
+
+    if [[ ! -f "$inference_script" ]]; then
+        log_error "PyTorch inference script not found: $inference_script"
+        exit 1
+    fi
+
+    log_progress "Detecting humans in $input_path using $model_name..."
+
+    # Build command arguments
+    local cmd_args=(
+        "$python_cmd"
+        "$inference_script"
+        --input "$input_path"
+        --model "$model_path"
+        --model-type yolo
+        --confidence "$confidence"
+    )
+
+    # Add visualization if requested
+    if [[ "$visualize" == true ]]; then
+        cmd_args+=(--output "$output_path")
+        cmd_args+=(--visualize)
+    else
+        # Still need output param but it won't be used
+        cmd_args+=(--output /dev/null)
+    fi
+
+    # Run detection
+    "${cmd_args[@]}"
+}
+
+# Main execution
+main() {
+    local input_path=""
+    local visualize=false
+    local output_path=""
+    local confidence="$DEFAULT_CONFIDENCE"
+    local model_name="$DEFAULT_MODEL"
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help)
+                show_usage
+                exit 0
+                ;;
+            --list-models)
+                list_models
+                exit 0
+                ;;
+            --visualize)
+                visualize=true
+                output_path="$2"
+                shift 2
+                ;;
+            --confidence)
+                confidence="$2"
+                shift 2
+                ;;
+            --model)
+                model_name="$2"
+                shift 2
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+            *)
+                if [[ -z "$input_path" ]]; then
+                    input_path="$1"
+                else
+                    log_error "Too many arguments"
+                    show_usage
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate arguments
+    if [[ -z "$input_path" ]]; then
+        log_error "Input path is required"
+        show_usage
+        exit 1
+    fi
+
+    if [[ "$visualize" == true ]] && [[ -z "$output_path" ]]; then
+        log_error "Output path is required when --visualize is used"
+        show_usage
+        exit 1
+    fi
+
+    # Check dependencies
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    # Run detection
+    log_banner "Human Detection"
+    log_info "Input: $input_path"
+    log_info "Model: $model_name"
+    log_info "Confidence threshold: $confidence"
+    if [[ "$visualize" == true ]]; then
+        log_info "Output visualization: $output_path"
+    fi
+    echo ""
+
+    if run_detection "$input_path" "$visualize" "$output_path" "$confidence" "$model_name" "$python_cmd"; then
+        echo ""
+        log_success "Detection completed successfully!"
+        if [[ "$visualize" == true ]]; then
+            log_info "Visualization saved to: $output_path"
+        fi
+    else
+        log_error "Detection failed"
+        exit 1
+    fi
+}
+
+main "$@"

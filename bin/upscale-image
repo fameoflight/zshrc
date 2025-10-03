@@ -49,29 +49,19 @@ check_dependencies() {
         exit 1
     fi
 
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        log_error "Models configuration not found: $CONFIG_FILE"
-        log_info "Run 'make pytorch-setup' to set up models"
-        exit 1
-    fi
-
     echo "$python_cmd"
 }
 
 # List available models
 list_models() {
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        log_error "Models configuration not found. Run 'make pytorch-setup' first."
-        exit 1
-    fi
-
     log_section "Available Models"
 
-    # Use python to parse JSON and list models
     local python_cmd
     python_cmd=$(check_dependencies)
 
-    $python_cmd -c "
+    if [[ -f "$CONFIG_FILE" ]]; then
+        # Use config file if available
+        $python_cmd -c "
 import json
 import sys
 
@@ -99,6 +89,21 @@ except Exception as e:
     print(f'Error reading configuration: {e}')
     sys.exit(1)
 "
+    else
+        # Fallback: list .pth files directly
+        echo "Available models (from directory scan):"
+        for model_file in "${MODELS_DIR}"/*.pth "${MODELS_DIR}"/*.pt; do
+            if [[ -f "$model_file" ]]; then
+                local basename=$(basename "$model_file")
+                local name="${basename%.*}"
+                echo "  • $name"
+            fi
+        done
+        echo ""
+        echo "Default model: $DEFAULT_MODEL"
+        echo ""
+        echo "💡 Run 'make pytorch-setup' to generate config and download more models"
+    fi
 }
 
 # Generate output filename if not provided
@@ -122,59 +127,11 @@ run_upscale() {
         exit 1
     fi
 
-    # Get model info
-    local model_info
-    model_info=$($python_cmd -c "
-import json
-
-with open('$CONFIG_FILE', 'r') as f:
-    config = json.load(f)
-
-models = config.get('models', {})
-if '$model_name' not in models:
-    print('MODEL_NOT_FOUND')
-    exit(1)
-
-model = models['$model_name']
-if 'coreml_path' in model and model['coreml_path']:
-    print(model['coreml_path'])
-else:
-    print(model['pytorch_path'])
-")
-
-    if [[ "$model_info" == "MODEL_NOT_FOUND" ]]; then
-        log_error "Model '$model_name' not found"
-        log_info "Use --list-models to see available models"
-        exit 1
-    fi
-
-    # Prefer PyTorch model for flexibility
+    # Python code will handle model path resolution automatically
+    # Just pass the model name, it will search config.json and standard locations
+    local model_path="$model_name"
+    local pytorch_path="$model_name"
     local use_coreml=false
-    local model_path="$model_info"
-    local pytorch_path="$model_info"
-
-    if [[ "$model_info" == *".mlmodel" ]] || [[ "$model_info" == *".mlpackage"* ]]; then
-        # Use PyTorch fallback if available - extract pytorch path from config
-        pytorch_path=$($python_cmd -c "
-import json
-with open('$CONFIG_FILE', 'r') as f:
-    config = json.load(f)
-model = config.get('models', {}).get('$model_name', {})
-print(model.get('pytorch_path', ''))
-")
-        if [[ -n "$pytorch_path" ]] && [[ -f "$pytorch_path" ]]; then
-            use_coreml=false
-            model_path="$pytorch_path"
-            log_info "Using PyTorch model (CoreML available but PyTorch preferred): $model_name"
-        else
-            # Fallback to CoreML if PyTorch not available
-            use_coreml=true
-            log_info "Using CoreML model: $model_name"
-        fi
-    else
-        use_coreml=false
-        log_info "Using PyTorch model: $model_name"
-    fi
 
     log_progress "Upscaling $input_path using $model_name..."
 
