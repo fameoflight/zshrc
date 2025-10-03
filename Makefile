@@ -276,6 +276,8 @@ iterm-setup:
 
 .PHONY: claude-setup claude-link
 claude-setup: claude-link
+	@mkdir -p ${SETTINGS}/claude
+	@mkdir -p ${SETTINGS}/claude/projects
 	@bash scripts/restore-settings.sh claude
 
 # Create symlink for Claude binary to expected native installation path
