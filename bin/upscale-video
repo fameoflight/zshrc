@@ -1,0 +1,349 @@
+#!/bin/bash
+
+# upscale-video - Upscale videos using AI models with selective frame processing
+# Usage: upscale-video <input> [output] [--model <model_name>] [--interval <frames>] [--workers <count>]
+
+set -euo pipefail
+
+# Source logging functions
+source "$ZSH_CONFIG/logging.zsh"
+
+# Configuration
+MODELS_DIR="${ZSH_CONFIG}/.models"
+CONFIG_FILE="${MODELS_DIR}/config.json"
+DEFAULT_MODEL="RealESRGAN_x4plus"
+DEFAULT_INTERVAL=3
+DEFAULT_WORKERS=20  # Optimized for 60-core GPU
+DEFAULT_INTERPOLATION="rife4.9"  # Best quality RIFE model (latest)
+
+# Show usage information
+show_usage() {
+    echo "Usage: upscale-video <input> [output] [--model <model_name>] [--interval <frames>] [--workers <count>] [--estimate]"
+    echo ""
+    echo "Options:"
+    echo "  input          Input video path"
+    echo "  output         Output video path (optional: auto-generates)"
+    echo "  --model        CoreML model name (default: ${DEFAULT_MODEL})"
+    echo "  --interval     Process every Nth frame (default: ${DEFAULT_INTERVAL} for good motion)"
+    echo "  --workers      Number of parallel workers (default: ${DEFAULT_WORKERS})"
+    echo "  --interpolation Frame interpolation method (default: rife4.9)"
+    echo "    • rife4.9: Best quality RIFE model (default, latest)"
+    echo "    • rife4.7: Stable quality RIFE model"
+    echo "    • rife4.6: Good quality RIFE model"
+    echo "    • rife4.3: Legacy RIFE model"
+    echo "    • rife-lite: Fast RIFE model"
+    echo "    • rife: Alias for rife4.9"
+    echo "    • linear: Fast linear interpolation"
+    echo "  --estimate     Only estimate processing time, don't process"
+    echo "  --list-models  List available models"
+    echo "  --help         Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  upscale-video video.mp4"
+    echo "  upscale-video video.mp4 --interpolation rife4.9"
+    echo "  upscale-video video.mp4 --interpolation rife-lite --interval 15"
+    echo "  upscale-video video.mp4 --interpolation linear --workers 8"
+    echo "  upscale-video video.mp4 result.mp4 --estimate"
+    echo ""
+    echo "Performance Notes:"
+    echo "  • Default interval (5) = excellent motion quality with RIFE"
+    echo "  • Interval (10) = good quality, faster processing"
+    echo "  • Interval (15) = acceptable quality, much faster"
+    echo "  • Interval (30) = poor motion quality, very fast"
+    echo "  • Default workers (16) = optimized for 60-core GPU"
+    echo "  • More workers = faster parallel processing (GPU cores available)"
+}
+
+# Check dependencies
+check_dependencies() {
+    local models_dir="${MODELS_DIR}"
+    local venv_path="${models_dir}/venv"
+    local python_cmd="${venv_path}/bin/python"
+
+    if [[ ! -f "$python_cmd" ]]; then
+        log_error "Python environment not found: $python_cmd"
+        log_info "Run 'make pytorch-setup' to set up models and environment"
+        exit 1
+    fi
+
+    # Check for OpenCV
+    if ! "$python_cmd" -c "import cv2" 2>/dev/null; then
+        log_error "OpenCV not installed. Install with: pip install opencv-python"
+        exit 1
+    fi
+
+    echo "$python_cmd"
+}
+
+# List available models
+list_models() {
+    echo "Available AI Models:"
+    echo "===================="
+
+    local config_file="${CONFIG_FILE}"
+    if [[ -f "$config_file" ]]; then
+        python3 -c "
+import json
+try:
+    with open('$config_file', 'r') as f:
+        config = json.load(f)
+
+    models = config.get('models', {})
+    for name, info in models.items():
+        coreml = '✅' if 'coreml_path' in info else '❌'
+        pytorch = '✅' if 'pytorch_path' in info else '❌'
+        print(f'{name}:')
+        print(f'  • CoreML: {coreml}')
+        print(f'  • PyTorch: {pytorch}')
+except:
+    print('Error reading config file')
+"
+    fi
+
+    echo ""
+    echo "Default model: $DEFAULT_MODEL"
+    echo ""
+    echo "💡 Run 'make pytorch-setup' to generate config and download more models"
+}
+
+# Generate output filename if not provided
+generate_output_path() {
+    local input_path="$1"
+    local base_name="${input_path%.*}"
+    local extension="${input_path##*.}"
+    echo "${base_name}_upscaled.${extension}"
+}
+
+# Estimate processing time
+estimate_processing() {
+    local input_path="$1"
+    local model_name="$2"
+    local model_type="$3"
+    local python_cmd="$4"
+
+    log_info "🔍 Analyzing video for processing estimate..."
+
+    "$python_cmd" -c "
+import cv2
+import json
+import sys
+import os
+from pathlib import Path
+
+def estimate_video_processing(input_path, model_name, model_type):
+    try:
+        cap = cv2.VideoCapture(input_path)
+        if not cap.isOpened():
+            print('❌ Could not open video file')
+            return
+
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        duration = total_frames / fps if fps > 0 else 0
+
+        cap.release()
+
+        # Calculate frames to process (every 30th by default)
+        interval = 30
+        frames_to_process = total_frames // interval
+
+        # Estimate processing time based on model type
+        if model_type == 'coreml':
+            # CoreML is faster: ~1.1s per frame
+            time_per_frame = 1.1
+        else:
+            # PyTorch is slower: ~2.5s per frame
+            time_per_frame = 2.5
+
+        estimated_time = frames_to_process * time_per_frame
+        speedup = duration / estimated_time if estimated_time > 0 else 0
+
+        print(f'📊 Video Analysis Results:')
+        print(f'   • Resolution: {width}x{height}')
+        print(f'   • Duration: {duration:.1f}s ({total_frames} frames @ {fps:.1f}fps)')
+        print(f'   • Processing interval: every {interval}th frame')
+        print(f'   • Frames to upscale: {frames_to_process}')
+        print(f'   • Estimated time per frame: {time_per_frame}s ({model_type})')
+        print(f'   • Estimated total time: {estimated_time:.1f}s ({estimated_time/60:.1f} minutes)')
+        print(f'   • Processing speed: {speedup:.1f}x real-time')
+        print(f'   • Output resolution: {width*4}x{height*4} (4x upscale)')
+        print(f'')
+        print(f'💡 Tips:')
+        if speedup < 0.5:
+            print(f'   ⚠️  Processing will be slower than real-time ({speedup:.1f}x)')
+            print(f'      Consider increasing --interval to 60 for faster processing')
+        elif speedup < 2:
+            print(f'   ⚠️  Processing will be slower than playback ({speedup:.1f}x)')
+        else:
+            print(f'   ✅ Processing will be faster than playback ({speedup:.1f}x)')
+
+        print(f'')
+        print(f'🎬 Quality vs Speed Trade-offs:')
+        print(f'   • --interval 15: {speedup/2:.1f}x speedup, Better quality')
+        print(f'   • --interval 30: {speedup:.1f}x speedup, Good quality (default)')
+        print(f'   • --interval 60: {speedup*2:.1f}x speedup, Lower quality')
+
+    except Exception as e:
+        print(f'❌ Error analyzing video: {e}')
+
+estimate_video_processing('$input_path', '$model_name', '$model_type')
+"
+}
+
+# Run video upscaling
+run_upscale() {
+    local input_path="$1"
+    local output_path="$2"
+    local model_name="$3"
+    local model_type="$4"
+    local interval="$5"
+    local workers="$6"
+    local python_cmd="$7"
+
+    # Validate input file
+    if [[ ! -f "$input_path" ]]; then
+        log_error "Input file not found: $input_path"
+        exit 1
+    fi
+
+    log_progress "Upscaling video $input_path using optimized CoreML implementation..."
+
+    # Use the new direct CoreML implementation
+    local video_upscale_script="${ZSH_CONFIG}/bin/video_upscale_direct.py"
+
+    if [[ ! -f "$video_upscale_script" ]]; then
+        log_error "CoreML video upscaler not found: $video_upscale_script"
+        exit 1
+    fi
+
+    # Run the optimized CoreML video upscaler
+    "$python_cmd" "$video_upscale_script" \
+        "$input_path" \
+        "$output_path" \
+        --model "$model_name" \
+        --interval "$interval" \
+        --workers "$workers" \
+        --interpolation "$interpolation"
+
+    local exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "Video upscaling completed successfully!"
+        log_info "Result saved to: $output_path"
+        return 0
+    else
+        log_error "Video upscaling failed with exit code: $exit_code"
+        return 1
+    fi
+}
+
+# Main execution
+main() {
+    local input_path=""
+    local output_path=""
+    local model_name="$DEFAULT_MODEL"
+    # Always use CoreML for optimal Apple Silicon performance
+    local model_type="coreml"
+    local interval="$DEFAULT_INTERVAL"
+    local workers="$DEFAULT_WORKERS"
+    local interpolation="$DEFAULT_INTERPOLATION"
+    local estimate_only=false
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help)
+                show_usage
+                exit 0
+                ;;
+            --list-models)
+                list_models
+                exit 0
+                ;;
+            --model)
+                model_name="$2"
+                shift 2
+                ;;
+            --interval)
+                interval="$2"
+                shift 2
+                ;;
+            --workers)
+                workers="$2"
+                shift 2
+                ;;
+            --interpolation)
+                interpolation="$2"
+                shift 2
+                ;;
+            --estimate)
+                estimate_only=true
+                shift
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+            *)
+                if [[ -z "$input_path" ]]; then
+                    input_path="$1"
+                elif [[ -z "$output_path" ]]; then
+                    output_path="$1"
+                else
+                    log_error "Too many arguments"
+                    show_usage
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate arguments
+    if [[ -z "$input_path" ]]; then
+        log_error "Input path is required"
+        show_usage
+        exit 1
+    fi
+
+    # Generate output path if not provided
+    if [[ -z "$output_path" ]]; then
+        output_path=$(generate_output_path "$input_path")
+    fi
+
+    # Check dependencies
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    # Show configuration
+    log_banner "Video Upscaling"
+    log_info "Input: $input_path"
+    log_info "Output: $output_path"
+    log_info "Model: $model_name"
+    log_info "Model type: $model_type"
+    log_info "Frame interval: $interval"
+    log_info "Workers: $workers"
+    log_info "Interpolation: $interpolation"
+
+    # Estimate processing time (only show if estimate flag is set)
+    if [[ "$estimate_only" == true ]]; then
+        estimate_processing "$input_path" "$model_name" "$model_type" "$python_cmd"
+        echo ""
+        log_info "📊 Estimate only. Remove --estimate flag to process video."
+        exit 0
+    fi
+
+    # Run upscaling
+    if run_upscale "$input_path" "$output_path" "$model_name" "$model_type" "$interval" "$workers" "$python_cmd"; then
+        log_success "Video upscaling completed successfully!"
+        log_info "Result saved to: $output_path"
+    else
+        log_error "Video upscaling failed"
+        exit 1
+    fi
+}
+
+main "$@"

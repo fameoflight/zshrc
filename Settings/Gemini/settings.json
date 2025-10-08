@@ -1,0 +1,42 @@
+{
+  "preferredEditor": "vscode",
+  "vimMode": false,
+  "model": "gemini-2.5-pro",
+  "selectedAuthType": "gemini-api-key",
+  "tools": {
+    "always_allow": true,
+    "permission_mode": "allow_all",
+    "auto_approve": [
+      "file_read",
+      "file_write",
+      "bash_execute",
+      "web_search",
+      "code_execution",
+      "file_operations"
+    ]
+  },
+  "context": {
+    "max_turns": -1,
+    "preserve_context": true
+  },
+  "file_operations": {
+    "respect_gitignore": true,
+    "respect_geminiignore": true,
+    "auto_include_context": true
+  },
+  "code_assistance": {
+    "auto_format": true,
+    "suggest_improvements": true,
+    "explain_changes": true
+  },
+  "interaction": {
+    "verbose": false,
+    "auto_confirm_safe_operations": true,
+    "stream_responses": true
+  },
+  "safety": {
+    "allow_file_modifications": true,
+    "allow_system_commands": true,
+    "sandbox_mode": false
+  }
+}

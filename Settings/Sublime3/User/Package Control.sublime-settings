@@ -1,0 +1,20 @@
+{
+	"in_process_packages":
+	[
+	],
+	"installed_packages":
+	[
+		"BeautifyRuby",
+		"ERB Autocomplete",
+		"HTMLBeautify",
+		"Javascript Beautify",
+		"Package Control",
+		"ProductiveSnippetsRuby",
+		"SassBeautify",
+		"SCSS",
+		"Solarized Color Scheme",
+		"SublimeLinter-contrib-ruby-lint",
+		"Theme - Soda SolarizedDark",
+		"Theme - Solarized Space"
+	]
+}

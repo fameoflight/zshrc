@@ -1,0 +1,31 @@
+*-cache
+private.zsh
+history*
+.DS_Store
+zshrc.bak
+
+packages/*
+*.safariextz
+backup_dir/*
+Settings/Sublime3/User/Package Control.cache/*
+Settings/Sublime3/User/Package Control.last-run
+
+Settings/Sublime3/User/Package Control.merged-ca-bundle
+
+Settings/Sublime3/User/Package Control.system-ca-bundle
+grayscale/bin/*
+
+.vscode/ipch/*
+/Settings/Claude/projects
+*.log
+*.sqlite.db
+/vendor
+credentials/gmail-token.yaml
+/credentials/cache
+/credentials/tokens
+/.models
+/bin/python-cli/python_cli.egg-info
+/bin/python-cli/python_cli/__pycache__
+.saved_hot_corners.plist
+*.pyc
+/bin/rust/target

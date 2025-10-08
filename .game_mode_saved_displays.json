@@ -1,0 +1,49 @@
+{
+  "timestamp": "2025-10-03T15:21:41+05:30",
+  "display_ids": [
+    "44C06257-5832-46FA-964D-253F1189AF1F",
+    "44262492-8D02-4ADA-9F3D-788B3D9F5690",
+    "E2D17507-688B-4BCD-AB7D-AA939374A2ED",
+    "B22C2883-5294-448D-93A1-677694E83F1B"
+  ],
+  "displays": [
+    {
+      "id": "44C06257-5832-46FA-964D-253F1189AF1F",
+      "type": "32 inch external screen",
+      "resolution": "3200x1800",
+      "hertz": "240",
+      "scaling": "on",
+      "rotation": "0",
+      "origin": "0,0"
+    },
+    {
+      "id": "44262492-8D02-4ADA-9F3D-788B3D9F5690",
+      "type": "16 inch external screen",
+      "resolution": "1920x1080",
+      "hertz": "60",
+      "scaling": "off",
+      "rotation": "0",
+      "origin": "-3840,0"
+    },
+    {
+      "id": "E2D17507-688B-4BCD-AB7D-AA939374A2ED",
+      "type": "32 inch external screen",
+      "resolution": "1800x3200",
+      "hertz": "30",
+      "scaling": "on",
+      "rotation": "270",
+      "origin": "3200,-1012"
+    },
+    {
+      "id": "B22C2883-5294-448D-93A1-677694E83F1B",
+      "type": "16 inch external screen",
+      "resolution": "1920x1080",
+      "hertz": "60",
+      "scaling": "off",
+      "rotation": "0",
+      "origin": "-1920,0"
+    }
+  ],
+  "total_displays": 4,
+  "version": "1.0"
+}

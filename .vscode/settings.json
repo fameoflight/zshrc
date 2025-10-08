@@ -1,0 +1,60 @@
+{
+  "workbench.colorTheme": "Behave",
+  "workbench.iconTheme": "vs-seti",
+  "workbench.colorCustomizations": {
+    "[Behave]": {
+      "sideBar.background": "#201c1c",
+      "editor.background": "#02283d"
+    }
+  },
+  "files.exclude": {
+    "build/**": true,
+    "node_modules/**": true,
+    "**/__generated__": true
+  },
+  "files.watcherExclude": {
+    "build/**": true,
+    "node_modules/**": true,
+    "**/__generated__": true
+  },
+  "window.zoomLevel": 2,
+  "editor.fontSize": 14,
+  "editor.cursorStyle": "line",
+  "editor.cursorBlinking": "blink",
+  "explorer.openEditors.visible": 6,
+  "editor.formatOnSave": true,
+  "files.autoSave": "onFocusChange",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.tslint": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "editor.detectIndentation": false,
+  "editor.tabSize": 2,
+  "javascript.format.enable": false,
+  "typescript.format.enable": false,
+  "eslint.autoFixOnSave": true,
+  "prettier.eslintIntegration": false,
+  "prettier.tslintIntegration": false,
+  "prettier.stylelintIntegration": true,
+  "prettier.parser": "babylon",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "git.ignoreLimitWarning": true,
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
+  "python-envs.defaultPackageManager": "ms-python.python:conda"
+}

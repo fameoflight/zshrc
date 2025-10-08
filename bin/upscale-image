@@ -1,0 +1,259 @@
+#!/bin/bash
+
+# upscale-image - Upscale images using direct CoreML implementation
+# Usage: upscale-image <input> [output] [--model <model_name>]
+
+set -euo pipefail
+
+# Source logging functions
+source "$ZSH_CONFIG/logging.zsh"
+
+# Configuration
+MODELS_DIR="${ZSH_CONFIG}/.models"
+CONFIG_FILE="${MODELS_DIR}/config.json"
+DEFAULT_MODEL="RealESRGAN_x4plus"
+
+# Show usage information
+show_usage() {
+    echo "Usage: upscale-image <input> [output] [--model <model_name>] [--tile <size>] [--scale <factor>]"
+    echo ""
+    echo "Options:"
+    echo "  input          Input image path"
+    echo "  output         Output image path (optional: auto-generates)"
+    echo "  --model        CoreML model name (default: ${DEFAULT_MODEL})"
+    echo "  --tile         Tile size for large images (auto-optimized for 60-core GPU, default: 1536)"
+    echo "  --scale        Upscale factor: 2 or 4 (default: 4)"
+    echo "  --list-models  List available CoreML models"
+    echo "  --help         Show this help"
+    echo ""
+    echo "Examples:"
+    echo "  upscale-image photo.jpg"
+    echo "  upscale-image photo.jpg --model RealESRGAN_x4plus"
+    echo "  upscale-image photo.jpg result.jpg --scale 2"
+    echo "  upscale-image photo.jpg --tile 1024"
+    echo "  upscale-image huge-image.jpg --tile 1200 --scale 4"
+}
+
+# Check dependencies
+check_dependencies() {
+    local models_dir="${MODELS_DIR}"
+    local venv_path="${models_dir}/venv"
+    local python_cmd="${venv_path}/bin/python"
+
+    if [[ ! -f "$python_cmd" ]]; then
+        log_error "Python environment not found: $python_cmd"
+        log_info "Run 'make pytorch-setup' to set up models and environment"
+        exit 1
+    fi
+
+    echo "$python_cmd"
+}
+
+# List available CoreML models
+list_models() {
+    log_section "Available CoreML Models"
+
+    echo "Searching for CoreML models..."
+
+    local found_models=false
+
+    # Search for .mlmodel files
+    for model_file in "${MODELS_DIR}"/*.mlmodel "${MODELS_DIR}"/*.mlpackage "${MODELS_DIR}"/*.mlmodelc; do
+        if [[ -f "$model_file" ]]; then
+            local basename=$(basename "$model_file")
+            local name="${basename%.*}"
+            local type="${basename##*.}"
+
+            if [[ "$name" == "$DEFAULT_MODEL" ]]; then
+                echo "  ✅ $name ($type) - default"
+            else
+                echo "  • $name ($type)"
+            fi
+            found_models=true
+        fi
+    done
+
+    # Search in coreml subdirectory
+    if [[ -d "${MODELS_DIR}/coreml" ]]; then
+        for model_file in "${MODELS_DIR}/coreml"/*.mlmodel "${MODELS_DIR}/coreml"/*.mlpackage "${MODELS_DIR}/coreml"/*.mlmodelc; do
+            if [[ -f "$model_file" ]]; then
+                local basename=$(basename "$model_file")
+                local name="${basename%.*}"
+                local type="${basename##*.}"
+
+                if [[ "$name" == "$DEFAULT_MODEL" ]]; then
+                    echo "  ✅ $name ($type) - default"
+                else
+                    echo "  • $name ($type)"
+                fi
+                found_models=true
+            fi
+        done
+    fi
+
+    if [[ "$found_models" == false ]]; then
+        echo "No CoreML models found in standard locations."
+        echo ""
+        echo "Searched directories:"
+        echo "  • $MODELS_DIR"
+        echo "  • $MODELS_DIR/coreml"
+        echo ""
+        echo "💡 Run 'make pytorch-setup' to download and convert models to CoreML"
+    else
+        echo ""
+        echo "Default model: $DEFAULT_MODEL"
+        echo ""
+        echo "💡 CoreML models provide optimal performance on Apple Silicon"
+    fi
+}
+
+# Generate output filename if not provided
+generate_output_path() {
+    local input_path="$1"
+    local base_name="${input_path%.*}"
+    local extension="${input_path##*.}"
+    echo "${base_name}_upscaled.${extension}"
+}
+
+# Run image upscaling with direct CoreML implementation
+run_upscale() {
+    local input_path="$1"
+    local output_path="$2"
+    local model_name="$3"
+    local python_cmd="$4"
+
+    # Validate input file
+    if [[ ! -f "$input_path" ]]; then
+        log_error "Input file not found: $input_path"
+        exit 1
+    fi
+
+    log_progress "Upscaling $input_path using optimized CoreML implementation..."
+
+    # Use the new direct CoreML implementation
+    local image_upscale_script="${ZSH_CONFIG}/bin/image_upscale_direct.py"
+
+    if [[ ! -f "$image_upscale_script" ]]; then
+        log_error "CoreML image upscaler not found: $image_upscale_script"
+        exit 1
+    fi
+
+    # Build script arguments
+    local script_args="--model $model_name"
+    if [[ -n "$tile_size" && "$tile_size" != "800" ]]; then
+        script_args="$script_args --tile $tile_size"
+    fi
+    if [[ -n "$scale_factor" && "$scale_factor" != "4" ]]; then
+        script_args="$script_args --scale $scale_factor"
+    fi
+
+    # Run the optimized CoreML image upscaler
+    "$python_cmd" "$image_upscale_script" \
+        "$input_path" \
+        "$output_path" \
+        $script_args
+
+    local exit_code=$?
+
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "Image upscaling completed successfully!"
+        log_info "Result saved to: $output_path"
+        return 0
+    else
+        log_error "Image upscaling failed with exit code: $exit_code"
+        return 1
+    fi
+}
+
+# Main execution
+main() {
+    local input_path=""
+    local output_path=""
+    local model_name="$DEFAULT_MODEL"
+    local tile_size="1536"  # Optimized for 60-core GPU
+    local scale_factor="4"
+
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --help)
+                show_usage
+                exit 0
+                ;;
+            --list-models)
+                list_models
+                exit 0
+                ;;
+            --model)
+                model_name="$2"
+                shift 2
+                ;;
+            --tile)
+                tile_size="$2"
+                shift 2
+                ;;
+            --scale)
+                scale_factor="$2"
+                shift 2
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+            *)
+                if [[ -z "$input_path" ]]; then
+                    input_path="$1"
+                elif [[ -z "$output_path" ]]; then
+                    output_path="$1"
+                else
+                    log_error "Too many arguments"
+                    show_usage
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # Validate arguments
+    if [[ -z "$input_path" ]]; then
+        log_error "Input path is required"
+        show_usage
+        exit 1
+    fi
+
+    # Validate scale factor
+    if [[ "$scale_factor" != "2" && "$scale_factor" != "4" ]]; then
+        log_error "Scale factor must be 2 or 4"
+        show_usage
+        exit 1
+    fi
+
+    # Generate output path if not provided
+    if [[ -z "$output_path" ]]; then
+        output_path=$(generate_output_path "$input_path")
+    fi
+
+    # Check dependencies
+    local python_cmd
+    python_cmd=$(check_dependencies)
+
+    # Run upscaling
+    log_banner "Image Upscaling - CoreML Optimized"
+    log_info "Input: $input_path"
+    log_info "Output: $output_path"
+    log_info "Model: $model_name"
+    log_info "Tile size: $tile_size"
+    log_info "Scale factor: ${scale_factor}x"
+
+    if run_upscale "$input_path" "$output_path" "$model_name" "$python_cmd"; then
+        log_success "Upscaling completed successfully!"
+        log_info "Result saved to: $output_path"
+    else
+        log_error "Upscaling failed"
+        exit 1
+    fi
+}
+
+main "$@"

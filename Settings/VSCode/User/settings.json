@@ -1,0 +1,115 @@
+{
+  "[ruby]": {
+    "editor.defaultFormatter": "misogi.ruby-rubocop"
+  },
+  "security.workspace.trust.untrustedFiles": "open",
+  "workbench.colorCustomizations": {
+    "[Behave]": {
+      "sideBar.background": "#061728",
+      "editor.background": "#02283d"
+    }
+  },
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "files.autoSave": "onFocusChange",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "terminal.integrated.env.osx": {
+    "FIG_NEW_SESSION": "1"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+  "editor.inlineSuggest.enabled": true,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "editor.cursorStyle": "line",
+  "redhat.telemetry.enabled": true,
+  "npm.packageManager": "yarn",
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false,
+    "yaml": true
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.detectIndentation": false,
+  "git.confirmSync": false,
+  "[graphql]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "workbench.colorTheme": "Behave",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "editor.renderWhitespace": "all",
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "git.enableSmartCommit": true,
+  "explorer.openEditors.visible": 6,
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "workbench.iconTheme": "vs-seti",
+  "[javascriptreact]": {
+    "editor.formatOnSave": true
+  },
+  "editor.accessibilitySupport": "off",
+  "npm.keybindingsChangedWarningShown": true,
+  "xml.server.binary.trustedHashes": [
+    "1facb3e258f78f295a988276a27ddd28465b10ab2ce9d81a07f9decee26abd39"
+  ],
+  "editor.formatOnSave": true,
+  "typescript.tsdk": "node_modules\/typescript\/lib",
+  "sync.quietSync": true,
+  "editor.suggestSelection": "first",
+  "editor.fontSize": 14,
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "editor.minimap.enabled": false,
+  "editor.tabSize": 2,
+  "editor.cursorBlinking": "blink",
+  "editor.codeActionsOnSave": {},
+  "[javascript]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.unicodeHighlight.ambiguousCharacters": false,
+  "editor.largeFileOptimizations": false,
+  "terminal.integrated.inheritEnv": false,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoSearchPaths": false,
+  "python.analysis.autoImportUserSymbols": true,
+  "[python]": {
+    "editor.formatOnType": true
+  },
+  "explorer.confirmDragAndDrop": false,
+"explorer.confirmDelete": false,
+"python.defaultInterpreterPath": "/Users/hemantv/anaconda3/envs/tf",
+"window.zoomLevel": 2,
+  "[scss]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [
+      80
+    ],
+    "editor.selectionHighlight": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": "off"
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "git.openRepositoryInParentFolders": "always"
+}

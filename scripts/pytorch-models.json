@@ -1,0 +1,27 @@
+{
+  "RealESRGAN_x4plus": {
+    "url": "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth",
+    "filename": "RealESRGAN_x4plus.pth",
+    "description": "Real-ESRGAN general 4x upscaler"
+  },
+  "SwinIR_4x": {
+    "url": "https://github.com/JingyunLiang/SwinIR/releases/download/v0.0/003_realSR_BSRGAN_DFOWMFC_s64w8_SwinIR-L_x4_GAN.pth",
+    "filename": "SwinIR_4x.pth",
+    "description": "SwinIR 4x super-resolution model"
+  },
+  "YOLOv8n": {
+    "url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt",
+    "filename": "yolov8n.pt",
+    "description": "YOLOv8 nano - person detection"
+  },
+  "RIFE4.9": {
+    "url": "https://huggingface.co/hfmaster/models-moved/resolve/main/rife/rife49.pth",
+    "filename": "rife49.pth",
+    "description": "RIFE 4.9 frame interpolation model - latest version"
+  },
+  "RIFE4.7": {
+    "url": "https://huggingface.co/wavespeed/misc/resolve/main/rife/rife47.pth",
+    "filename": "rife47.pth",
+    "description": "RIFE 4.7 frame interpolation model - stable version"
+  }
+}

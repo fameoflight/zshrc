@@ -1,0 +1,6 @@
+{
+  /* List of installted extensions 
+		code --list-extensions | xargs -L 1 echo 
+	*/
+  "recommendations": ["liwangqian.luacoderassist"]
+}

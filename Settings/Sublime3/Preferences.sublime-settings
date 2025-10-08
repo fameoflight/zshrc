@@ -1,0 +1,24 @@
+{
+	"always_show_minimap_viewport": true,
+	"caret_style": "smooth",
+	"color_scheme": "Packages/Solarized Color Scheme/Solarized (dark).tmTheme",
+	"draw_minimap_border": true,
+	"font_size": 20,
+	"highlight_line": true,
+  "translate_tabs_to_spaces": true,
+  "tab_size": 2,
+  "margin": 2,
+  "rulers": [80, 120],
+  "indent_guide_options": ["draw_active"],
+  "trim_trailing_white_space_on_save": true,
+	"auto_complete_commit_on_tab": true,
+	"scroll_speed": 1.5,
+	"highlight_modified_tabs": true,
+	"bold_folder_labels": true,
+	"open_files_in_new_window": false,
+	"ignored_packages":
+	[
+		"Vintage"
+	],
+	"theme": "Solarized Space Dark.sublime-theme"
+}

@@ -1,0 +1,32 @@
+# Cargo build optimizations
+[build]
+# Use all available CPU cores for parallel builds
+jobs = 8  # Adjust based on your CPU cores (use `sysctl -n hw.ncpu` on macOS or `nproc` on Linux to check)
+
+# Faster linker (lld on macOS, mold on Linux)
+# To use a custom linker, set the environment variable CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER to the path of ld.lld.
+# Example: export CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER=/usr/local/opt/llvm/bin/ld.lld
+# Alternatively, uncomment the following line if you are sure of the linker path:
+# rustflags = ["-C", "link-arg=-fuse-ld=/opt/homebrew/opt/llvm/bin/ld.lld"]
+
+# Dev profile optimizations for faster builds
+[profile.dev]
+# Remove debug symbols for faster compilation
+debug = 0
+# Light optimization for dependencies
+opt-level = 1
+# More codegen units for parallel compilation
+codegen-units = 256
+# Keep incremental compilation enabled
+incremental = true
+
+# Optimize dependencies more in dev builds
+[profile.dev.package."*"]
+opt-level = 2
+
+# Release profile optimizations (for your current `make rust`)
+[profile.release]
+# Maximum optimization
+lto = "fat"
+codegen-units = 1
+panic = "abort"

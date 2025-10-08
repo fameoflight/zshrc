@@ -1,0 +1,1 @@
+alias mix-test="MIX_ENV=test mix"
