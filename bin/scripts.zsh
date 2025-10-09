@@ -61,6 +61,25 @@ _execute_rust_program() {
   "$rust_binary" "$program_name" "$@"
 }
 
+_execute_ink_program() {
+  local program_name="$1"
+  local ink_binary="$ZSH_CONFIG/bin/ink-cli/dist/cli.js"
+  shift # Remove program name from arguments
+
+  if [[ ! -f "$ink_binary" ]]; then
+    log_error "Ink CLI binary not found at $ink_binary. Please run: cd $ZSH_CONFIG && make ink"
+    return 1
+  fi
+
+  if [[ ! -x "$ink_binary" ]]; then
+    log_info "Making Ink CLI binary executable..."
+    chmod +x "$ink_binary"
+  fi
+
+  # Run the Ink program with Node.js
+  node "$ink_binary" "$program_name" "$@"
+}
+
 # =============================================================================
 # UTILITY SCRIPT FUNCTIONS (Available in ZSH)
 # =============================================================================

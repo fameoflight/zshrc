@@ -530,6 +530,26 @@ rust:
 	fi
 
 # =============================================================================
+# React INK PROGRAMS
+# =============================================================================
+
+.PHONY: ink
+
+ink:
+	@echo -e "$(BOLD)$(CYAN)🖌️  Building React Ink programs...$(NC)"
+	@cd bin/ink-cli && { \
+		if [ "$(CLEAN)" = "true" ] || [ "$(CLEAN)" = "1" ]; then \
+			echo -e "$(YELLOW)🧹 Cleaning previous builds...$(NC)"; \
+			rm -rf node_modules dist; \
+		fi; \
+		echo -e "$(BLUE)📦 Installing dependencies...$(NC)"; \
+		yarn install; \
+		echo -e "$(BLUE)🚀 Building project...$(NC)"; \
+		yarn build; \
+	}
+	@echo -e "$(BOLD)$(GREEN)✅ React Ink programs built successfully$(NC)"
+
+# =============================================================================
 # UTILITIES
 # =============================================================================
 
