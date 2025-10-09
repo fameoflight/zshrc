@@ -43,17 +43,17 @@ _execute_ruby_script() {
 # Execute a Rust program with automatic building
 _execute_rust_program() {
   local program_name="$1"
-  local rust_binary="$ZSH_CONFIG/bin/rust/target/release/utils"
+  local rust_binary="$ZSH_CONFIG/bin/rust/target/release/rust-cli"
   shift # Remove program name from arguments
 
   # Build the Rust binary if it doesn't exist
   if [[ ! -f "$rust_binary" ]]; then
-    log_info "Rust utils not found. Building with: make rust"
+    log_info "rust-cli not found. Building with: make rust"
     cd "$ZSH_CONFIG" && make rust
   fi
 
   if [[ ! -f "$rust_binary" ]]; then
-    log_error "Rust utils binary not available after build. Please run: cd $ZSH_CONFIG && make rust"
+    log_error "rust-cli binary not available after build. Please run: cd $ZSH_CONFIG && make rust"
     return 1
   fi
 

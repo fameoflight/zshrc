@@ -97,48 +97,7 @@ zstyle ':completion::*:vi:*:*' file-patterns 'Makefile|*(rc|log)|*.(php|tex|bib|
 
 zstyle :compinstall filename '~/.zshrc'
 
-# Optimized completion system with lazy loading and cache management
-_zsh_compinit_force_check=()  # Array to force regeneration of specific completion caches
-
-# Only run compinit if:
-# 1. The zcompdump file is missing, or
-# 2. It's older than 1 day, or
-# 3. We're explicitly forcing a check
-_zsh_compinit_lazy() {
-    local zcompdump="$ZSH_CACHE/zcompdump-${HOST/.*/}"
-    local zcompdump_files=($zcompdump(Nmh-1))
-
-    # Force check if any completion files are newer than the dump
-    if [[ -z "$_zsh_compinit_force_check" ]]; then
-        local completion_files=(${^fpath}/_*~*.zwc(Nmh-1))
-        zcompdump_files+=(${completion_files})
-    fi
-
-    if [[ $#zcompdump_files -gt 0 ]] || [[ ! -f "$zcompdump" ]]; then
-        # Create cache directory if it doesn't exist
-        [[ -d "$ZSH_CACHE" ]] || mkdir -p "$ZSH_CACHE"
-
-        # Run compinit with improved options
-        autoload -Uz compinit
-        compinit -u -C -d "$zcompdump"
-
-        # Optimize the dump file
-        if [[ -f "$zcompdump" ]]; then
-            # Remove duplicate entries and sort with proper temp file handling
-            local temp_dump="${zcompdump}.tmp.$$"
-            if sort -u "$zcompdump" > "$temp_dump" 2>/dev/null; then
-                mv "$temp_dump" "$zcompdump"
-            else
-                rm -f "$temp_dump" 2>/dev/null
-            fi
-        fi
-    else
-        # Fast path - just load the dump
-        autoload -Uz compinit
-        compinit -C -d "$zcompdump"
-    fi
-}
-
-# Lazy load completions
-_zsh_compinit_lazy
+# Simple and reliable completion initialization
+autoload -Uz compinit
+compinit -u
 
