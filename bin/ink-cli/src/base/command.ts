@@ -4,14 +4,14 @@ export interface CommandFlags {
 	[key: string]: any;
 }
 
-export interface CommandConfig {
+export interface CommandConfig<T extends CommandFlags = CommandFlags> {
 	name: string;
 	description: string;
 	flags?: {
-		[key: string]: {
+		[K in keyof T]: {
 			type: 'string' | 'number' | 'boolean';
 			description?: string;
-			default?: any;
+			default?: T[K];
 			required?: boolean;
 		};
 	};
@@ -52,5 +52,5 @@ export interface Command {
 	/**
 	 * Execute the command with parsed flags
 	 */
-	execute(flags: CommandFlags): ReactElement;
+	execute<T extends CommandFlags = CommandFlags>(flags: T): ReactElement;
 }

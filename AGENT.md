@@ -343,7 +343,7 @@ Interactive command-line interface framework built with React and Ink. Located i
 
 **Quick Start:**
 ```bash
-cd bin/ink-cli && npm install && npm run build && npm start
+cd bin/ink-cli && yarn install && yarn build && yarn start
 ```
 
 **ZSH Integration:**
@@ -357,9 +357,11 @@ scripts                      # Interactive fuzzy finder
 **Adding Commands:**
 1. Create command in `src/commands/` following the pattern in `INK.md`
 2. Register in `src/commands/index.ts`
-3. Build with `npm run build`
+3. Build with `yarn build`
 
 **Documentation:** See `bin/ink-cli/INK.md` for complete architecture and examples.
+
+**IMPORTANT:** Always use `yarn` instead of `npm` for ink-cli project.
 
 ## Git Integration
 

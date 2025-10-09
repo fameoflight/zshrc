@@ -6,6 +6,8 @@ import {getRegistry} from './base/index.js';
 import Help from './Help.js';
 import {registerAllCommands} from './commands/index.js';
 
+import {isDebugMode} from './common/utils.js';
+
 registerAllCommands();
 
 const cli = meow(
@@ -14,7 +16,6 @@ const cli = meow(
 	  $ ink-cli <command> [options]
 
 	Examples
-	  $ ink-cli add --a=5 --b=3
 	  $ ink-cli help
 `,
 	{
@@ -28,12 +29,19 @@ const commandName = cli.input[0];
 const registry = getRegistry();
 
 if (commandName === 'help' || !commandName) {
-	render(<Help />);
+	render(<Help />, {
+		exitOnCtrlC: false,
+		patchConsole: false,
+	});
 } else if (registry.hasCommand(commandName)) {
 	const command = registry.getCommand(commandName);
 	if (command) {
 		const result = command.execute(cli.flags);
-		render(result);
+		render(result, {
+			exitOnCtrlC: false,
+			debug: isDebugMode(),
+			patchConsole: false,
+		});
 	}
 } else {
 	console.error(`Unknown command: ${commandName}`);

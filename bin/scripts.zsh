@@ -62,22 +62,40 @@ _execute_rust_program() {
 }
 
 _execute_ink_program() {
-  local program_name="$1"
-  local ink_binary="$ZSH_CONFIG/bin/ink-cli/dist/cli.js"
-  shift # Remove program name from arguments
+  local ink_cli_dir="$ZSH_CONFIG/bin/ink-cli"
+  local ink_cli_path="$ink_cli_dir/dist/cli.js"
 
-  if [[ ! -f "$ink_binary" ]]; then
-    log_error "Ink CLI binary not found at $ink_binary. Please run: cd $ZSH_CONFIG && make ink"
+  if [[ ! -d "$ink_cli_dir" ]]; then
+    log_error "Ink CLI directory not found at $ink_cli_dir"
     return 1
   fi
 
-  if [[ ! -x "$ink_binary" ]]; then
-    log_info "Making Ink CLI binary executable..."
-    chmod +x "$ink_binary"
-  fi
 
-  # Run the Ink program with Node.js
-  node "$ink_binary" "$program_name" "$@"
+
+  # Store current directory and change to ink-cli directory
+  local current_dir="$(pwd)"
+  (
+    cd "$ink_cli_dir" || return
+    # Run in development mode if DEV=1, otherwise use production mode
+    if [[ "$DEV" == "1" ]]; then
+      log_info "Running ink-cli in development mode..."
+      log_info "current_dir: $current_dir, PWD: $(pwd)"
+      ORIGINAL_WORKING_DIR="$current_dir" yarn dev "$@"
+    else
+      if [[ ! -f "$ink_cli_path" ]]; then
+        log_info "Ink CLI not built. Building with: cd ~/zshrc && make ink"
+        (
+          cd "$ZSH_CONFIG"
+          make ink
+        )
+      fi
+      
+      ORIGINAL_WORKING_DIR="$current_dir" yarn start "$@"
+    fi
+  )
+
+  # Return to original directory
+  cd "$current_dir"
 }
 
 # =============================================================================
@@ -210,7 +228,7 @@ check-camera-mic() {
 
 # Interactive Command Line Interface - ink-cli tool
 ink-cli() {
-  _execute_ink_program "" "$@"
+  _execute_ink_program "$@"
 }
 
 # Image upscaling utility - AI-powered image upscaling

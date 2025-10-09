@@ -87,9 +87,12 @@
       "Bash(sudo pmset:*)",
       "Bash(cat:*)",
       "Bash(openresty:*)",
-      "Bash(htpasswd:*)"
+      "Bash(htpasswd:*)",
+      "Read(//Library/Logs/DiagnosticReports/**)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }
