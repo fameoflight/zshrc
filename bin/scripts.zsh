@@ -208,6 +208,11 @@ check-camera-mic() {
   _execute_ruby_script "check-camera-mic.rb" "$@"
 }
 
+# Interactive Command Line Interface - ink-cli tool
+ink-cli() {
+  _execute_ink_program "" "$@"
+}
+
 # Image upscaling utility - AI-powered image upscaling
 upscale-image() {
   local script_path="$ZSH_CONFIG/bin/upscale-image"
@@ -429,6 +434,7 @@ list-scripts() {
   echo " 📁 git-commit-dir        - Stage and commit changes in a specific directory"
   echo " 📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo " 📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
   echo " 🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo " 🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
@@ -458,6 +464,7 @@ list-scripts() {
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo "  🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
   echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
@@ -746,7 +753,7 @@ scripts() {
   local utility_functions=(
     "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
-    "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
+    "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human" "find-similar-images" "find-duplicate-images"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )

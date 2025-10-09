@@ -540,8 +540,9 @@ ink:
 	@cd bin/ink-cli && { \
 		if [ "$(CLEAN)" = "true" ] || [ "$(CLEAN)" = "1" ]; then \
 			echo -e "$(YELLOW)🧹 Cleaning previous builds...$(NC)"; \
-			rm -rf node_modules dist; \
+			rm -rf node_modules; \
 		fi; \
+		rm -rf dist; \
 		echo -e "$(BLUE)📦 Installing dependencies...$(NC)"; \
 		yarn install; \
 		echo -e "$(BLUE)🚀 Building project...$(NC)"; \

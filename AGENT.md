@@ -337,6 +337,30 @@ The framework includes automatic memory management:
 - Provides helpful error messages with optimization suggestions
 - Handles device-specific memory constraints
 
+## INK CLI Framework
+
+Interactive command-line interface framework built with React and Ink. Located in `bin/ink-cli/` with plugin-based architecture.
+
+**Quick Start:**
+```bash
+cd bin/ink-cli && npm install && npm run build && npm start
+```
+
+**ZSH Integration:**
+The ink-cli is available as a ZSH function through `bin/scripts.zsh`:
+```bash
+ink-cli add --a=5 --b=3      # Direct usage
+scripts ink-cli add --a=5    # Via scripts interface
+scripts                      # Interactive fuzzy finder
+```
+
+**Adding Commands:**
+1. Create command in `src/commands/` following the pattern in `INK.md`
+2. Register in `src/commands/index.ts`
+3. Build with `npm run build`
+
+**Documentation:** See `bin/ink-cli/INK.md` for complete architecture and examples.
+
 ## Git Integration
 
 **Custom aliases:** `lg` (log), `cp` (cherry-pick), `ri` (rebase interactive), `rc` (rebase continue), `pushf` (force push)

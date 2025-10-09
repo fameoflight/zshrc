@@ -61,7 +61,4 @@ class CommandRegistry {
 	}
 }
 
-// Global registry instance
-const registry = new CommandRegistry();
-
-export {CommandRegistry, registry};
+export default CommandRegistry;

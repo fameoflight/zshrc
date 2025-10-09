@@ -1,7 +1,21 @@
 {
 	"extends": "@sindresorhus/tsconfig",
 	"compilerOptions": {
-		"outDir": "dist"
+		"outDir": "dist",
+		"rootDir": "src",
+		"baseUrl": ".",
+		"module": "ES2020",
+		"moduleResolution": "bundler",
+		"allowImportingTsExtensions": false,
+		"moduleDetection": "legacy",
+		"allowJs": true,
+		"paths": {
+			"@src/*": ["./src/*"]
+		}
 	},
-	"include": ["source"]
+	"include": ["src"],
+	"ts-node": {
+		"esm": true,
+		"experimentalSpecifierResolution": "node"
+	}
 }

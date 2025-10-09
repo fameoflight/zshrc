@@ -17,6 +17,13 @@ export interface CommandConfig {
 	};
 }
 
+export interface CommandHelp {
+	description: string;
+	examples: string[];
+	usage?: string;
+	notes?: string[];
+}
+
 /**
  * Base Command interface - similar to Rust's CommandTrait
  * All commands must implement these methods
@@ -28,7 +35,7 @@ export interface Command {
 	name(): string;
 
 	/**
-	 * Return help text for the command
+	 * Return brief description for the command
 	 */
 	description(): string;
 
@@ -36,6 +43,11 @@ export interface Command {
 	 * Get command configuration including flags
 	 */
 	config(): CommandConfig;
+
+	/**
+	 * Return detailed help information with examples
+	 */
+	help(): CommandHelp;
 
 	/**
 	 * Execute the command with parsed flags
