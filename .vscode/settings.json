@@ -9,12 +9,14 @@
   },
   "files.exclude": {
     "build/**": true,
-    "node_modules/**": true,
-    "**/__generated__": true
+    "**/node_modules/**": true,
+    "**/__generated__": true,
+    "**/.DS_Store": true,
+    "**/dist/**": true
   },
   "files.watcherExclude": {
     "build/**": true,
-    "node_modules/**": true,
+    "**/node_modules/**": true,
     "**/__generated__": true
   },
   "window.zoomLevel": 2,

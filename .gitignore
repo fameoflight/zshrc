@@ -29,3 +29,6 @@ credentials/gmail-token.yaml
 .saved_hot_corners.plist
 *.pyc
 /bin/rust/target
+/.yarn
+.yarnrc
+/node_modules
