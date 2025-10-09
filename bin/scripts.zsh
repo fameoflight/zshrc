@@ -61,6 +61,7 @@ _execute_rust_program() {
   "$rust_binary" "$program_name" "$@"
 }
 
+
 _execute_ink_program() {
   local ink_cli_dir="$ZSH_CONFIG/bin/ink-cli"
   local ink_cli_path="$ink_cli_dir/dist/cli.js"
@@ -369,6 +370,10 @@ find-duplicate-images() {
   fi
 
   python3 "$script_path" "$@"
+}
+
+rust-cli() {
+  _execute_rust_program "$@"
 }
 
 # Disk usage analyzer - Fast analysis of du output

@@ -2,6 +2,7 @@ pub mod display;
 pub mod display_tree;
 pub mod file_finder;
 pub mod logger;
+pub mod llm_client;
 
 pub use display::{DisplayFormatter, DisplayItem, ItemType};
 pub use display_tree::{TreeDisplay, TreeNode};
@@ -14,3 +15,4 @@ pub use logger::{
     log_error_with_context, log_file_created, log_git, log_info, log_install, log_progress,
     log_section, log_success, log_warning, prompt_with_default,
 };
+pub use llm_client::{LLMClient, Message};
