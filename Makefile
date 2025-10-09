@@ -91,6 +91,7 @@ help:
 	@echo ""
 	@echo -e "$(BOLD)$(RED)🩺 Troubleshooting:$(NC)"
 	@echo -e "  $(GREEN)doctor$(NC)   - Run system diagnostics"
+	@echo -e "  $(GREEN)debug$(NC)    - Profile ZSH startup performance"
 	@echo -e "  $(GREEN)fix-brew$(NC) - Fix Homebrew issues"
 	@echo -e "  $(GREEN)update$(NC)   - Update repository and packages"
 	@echo -e "  $(GREEN)clean$(NC)    - Clean temporary files"
@@ -473,7 +474,44 @@ find-orphans:
 # TROUBLESHOOTING - Fix common issues and run diagnostics
 # =============================================================================
 
-.PHONY: fix-brew fix-brew-only brew-doctor brew-clean brew-relink xcode-update doctor
+.PHONY: debug debug-profile debug-baseline debug-compare debug-components debug-recommendations debug-test-optimizations fix-brew fix-brew-only brew-doctor brew-clean brew-relink xcode-update doctor
+
+# ZSH startup performance debugging
+debug:
+	@echo -e "$(BOLD)$(CYAN)🔍 ZSH Startup Performance Debugging$(NC)"
+	@echo -e "$(DIM)Running comprehensive ZSH startup analysis...$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh
+
+debug-profile:
+	@echo -e "$(BOLD)$(CYAN)🔍 Detailed ZSH Startup Profiling$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh profile
+
+debug-baseline:
+	@echo -e "$(BOLD)$(CYAN)📊 ZSH Baseline Performance Testing$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh baseline
+
+debug-compare:
+	@echo -e "$(BOLD)$(CYAN)⚖️  ZSH Performance Comparison$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh compare
+
+debug-components:
+	@echo -e "$(BOLD)$(CYAN)🔧 ZSH Component Analysis$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh components
+
+debug-recommendations:
+	@echo -e "$(BOLD)$(CYAN)💡 ZSH Optimization Recommendations$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh recommend
+
+debug-test-optimizations:
+	@echo -e "$(BOLD)$(CYAN)✅ Testing ZSH Optimizations$(NC)"
+	@echo ""
+	@bash scripts/debug.zsh test-optimizations
 fix-brew: fix-permissions brew-doctor brew-update brew-relink xcode-update
 	@echo -e "$(BOLD)$(GREEN)✅ Homebrew troubleshooting complete$(NC)"
 
@@ -544,9 +582,17 @@ ink:
 		fi; \
 		rm -rf dist; \
 		echo -e "$(BLUE)📦 Installing dependencies...$(NC)"; \
-		yarn install; \
+		if [ -f "$$HOME/.config/nvm/nvm.sh" ]; then \
+			. "$$HOME/.config/nvm/nvm.sh" && nvm use default && npm install --legacy-peer-deps; \
+		else \
+			npm install --legacy-peer-deps; \
+		fi; \
 		echo -e "$(BLUE)🚀 Building project...$(NC)"; \
-		yarn build; \
+		if [ -f "$$HOME/.config/nvm/nvm.sh" ]; then \
+			. "$$HOME/.config/nvm/nvm.sh" && nvm use default && npm run build; \
+		else \
+			npm run build; \
+		fi; \
 	}
 	@echo -e "$(BOLD)$(GREEN)✅ React Ink programs built successfully$(NC)"
 

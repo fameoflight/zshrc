@@ -2,6 +2,26 @@
   "[ruby]": {
     "editor.defaultFormatter": "misogi.ruby-rubocop"
   },
+  "files.exclude": {
+    "**/node_modules/**": true,
+    "**/.DS_Store": true,
+    "**/dist/**": true,
+    "**/.git": true,
+    "**/bundle/ruby/**": true
+  },
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/__generated__": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/__generated__": true,
+    "**/bundle/ruby/**": true
+  },
   "security.workspace.trust.untrustedFiles": "open",
   "workbench.colorCustomizations": {
     "[Behave]": {
@@ -70,7 +90,7 @@
     "1facb3e258f78f295a988276a27ddd28465b10ab2ce9d81a07f9decee26abd39"
   ],
   "editor.formatOnSave": true,
-  "typescript.tsdk": "node_modules\/typescript\/lib",
+  "typescript.tsdk": "node_modules/typescript/lib",
   "sync.quietSync": true,
   "editor.suggestSelection": "first",
   "editor.fontSize": 14,
@@ -93,18 +113,16 @@
     "editor.formatOnType": true
   },
   "explorer.confirmDragAndDrop": false,
-"explorer.confirmDelete": false,
-"python.defaultInterpreterPath": "/Users/hemantv/anaconda3/envs/tf",
-"window.zoomLevel": 2,
+  "explorer.confirmDelete": false,
+  "python.defaultInterpreterPath": "/Users/hemantv/anaconda3/envs/tf",
+  "window.zoomLevel": 2,
   "[scss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[dart]": {
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
-    "editor.rulers": [
-      80
-    ],
+    "editor.rulers": [80],
     "editor.selectionHighlight": false,
     "editor.suggestSelection": "first",
     "editor.tabCompletion": "onlySnippets",

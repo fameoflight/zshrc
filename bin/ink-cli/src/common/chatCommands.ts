@@ -30,18 +30,37 @@ export const CHAT_COMMANDS: ChatCommand[] = [
 	{
 		label: '/tokens',
 		value: 'tokens',
-		description: 'Total number of tokens till now',
+		description: 'Show detailed token usage statistics',
 		execute: (context: ChatContext) => {
+			// Calculate token usage by role
+			const userChars = context.messages
+				.filter(msg => msg.role === 'user')
+				.reduce((sum, msg) => sum + msg.content.length, 0);
+
+			const assistantChars = context.messages
+				.filter(msg => msg.role === 'assistant')
+				.reduce((sum, msg) => sum + msg.content.length, 0);
+
+			const systemChars = context.messages
+				.filter(msg => msg.role === 'system')
+				.reduce((sum, msg) => sum + msg.content.length, 0);
+
+			const totalChars = userChars + assistantChars + systemChars;
+
 			// Simple token estimation (rough approximation: ~4 characters per token)
-			const totalChars = context.messages.reduce(
-				(sum, msg) => sum + msg.content.length,
-				0,
-			);
-			const estimatedTokens = Math.ceil(totalChars / 4);
+			const userTokens = Math.ceil(userChars / 4);
+			const assistantTokens = Math.ceil(assistantChars / 4);
+			const systemTokens = Math.ceil(systemChars / 4);
+			const totalTokens = Math.ceil(totalChars / 4);
+
+			// Count messages by role
+			const userMessages = context.messages.filter(msg => msg.role === 'user').length;
+			const assistantMessages = context.messages.filter(msg => msg.role === 'assistant').length;
+			const systemMessages = context.messages.filter(msg => msg.role === 'system').length;
 
 			context.addMessage(
 				'system',
-				`📊 Token Usage:\n• Messages: ${context.messageCount}\n• Characters: ${totalChars}\n• Estimated Tokens: ${estimatedTokens}\n\nNote: This is a rough approximation. Actual token count may vary based on the model's tokenizer.`,
+				`📊 Token Usage:\n\n📥 Input Tokens:\n• User: ${userTokens} tokens (${userMessages} messages, ${userChars} chars)\n• System: ${systemTokens} tokens (${systemMessages} messages, ${systemChars} chars)\n\n📤 Output Tokens:\n• Assistant: ${assistantTokens} tokens (${assistantMessages} messages, ${assistantChars} chars)\n\n📈 Summary:\n• Total Messages: ${context.messageCount}\n• Total Characters: ${totalChars}\n• Estimated Total Tokens: ${totalTokens}\n\nNote: This is a rough approximation (~4 chars/token). Actual token count may vary based on the model's tokenizer.`,
 			);
 		},
 	},

@@ -1,5 +1,6 @@
 import React, {memo} from 'react';
-import {Text, Box} from 'ink';
+import {Box, Text} from 'ink';
+import {ChatMessage} from '../common/types/chat.js';
 
 export interface SenderConfig {
 	name: string;
@@ -7,53 +8,61 @@ export interface SenderConfig {
 	icon?: string;
 }
 
-export interface MessageBubbleProps {
-	sender: SenderConfig;
-	content: string;
-	renderer?: (content: string) => React.ReactElement;
-	backgroundColor?: string;
+interface IMessageBubbleProps {
+	message: ChatMessage;
 }
 
-/**
- * MessageBubble - Generic message display component
- *
- * Displays a message from any sender with customizable rendering.
- * Works for chat messages, logs, notifications, etc.
- *
- * @example
- * <MessageBubble
- *   sender={{ name: 'Assistant', color: 'cyan', icon: '🤖' }}
- *   content="Hello!"
- *   renderer={(text) => <MarkdownRenderer content={text} />}
- * />
- */
-const MessageBubble: React.FC<MessageBubbleProps> = memo(
-	({sender, content, renderer, backgroundColor}) => {
-		if (!renderer) {
-			return (
-				<Text>
-					{sender.icon && `${sender.icon} `}
-					{sender.name}:{' '}
-					<Text backgroundColor={backgroundColor}>{content}</Text>
-				</Text>
-			);
-		}
+function getConfig(role: ChatMessage['role']) {
+	switch (role) {
+		case 'user':
+			return {
+				prefix: '👤',
+				textColor: 'white',
+				backgroundColor: 'black',
+				name: 'You',
+			};
+		case 'assistant':
+			return {
+				prefix: '🤖',
+				textColor: undefined,
+				backgroundColor: undefined,
+				name: 'Assistant',
+			};
+		case 'system':
+			return {
+				prefix: '⚙️',
+				textColor: 'yellow',
+				backgroundColor: 'black',
+				name: 'System',
+			};
+		default:
+			return {
+				prefix: '❓',
+				textColor: 'white',
+				backgroundColor: 'black',
+				name: 'Unknown',
+			};
+	}
+}
 
-		return (
-			<>
-				<Text>
-					{sender.icon && `${sender.icon} `}
-					{sender.name}:
-				</Text>
+function MessageBubble(props: IMessageBubbleProps) {
+	const {message} = props;
+	const {prefix, textColor, backgroundColor} = getConfig(message.role);
 
-				<Box marginLeft={2} flexDirection="column">
-					{renderer(content)}
-				</Box>
-			</>
-		);
-	},
-);
+	return (
+		<Box
+			flexDirection="column"
+			backgroundColor={backgroundColor}
+			justifyContent="center"
+			alignItems="flex-start"
+		>
+			<Text color={textColor}>
+				{prefix}
+				{': '}
+				{message.content}
+			</Text>
+		</Box>
+	);
+}
 
-MessageBubble.displayName = 'MessageBubble';
-
-export default MessageBubble;
+export default memo(MessageBubble);

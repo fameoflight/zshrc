@@ -88,7 +88,8 @@
       "Bash(cat:*)",
       "Bash(openresty:*)",
       "Bash(htpasswd:*)",
-      "Read(//Library/Logs/DiagnosticReports/**)"
+      "Read(//Library/Logs/DiagnosticReports/**)",
+      "Bash(yarn build:*)"
     ],
     "deny": [],
     "additionalDirectories": [

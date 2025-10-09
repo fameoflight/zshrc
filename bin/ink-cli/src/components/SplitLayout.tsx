@@ -3,7 +3,7 @@ import {Box} from 'ink';
 
 export interface SplitLayoutProps {
 	header?: React.ReactElement;
-	body: React.ReactElement;
+	children: React.ReactElement;
 	footer?: React.ReactElement;
 }
 
@@ -22,7 +22,8 @@ export interface SplitLayoutProps {
  *   footer={<BottomBar status="Ready" />}
  * />
  */
-const SplitLayout: React.FC<SplitLayoutProps> = ({header, body, footer}) => {
+const SplitLayout: React.FC<SplitLayoutProps> = props => {
+	const {header, children: body, footer} = props;
 	return (
 		<Box flexDirection="column" height="100%">
 			{header}

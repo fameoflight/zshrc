@@ -68,9 +68,12 @@ foreach file (`echo $sources`)
     fi
 end
 
-ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
-ssh-add ~/.ssh/id_hemantv > /dev/null 2>&1
-ssh-add ~/.ssh/do_hemantv > /dev/null 2>&1
+# Simple SSH key loading - run silently to avoid notifications
+{
+    ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
+    ssh-add ~/.ssh/id_hemantv > /dev/null 2>&1
+    ssh-add ~/.ssh/do_hemantv > /dev/null 2>&1
+} 2>/dev/null || true
 
 export PATH="$PATH:$HOME/.rvm/bin"
 
@@ -109,6 +112,104 @@ export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
 
 
 
+# NVM (Node Version Manager) - Optimized lazy loading with .nvmrc support
 export NVM_DIR="$HOME/.config/nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Optimized NVM lazy loading function
+function _load_nvm() {
+    # Remove all lazy loading functions
+    for cmd in nvm node npm npx yarn npxl; do
+        unset -f $cmd 2>/dev/null
+    done
+
+    # Load NVM with --no-use for better performance
+    if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+        \. "$NVM_DIR/nvm.sh" --no-use
+        if [[ -s "$NVM_DIR/bash_completion" ]]; then
+            \. "$NVM_DIR/bash_completion"
+        fi
+        return 0
+    else
+        echo "NVM not found. Please install NVM first."
+        return 1
+    fi
+}
+
+# Lazy load NVM and handle .nvmrc
+function nvm() {
+    _load_nvm
+    nvm "$@"
+}
+
+# Lazy load Node.js tools
+function node() {
+    _load_nvm
+    node "$@"
+}
+
+function npm() {
+    _load_nvm
+    npm "$@"
+}
+
+function npx() {
+    _load_nvm
+    npx "$@"
+}
+
+function yarn() {
+    _load_nvm
+    yarn "$@"
+}
+
+function npxl() {
+    _load_nvm
+    npxl "$@"
+}
+
+# Add default Node version to PATH (if it exists) - cached for performance
+NODE_DEFAULT_PATH="${NVM_DIR}/versions/default/bin"
+if [[ -d "$NODE_DEFAULT_PATH" ]]; then
+    PATH="${NODE_DEFAULT_PATH}:${PATH}"
+fi
+
+# Lightweight .nvmrc support - only check when directory actually changes
+_last_nvmrc_dir=""
+_last_node_version=""
+
+switchNode() {
+    local current_dir="$(pwd)"
+
+    # Skip if directory hasn't changed since last check
+    if [[ "$current_dir" == "$_last_nvmrc_dir" ]]; then
+        return 0
+    fi
+
+    _last_nvmrc_dir="$current_dir"
+
+    # Quick check for .nvmrc without loading NVM
+    local nvmrc_file="$current_dir/.nvmrc"
+    if [[ -f "$nvmrc_file" ]]; then
+        local target_version="$(cat "$nvmrc_file")"
+
+        # Only switch if different from last used version
+        if [[ "$target_version" != "$_last_node_version" ]]; then
+            # Load NVM if not already loaded
+            if ! command -v nvm >/dev/null 2>&1; then
+                _load_nvm >/dev/null 2>&1
+            fi
+
+            # Use nvm to switch version
+            if command -v nvm >/dev/null 2>&1; then
+                nvm use "$target_version" >/dev/null 2>&1
+                _last_node_version="$target_version"
+                echo "📦 Switched to Node $target_version"
+            fi
+        fi
+    fi
+}
+
+# Set up lightweight directory change hook for .nvmrc support
+if autoload -Uz add-zsh-hook; then
+    add-zsh-hook chpwd switchNode
+fi

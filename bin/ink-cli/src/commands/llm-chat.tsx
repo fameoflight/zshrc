@@ -1,12 +1,10 @@
 import React, {useState, useMemo} from 'react';
 import {Text, Box, Newline, useApp, useInput} from 'ink';
 import BottomBar from '../components/BottomBar.js';
-import MessageBubble, {SenderConfig} from '../components/MessageBubble.js';
-import MessageList from '../components/MessageList.js';
+import MessageBubble from '../components/MessageBubble.js';
 import InfoSection, {InfoItem} from '../components/InfoSection.js';
 import TextInput from '../components/TextInput.js';
 import SplitLayout from '../components/SplitLayout.js';
-import MarkdownRenderer from '../components/MarkdownRenderer.js';
 import {
 	Command,
 	CommandConfig,
@@ -20,13 +18,14 @@ import {useLLMService} from '../common/hooks/useLLMService.js';
 import {useTextInput} from '../common/hooks/useTextInput.js';
 import {useChatMessages} from '../common/hooks/useChatMessages.js';
 import {CHAT_COMMANDS, ChatContext} from '../common/chatCommands.js';
-import {ChatRole} from '../common/types/chat.js';
+import {ChatMessage, ChatRole} from '../common/types/chat.js';
 import SelectInput from 'ink-select-input';
 import {
 	computeChatStatus,
 	computeInfoText,
 	getShortcuts,
 } from '../common/utils/chatStatus.js';
+import StaticList from '../components/StaticList.js';
 
 interface LLMChatFlags extends CommandFlags {
 	provider?: string;
@@ -258,11 +257,15 @@ const LLMChatComponent: React.FC<{flags: LLMChatFlags}> = ({flags}) => {
 		executeCommand(item.value);
 	};
 
-	// Handle escape key for command selector
+	// Handle escape key and Ctrl+C for command selector
 	useInput(
-		(_input, key) => {
-			if (showCommandSelector && key.escape) {
-				setShowCommandSelector(false);
+		(input, key) => {
+			if (showCommandSelector) {
+				if (key.escape) {
+					setShowCommandSelector(false);
+				} else if (key.ctrl && input === 'c') {
+					exit();
+				}
 			}
 		},
 		{isActive: showCommandSelector},
@@ -298,13 +301,6 @@ const LLMChatComponent: React.FC<{flags: LLMChatFlags}> = ({flags}) => {
 	const info = computeInfoText(messageCount, resolvedProvider);
 	const shortcuts = getShortcuts(isStreaming, !!error);
 
-	// Sender configurations
-	const senders = {
-		user: {name: 'You', color: 'yellow', icon: '👤'} as SenderConfig,
-		assistant: {name: 'Assistant', color: 'cyan', icon: '🤖'} as SenderConfig,
-		system: {name: 'System', color: 'magenta', icon: '🔧'} as SenderConfig,
-	};
-
 	// Header info items
 	const headerInfo: InfoItem[] = [
 		{
@@ -333,88 +329,89 @@ const LLMChatComponent: React.FC<{flags: LLMChatFlags}> = ({flags}) => {
 					items={headerInfo}
 				/>
 			}
-			body={
-				<>
-					{/* Error display */}
-					{error && (
-						<Box>
-							<Text color="red">❌ Error: {error}</Text>
-							<Newline />
-						</Box>
-					)}
-
-					{/* Initializing state */}
-					{!isInitialized && !error && (
-						<Box>
-							<Text color="yellow">🔄 Initializing LLM service...</Text>
-							<Newline />
-						</Box>
-					)}
-
-					{/* Welcome message */}
-					{showWelcome && isInitialized && !error && (
-						<Box flexDirection="column" marginBottom={1}>
-							<Text color="green">
-								💬 Start typing your message and press Enter to send.
-							</Text>
-							<Text color="gray">Type / to see available commands.</Text>
-						</Box>
-					)}
-
-					{/* Chat history */}
-					<MessageList messages={messages} senders={senders} />
-
-					{/* Streaming response */}
-					{isStreaming && currentResponse && (
-						<MessageBubble
-							sender={senders['assistant']}
-							content={currentResponse}
-							renderer={content => (
-								<MarkdownRenderer content={content} isStreaming={true} />
-							)}
-						/>
-					)}
-
-					{/* Thinking indicator */}
-					{isStreaming && !currentResponse && (
-						<Text color="gray">🤔 Thinking...</Text>
-					)}
-
-					{/* Command selector overlay */}
-					{showCommandSelector && (
-						<Box flexDirection="column" marginTop={1}>
-							<Box borderColor="cyan" padding={1}>
-								<Text color="cyan" bold>
-									🔧 Select a command:
-								</Text>
-								<Newline />
-								<SelectInput
-									items={CHAT_COMMANDS}
-									onSelect={handleCommandSelect}
-								/>
-								<Text color="gray" dimColor>
-									Press Escape to cancel
-								</Text>
-							</Box>
-						</Box>
-					)}
-
-					{/* Input prompt - always at bottom */}
-					{!showCommandSelector && (
-						<TextInput value={currentInput} suffix="_" prefixColor="yellow" />
-					)}
-				</>
-			}
 			footer={
-				<BottomBar
-					status={status.text}
-					statusColor={status.color}
-					info={info}
-					shortcuts={shortcuts}
-					border={true}
-				/>
+				showCommandSelector ? (
+					<Box flexDirection="column">
+						<Box width="100%">
+							<Text color="gray">
+								{'─'.repeat(process.stdout.columns || 80)}
+							</Text>
+						</Box>
+						<Box borderColor="cyan" padding={1} flexDirection="column">
+							<Text color="cyan" bold>
+								🔧 Select a command:
+							</Text>
+							<SelectInput
+								items={CHAT_COMMANDS}
+								onSelect={handleCommandSelect}
+							/>
+							<Text color="gray" dimColor>
+								Press Escape to cancel, Ctrl+C to exit
+							</Text>
+						</Box>
+					</Box>
+				) : (
+					<BottomBar
+						status={status.text}
+						statusColor={status.color}
+						info={info}
+						shortcuts={shortcuts}
+						border={true}
+					/>
+				)
 			}
-		/>
+		>
+			<>
+				{/* Error display */}
+				{error && (
+					<Box>
+						<Text color="red">❌ Error: {error}</Text>
+						<Newline />
+					</Box>
+				)}
+
+				{/* Initializing state */}
+				{!isInitialized && !error && (
+					<Box>
+						<Text color="yellow">🔄 Initializing LLM service...</Text>
+						<Newline />
+					</Box>
+				)}
+
+				{/* Welcome message */}
+				{showWelcome && isInitialized && !error && (
+					<Box flexDirection="column" marginBottom={1}>
+						<Text color="green">
+							💬 Start typing your message and press Enter to send.
+						</Text>
+						<Text color="gray">Type / to see available commands.</Text>
+					</Box>
+				)}
+
+				{/* Chat history */}
+				<StaticList items={messages}>
+					{(message: ChatMessage) => <MessageBubble message={message} />}
+				</StaticList>
+
+				{/* Streaming response */}
+				{isStreaming && currentResponse && (
+					<MessageBubble
+						message={{
+							role: 'assistant',
+							content: currentResponse + '▌',
+						}}
+					/>
+				)}
+
+				{/* Thinking indicator */}
+				{isStreaming && !currentResponse && (
+					<Text color="gray">🤔 Thinking...</Text>
+				)}
+
+				{/* Input prompt - always at bottom */}
+				<TextInput value={currentInput} suffix="_" prefixColor="yellow" />
+			</>
+		</SplitLayout>
 	);
 };
 

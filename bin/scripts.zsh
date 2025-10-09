@@ -76,21 +76,29 @@ _execute_ink_program() {
   local current_dir="$(pwd)"
   (
     cd "$ink_cli_dir" || return
-    # Run in development mode if DEV=1, otherwise use production mode
-    if [[ "$DEV" == "1" ]]; then
-      log_info "Running ink-cli in development mode..."
-      log_info "current_dir: $current_dir, PWD: $(pwd)"
-      ORIGINAL_WORKING_DIR="$current_dir" yarn dev "$@"
-    else
-      if [[ ! -f "$ink_cli_path" ]]; then
-        log_info "Ink CLI not built. Building with: cd ~/zshrc && make ink"
-        (
-          cd "$ZSH_CONFIG"
-          make ink
-        )
+    # Load NVM and run Node.js commands
+    if [ -f "$HOME/.config/nvm/nvm.sh" ]; then
+      . "$HOME/.config/nvm/nvm.sh" && nvm use default
+
+      # Run in development mode if DEV=1, otherwise use production mode
+      if [[ "$DEV" == "1" ]]; then
+        log_info "Running ink-cli in development mode..."
+        log_info "current_dir: $current_dir, PWD: $(pwd)"
+        ORIGINAL_WORKING_DIR="$current_dir" npm run dev "$@"
+      else
+        if [[ ! -f "$ink_cli_path" ]]; then
+          log_info "Ink CLI not built. Building with: cd ~/zshrc && make ink"
+          (
+            cd "$ZSH_CONFIG"
+            make ink
+          )
+        fi
+
+        ORIGINAL_WORKING_DIR="$current_dir" npm start "$@"
       fi
-      
-      ORIGINAL_WORKING_DIR="$current_dir" yarn start "$@"
+    else
+      log_error "NVM not found. Please install Node.js via NVM."
+      return 1
     fi
   )
 
