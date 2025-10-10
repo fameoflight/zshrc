@@ -15,7 +15,19 @@ export LSCOLORS="gxfxcxdxbxegedabagacad"
 export EDITOR='code --wait'
 
 # Homebrew completions (updated for modern Homebrew paths)
-export FPATH="$(brew --prefix)/share/zsh-completions:$(brew --prefix)/share/zsh/functions:$FPATH"
+# Cache brew prefix for faster startup
+BREW_PREFIX_CACHE_FILE="/tmp/brew_prefix_cache"
+if [[ -f "$BREW_PREFIX_CACHE_FILE" ]]; then
+    BREW_PREFIX=$(cat "$BREW_PREFIX_CACHE_FILE")
+else
+    BREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/opt/homebrew")
+    echo "$BREW_PREFIX" > "$BREW_PREFIX_CACHE_FILE"
+fi
+
+# Only export FPATH once to avoid duplicate operations
+if [[ "$FPATH" != *"$BREW_PREFIX/share/zsh-completions"* ]]; then
+    export FPATH="$BREW_PREFIX/share/zsh-completions:$BREW_PREFIX/share/zsh/functions:$FPATH"
+fi
 
 # activate gls colors
 export ZSH_DIRCOLORS="$ZSH_CONFIG/dircolors-solarized/dircolors.256dark"

@@ -43,22 +43,68 @@ _execute_ruby_script() {
 # Execute a Rust program with automatic building
 _execute_rust_program() {
   local program_name="$1"
-  local rust_binary="$ZSH_CONFIG/bin/rust/target/release/utils"
+  local rust_binary="$ZSH_CONFIG/bin/rust/target/release/rust-cli"
   shift # Remove program name from arguments
 
   # Build the Rust binary if it doesn't exist
   if [[ ! -f "$rust_binary" ]]; then
-    log_info "Rust utils not found. Building with: make rust"
+    log_info "rust-cli not found. Building with: make rust"
     cd "$ZSH_CONFIG" && make rust
   fi
 
   if [[ ! -f "$rust_binary" ]]; then
-    log_error "Rust utils binary not available after build. Please run: cd $ZSH_CONFIG && make rust"
+    log_error "rust-cli binary not available after build. Please run: cd $ZSH_CONFIG && make rust"
     return 1
   fi
 
   # Run the Rust program
   "$rust_binary" "$program_name" "$@"
+}
+
+
+_execute_ink_program() {
+  local ink_cli_dir="$ZSH_CONFIG/bin/ink-cli"
+  local ink_cli_path="$ink_cli_dir/dist/cli.js"
+
+  if [[ ! -d "$ink_cli_dir" ]]; then
+    log_error "Ink CLI directory not found at $ink_cli_dir"
+    return 1
+  fi
+
+
+
+  # Store current directory and change to ink-cli directory
+  local current_dir="$(pwd)"
+  (
+    cd "$ink_cli_dir" || return
+    # Load NVM and run Node.js commands
+    if [ -f "$HOME/.config/nvm/nvm.sh" ]; then
+      . "$HOME/.config/nvm/nvm.sh" && nvm use default
+
+      # Run in development mode if DEV=1, otherwise use production mode
+      if [[ "$DEV" == "1" ]]; then
+        log_info "Running ink-cli in development mode..."
+        log_info "current_dir: $current_dir, PWD: $(pwd)"
+        ORIGINAL_WORKING_DIR="$current_dir" npm run dev "$@"
+      else
+        if [[ ! -f "$ink_cli_path" ]]; then
+          log_info "Ink CLI not built. Building with: cd ~/zshrc && make ink"
+          (
+            cd "$ZSH_CONFIG"
+            make ink
+          )
+        fi
+
+        ORIGINAL_WORKING_DIR="$current_dir" npm start "$@"
+      fi
+    else
+      log_error "NVM not found. Please install Node.js via NVM."
+      return 1
+    fi
+  )
+
+  # Return to original directory
+  cd "$current_dir"
 }
 
 # =============================================================================
@@ -187,6 +233,11 @@ gmail-inbox() {
 # Camera & microphone usage checker
 check-camera-mic() {
   _execute_ruby_script "check-camera-mic.rb" "$@"
+}
+
+# Interactive Command Line Interface - ink-cli tool
+ink-cli() {
+  _execute_ink_program "$@"
 }
 
 # Image upscaling utility - AI-powered image upscaling
@@ -321,6 +372,10 @@ find-duplicate-images() {
   python3 "$script_path" "$@"
 }
 
+rust-cli() {
+  _execute_rust_program "$@"
+}
+
 # Disk usage analyzer - Fast analysis of du output
 disk-usage() {
   local input="$1"
@@ -410,6 +465,7 @@ list-scripts() {
   echo " 📁 git-commit-dir        - Stage and commit changes in a specific directory"
   echo " 📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo " 📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
   echo " 🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo " 🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
@@ -439,6 +495,7 @@ list-scripts() {
   echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
   echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
   echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
+  echo "  🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
   echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
   echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
@@ -727,7 +784,7 @@ scripts() {
   local utility_functions=(
     "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
-    "gmail-inbox" "check-camera-mic" "website-epub" "safari-epub"
+    "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human" "find-similar-images" "find-duplicate-images"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )

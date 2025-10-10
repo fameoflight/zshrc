@@ -87,9 +87,13 @@
       "Bash(sudo pmset:*)",
       "Bash(cat:*)",
       "Bash(openresty:*)",
-      "Bash(htpasswd:*)"
+      "Bash(htpasswd:*)",
+      "Read(//Library/Logs/DiagnosticReports/**)",
+      "Bash(yarn build:*)"
     ],
     "deny": [],
-    "additionalDirectories": ["/tmp"]
+    "additionalDirectories": [
+      "/tmp"
+    ]
   }
 }

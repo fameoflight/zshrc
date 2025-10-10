@@ -61,9 +61,22 @@ bindkey -M menuselect '^@' accept-and-infer-next-history
 # case-insensitive -> partial-word (cs) -> substring completion:
 zstyle ':completion:*' matcher-list 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
 
-# caching of completion stuff
+# caching of completion stuff (performance optimization)
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "$ZSH_CACHE"
+
+# Create cache directory if it doesn't exist
+[[ -d "$ZSH_CACHE" ]] || mkdir -p "$ZSH_CACHE"
+
+# Additional performance optimizations
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' squeeze-slashes true
+zstyle ':completion:*' list-prompt ''
+zstyle ':completion:*' select-prompt ''
+
+# Faster completion for large directories
+zstyle ':completion:*:*:*:*:files' ignored-patterns '*?.o' '*?~' '*?.bak'
+zstyle ':completion:*:*:*:*:cd' ignored-patterns '*?.o' '*?~' '*?.bak'
 
 
 # ~dirs: reorder output sorting: named dirs over userdirs
@@ -84,5 +97,7 @@ zstyle ':completion::*:vi:*:*' file-patterns 'Makefile|*(rc|log)|*.(php|tex|bib|
 
 zstyle :compinstall filename '~/.zshrc'
 
-autoload -Uz compinit && compinit -u
+# Simple and reliable completion initialization
+autoload -Uz compinit
+compinit -u
 

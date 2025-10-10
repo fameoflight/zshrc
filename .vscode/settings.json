@@ -1,6 +1,7 @@
 {
   "workbench.colorTheme": "Behave",
   "workbench.iconTheme": "vs-seti",
+  "search.followSymlinks": false,
   "workbench.colorCustomizations": {
     "[Behave]": {
       "sideBar.background": "#201c1c",
@@ -9,13 +10,26 @@
   },
   "files.exclude": {
     "build/**": true,
-    "node_modules/**": true,
-    "**/__generated__": true
+    "**/node_modules/**": true,
+    "**/__generated__": true,
+    "**/.DS_Store": true,
+    "**/dist/**": true,
+    "**/.git": true,
+    "**/bundle/ruby/**": true
   },
   "files.watcherExclude": {
     "build/**": true,
-    "node_modules/**": true,
+    "**/node_modules/**": true,
     "**/__generated__": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/__generated__": true,
+    "**/bundle/ruby/**": true
   },
   "window.zoomLevel": 2,
   "editor.fontSize": 14,
@@ -32,11 +46,6 @@
   "editor.tabSize": 2,
   "javascript.format.enable": false,
   "typescript.format.enable": false,
-  "eslint.autoFixOnSave": true,
-  "prettier.eslintIntegration": false,
-  "prettier.tslintIntegration": false,
-  "prettier.stylelintIntegration": true,
-  "prettier.parser": "babylon",
   "javascript.updateImportsOnFileMove.enabled": "always",
   "typescript.updateImportsOnFileMove.enabled": "always",
   "[jsonc]": {
@@ -56,5 +65,8 @@
   },
   "git.ignoreLimitWarning": true,
   "python-envs.defaultEnvManager": "ms-python.python:conda",
-  "python-envs.defaultPackageManager": "ms-python.python:conda"
+  "python-envs.defaultPackageManager": "ms-python.python:conda",
+  "typescript.tsserver.maxTsServerMemory": 4096,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.preferences.includePackageJsonAutoImports": "off"
 }

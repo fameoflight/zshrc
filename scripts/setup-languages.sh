@@ -235,21 +235,90 @@ setup_flutter() {
     fi
 }
 
-# Setup Node.js environment (optional)
+# Setup Node.js environment with nvm (optional)
 setup_node() {
     if command -v log_info >/dev/null 2>&1; then
-        log_info "Setting up Node.js..."
+        log_info "Setting up Node.js with nvm..."
     else
-        echo "🟢 Setting up Node.js..."
+        echo "🟢 Setting up Node.js with nvm..."
     fi
 
-    install_package "node"
-    install_package "npm"
+    # Install nvm if not present
+    if ! command -v nvm >/dev/null 2>&1 && [[ ! -f "$HOME/.config/nvm/nvm.sh" ]]; then
+        echo "Installing nvm (Node Version Manager)..."
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+
+        # Source zsh config to get proper nvm setup
+        if [[ -f "$HOME/.zshrc" ]]; then
+            source "$HOME/.zshrc" 2>/dev/null || true
+        fi
+
+        if command -v log_success >/dev/null 2>&1; then
+            log_success "nvm installed successfully"
+        else
+            echo "✅ nvm installed successfully"
+        fi
+    else
+        # Source zsh config to get proper nvm setup
+        if [[ -f "$HOME/.zshrc" ]]; then
+            source "$HOME/.zshrc" 2>/dev/null || true
+        fi
+
+        if command -v log_info >/dev/null 2>&1; then
+            log_info "nvm already installed"
+        else
+            echo "ℹ️  nvm already installed"
+        fi
+    fi
+
+    # Install and use Node.js 20
+    if [[ -s "$NVM_DIR/nvm.sh" ]]; then
+        echo "Installing Node.js 20..."
+        # Ensure nvm is loaded
+        \. "$NVM_DIR/nvm.sh"
+        nvm install 20
+        nvm use 20
+        nvm alias default 20
+
+        # Verify installation
+        NODE_VERSION=$(node --version)
+        NPM_VERSION=$(npm --version)
+
+        if command -v log_success >/dev/null 2>&1; then
+            log_success "Node.js $NODE_VERSION and npm $NPM_VERSION installed successfully"
+        else
+            echo "✅ Node.js $NODE_VERSION and npm $NPM_VERSION installed successfully"
+        fi
+
+        # Install Yarn (latest version) using official script
+        echo "Installing latest Yarn..."
+        if ! command -v yarn >/dev/null 2>&1; then
+            curl -o- -L https://yarnpkg.com/install.sh | bash
+            # Add Yarn to PATH for current session
+            export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+        else
+            # Update existing Yarn to latest
+            yarn set version latest
+        fi
+
+        # Install other common global packages
+        echo "Installing other common Node.js packages..."
+        npm install -g typescript ts-node nodemon 2>/dev/null || echo "⚠️  Some packages may already be installed"
+
+        if command -v log_success >/dev/null 2>&1; then
+            log_success "Common Node.js packages installed"
+        else
+            echo "✅ Common Node.js packages installed"
+        fi
+    else
+        echo "❌ nvm installation not found. Please check the installation or restart your terminal and run the script again."
+        exit 1
+    fi
 
     if command -v log_success >/dev/null 2>&1; then
-        log_success "Node.js setup complete"
+        log_success "Node.js setup with nvm complete"
     else
-        echo "✅ Node.js setup complete"
+        echo "✅ Node.js setup with nvm complete"
     fi
 }
 
@@ -300,7 +369,7 @@ case "${1:-all}" in
         echo " ruby-gems - Install Ruby gems from Gemfile"
         echo " postgres  - Install PostgreSQL 15 and start service"
         echo " flutter   - Setup Flutter SDK with Android and iOS support"
-        echo " node      - Setup Node.js and npm"
+        echo " node      - Setup Node.js 20 with nvm and common packages"
         echo " all       - Setup all language environments (except Flutter)"
         exit 1
         ;;

@@ -1,8 +1,10 @@
 pub mod command_trait;
 pub mod disk_usage;
+pub mod llm_chat;
 
 pub use command_trait::CommandTrait;
 pub use disk_usage::DiskUsageCommand;
+pub use llm_chat::LLMChatCommand;
 
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
@@ -24,6 +26,15 @@ static COMMANDS: Lazy<HashMap<&'static str, CommandFunctions>> = Lazy::new(|| {
         CommandFunctions {
             build: DiskUsageCommand::build_command,
             execute: DiskUsageCommand::execute,
+        },
+    );
+
+    // Register llm-chat command
+    commands.insert(
+        "llm-chat",
+        CommandFunctions {
+            build: LLMChatCommand::build_command,
+            execute: LLMChatCommand::execute,
         },
     );
 
