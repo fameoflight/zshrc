@@ -9,7 +9,9 @@
 		"allowImportingTsExtensions": false,
 		"moduleDetection": "legacy",
 		"allowJs": true,
-		"jsx": "react-jsx",
+	"jsx": "react-jsx",
+	"noUnusedLocals": false,
+		"noUnusedParameters": false,
 		"paths": {
 			"@src/*": ["./src/*"]
 		}
