@@ -14,18 +14,18 @@ interface StreamingMessageProps {
  * re-renders. It renders directly without additional markdown processing during
  * streaming to prevent flickering.
  */
-const StreamingMessage: React.FC<StreamingMessageProps> = memo(({content, prefix = '🤖', textColor}) => {
+const StreamingMessage: React.FC<StreamingMessageProps> = memo(({content, prefix = '🤖', textColor = 'green'}) => {
 	return (
 		<Box
 			flexDirection="column"
 			justifyContent="center"
 			alignItems="flex-start"
+			marginBottom={1}
 		>
 			<Text color={textColor}>
 				{prefix}
 				{': '}
-				{content}
-				{'▌'}
+				{content || '...'}
 			</Text>
 		</Box>
 	);

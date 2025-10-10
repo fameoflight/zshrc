@@ -258,24 +258,47 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 
 			this.logger?.debug('Calling LLM streamChat with messages:', messages);
 
-			// Stream response
+			// Stream response with throttled updates
 			let assistantResponse = '';
+			let updateTimer: NodeJS.Timeout | null = null;
+			const UPDATE_DELAY = 50; // 50ms delay - barely perceptible to humans
+
+			const scheduleUpdate = () => {
+				if (updateTimer) return; // Already scheduled
+
+				updateTimer = setTimeout(() => {
+					this.updateState({
+						currentResponse: assistantResponse,
+					} as Partial<TState>);
+					updateTimer = null;
+				}, UPDATE_DELAY);
+			};
+
 			await this.llmProvider.streamChat(
 				messages,
 				(chunk) => {
 					if (chunk.content) {
 						assistantResponse += chunk.content;
-						// Update streaming state
-						this.updateState({
-							currentResponse: assistantResponse,
-						} as Partial<TState>);
+						// Schedule throttled update
+						scheduleUpdate();
 					}
 					if (chunk.error) {
 						this.logger?.error('LLM streaming error:', chunk.error);
+						// Clear any pending update and throw error immediately
+						if (updateTimer) {
+							clearTimeout(updateTimer);
+							updateTimer = null;
+						}
 						throw new Error(chunk.error);
 					}
 				}
 			);
+
+			// Clear any pending timer to ensure final state is up to date
+			if (updateTimer) {
+				clearTimeout(updateTimer);
+				updateTimer = null;
+			}
 
 			// Add final assistant message
 			await this.addMessage('assistant', assistantResponse);

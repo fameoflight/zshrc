@@ -54,7 +54,7 @@ function MessageBubble(props: IMessageBubbleProps) {
 		if (message.role === 'user') {
 			return <Text>{text}</Text>;
 		} else {
-			return <MarkdownRenderer content={text} isStreaming={false} />;
+			return <MarkdownRenderer content={text} isStreaming={false} textColor={textColor} />;
 		}
 	};
 
@@ -65,11 +65,21 @@ function MessageBubble(props: IMessageBubbleProps) {
 			justifyContent="center"
 			alignItems="flex-start"
 		>
-			<Text color={textColor}>
-				{prefix}
-				{': '}
-				{renderer(message.content)}
-			</Text>
+			{message.role === 'user' ? (
+				<Text color={textColor}>
+					{prefix}
+					{': '}
+					{renderer(message.content)}
+				</Text>
+			) : (
+				<>
+					<Text color={textColor}>
+						{prefix}
+						{': '}
+					</Text>
+					{renderer(message.content)}
+				</>
+			)}
 		</Box>
 	);
 }

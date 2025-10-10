@@ -1,5 +1,5 @@
 import React, {ReactElement} from 'react';
-import {Box, Text, Newline} from 'ink';
+import {Box, Text, Newline, Static} from 'ink';
 import MessageBubble from '../MessageBubble';
 import StreamingMessage from '../StreamingMessage';
 import {ChatMessage} from '../../common/types/chat';
@@ -64,23 +64,46 @@ export function MessageDisplay({
 	// Custom message renderer or default
 	const MessageRenderer = renderMessage || DefaultMessageRenderer;
 
-	return (
-		<Box flexDirection="column" width="100%">
-			{displayMessages.map((message, index) => (
-				<Box key={message.id} flexDirection="column" marginBottom={compact ? 0 : 1}>
+	// Separate static messages (all except potentially the last one) from dynamic content
+	const staticMessages = displayMessages.slice(0, -1);
+	const lastMessage = displayMessages[displayMessages.length - 1];
+
+	// Render static messages that won't change
+	const staticContent = staticMessages.map((message, index) => (
+		<Box key={`static-${message.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
+			{showIds && (
+				<Text color="dimColor" dimColor>
+					[{message.id}]
+				</Text>
+			)}
+			{showTimestamps && (
+				<Text color="dimColor" dimColor>
+					{message.timestamp.toLocaleTimeString()}{' '}
+				</Text>
+			)}
+			<MessageRenderer {...message} />
+		</Box>
+	));
+
+	// Render dynamic content (last message + streaming)
+	const dynamicContent = (
+		<>
+			{/* Last message (might be recent and could be referenced in streaming) */}
+			{lastMessage && (
+				<Box key={`dynamic-${lastMessage.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
 					{showIds && (
 						<Text color="dimColor" dimColor>
-							[{message.id}]
+							[{lastMessage.id}]
 						</Text>
 					)}
 					{showTimestamps && (
 						<Text color="dimColor" dimColor>
-							{message.timestamp.toLocaleTimeString()}{' '}
+							{lastMessage.timestamp.toLocaleTimeString()}{' '}
 						</Text>
 					)}
-					<MessageRenderer {...message} />
+					<MessageRenderer {...lastMessage} />
 				</Box>
-			))}
+			)}
 
 			{/* Streaming response */}
 			{isStreaming && currentResponse && (
@@ -105,15 +128,34 @@ export function MessageDisplay({
 					<Text color="gray">🤔 Thinking...</Text>
 				</Box>
 			)}
+		</>
+	);
 
-			{/* Auto-scroll indicator */}
-			{autoScroll && displayMessages.length > 0 && (
-				<Box height={1}>
-					<Text color="dimColor" dimColor>
-						{'↓'}
-					</Text>
-				</Box>
+	return (
+		<Box flexDirection="column" width="100%">
+			{/* Static content that won't re-render */}
+			{staticContent.length > 0 && (
+				<Static items={staticMessages}>
+					{(message, index) => (
+						<Box key={`static-${message.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
+							{showIds && (
+								<Text color="dimColor" dimColor>
+									[{message.id}]
+								</Text>
+							)}
+							{showTimestamps && (
+								<Text color="dimColor" dimColor>
+									{message.timestamp.toLocaleTimeString()}{' '}
+								</Text>
+							)}
+							<MessageRenderer {...message} />
+						</Box>
+					)}
+				</Static>
 			)}
+
+			{/* Dynamic content that can update */}
+			{dynamicContent}
 		</Box>
 	);
 }
