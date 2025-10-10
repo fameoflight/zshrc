@@ -34,18 +34,35 @@ function getLogDir(commandName: string): string {
 	return createIfNotExists(path.join(getCommandDir(commandName), 'logs'));
 }
 
+function getConfigPath(commandName: string): string {
+	return path.join(getCommandDir(commandName), 'config.json');
+}
+
+// Global variable to store session log file path
+let sessionLogFile: string | null = null;
+
 function getLogFile(commandName: string): string {
+	// Return existing session log file if already created
+	if (sessionLogFile) {
+		return sessionLogFile;
+	}
+
 	const logDir = getLogDir(commandName);
 
-	// current date in YYYY-MM-DD format and time in HH-MM-SS format
+	// current date in YYYY-MM-DD format and time in HH-MM-SS format (24-hour)
 	const date = new Date();
 	const dateStr = date.toISOString().split('T')[0];
-	const timeStr = date.toLocaleTimeString().replace(/:/g, '-');
+	const timeStr = date
+		.toTimeString()
+		?.split(' ')[0] // Get HH:MM:SS part only
+		?.replace(/:/g, '-') || '00-00-00'; // Replace colons with hyphens, fallback if undefined
 
-	return createIfNotExists(
+	sessionLogFile = createIfNotExists(
 		path.join(logDir, `${commandName}-${dateStr}-${timeStr}.log`),
 		'file',
 	);
+
+	return sessionLogFile;
 }
 
 function isDebugMode() {
@@ -60,4 +77,4 @@ function getCurrentDir(): string {
 	return path.resolve(value);
 }
 
-export {getCommandDir, isDebugMode, getLogFile, getCurrentDir};
+export {getCommandDir, isDebugMode, getLogFile, getCurrentDir, getConfigPath};

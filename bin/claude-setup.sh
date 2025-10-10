@@ -173,6 +173,8 @@ setup_claude_symlinks() {
             log_warning "$file not found in source, skipping"
         fi
     done
+
+    mkdir -p "$CLAUDE_SOURCE_DIR/projects"
     
     # Symlink projects directory if available
     if [ -d "$CLAUDE_SOURCE_DIR/projects" ]; then

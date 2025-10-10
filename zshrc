@@ -138,33 +138,33 @@ function _load_nvm() {
 # Lazy load NVM and handle .nvmrc
 function nvm() {
     _load_nvm
-    nvm "$@"
+    command nvm "$@"
 }
 
 # Lazy load Node.js tools
 function node() {
     _load_nvm
-    node "$@"
+    command node "$@"
 }
 
 function npm() {
     _load_nvm
-    npm "$@"
+    command npm "$@"
 }
 
 function npx() {
     _load_nvm
-    npx "$@"
+    command npx "$@"
 }
 
 function yarn() {
     _load_nvm
-    yarn "$@"
+    command yarn "$@"
 }
 
 function npxl() {
     _load_nvm
-    npxl "$@"
+    command npxl "$@"
 }
 
 # Add default Node version to PATH (if it exists) - cached for performance

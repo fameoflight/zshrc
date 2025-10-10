@@ -1,34 +1,23 @@
-import React from 'react';
 import {Text} from 'ink';
+import Markdown from '@jescalan/ink-markdown';
 
 interface MarkdownRendererProps {
 	content: string;
 	isStreaming?: boolean;
 }
 
-/**
- * MarkdownRenderer - Renders content as plain text
- *
- * Simplified version that just renders plain text.
- * Markdown libraries for Ink have rendering issues.
- */
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+function MarkdownRenderer({
 	content,
 	isStreaming = false,
-}) => {
-	if (!content.trim()) {
-		return null;
-	}
-
+}: MarkdownRendererProps) {
 	if (isStreaming) {
-		// For streaming, show content as is
+		// For streaming, just render raw content to avoid flicker
+		// The markdown processing happens when streaming ends
 		return <Text>{content}</Text>;
 	}
 
-	// Just render as plain text - markdown libraries for Ink don't work well
-	return <Text>{content}</Text>;
-};
-
-MarkdownRenderer.displayName = 'MarkdownRenderer';
+	// For non-streaming content, render the full markdown at once
+	return <Markdown>{content}</Markdown>;
+}
 
 export default MarkdownRenderer;

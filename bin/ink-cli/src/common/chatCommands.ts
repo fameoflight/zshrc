@@ -19,7 +19,7 @@ export interface ChatCommand {
 
 export const CHAT_COMMANDS: ChatCommand[] = [
 	{
-		label: '/clear (reset, new)',
+		label: '/clear',
 		value: 'clear',
 		description: 'Clear conversation history and free up context',
 		execute: (context: ChatContext) => {
@@ -54,9 +54,15 @@ export const CHAT_COMMANDS: ChatCommand[] = [
 			const totalTokens = Math.ceil(totalChars / 4);
 
 			// Count messages by role
-			const userMessages = context.messages.filter(msg => msg.role === 'user').length;
-			const assistantMessages = context.messages.filter(msg => msg.role === 'assistant').length;
-			const systemMessages = context.messages.filter(msg => msg.role === 'system').length;
+			const userMessages = context.messages.filter(
+				msg => msg.role === 'user',
+			).length;
+			const assistantMessages = context.messages.filter(
+				msg => msg.role === 'assistant',
+			).length;
+			const systemMessages = context.messages.filter(
+				msg => msg.role === 'system',
+			).length;
 
 			context.addMessage(
 				'system',

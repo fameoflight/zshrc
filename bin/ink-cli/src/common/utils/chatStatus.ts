@@ -22,7 +22,7 @@ export function computeChatStatus(state: ChatState): ChatStatus {
 	}
 
 	if (isInterrupting) {
-		return {text: 'Interrupting...', color: 'magenta', icon: '⏸'};
+		return {text: 'Cancelling...', color: 'magenta', icon: '⏸'};
 	}
 
 	if (isStreaming) {
@@ -69,7 +69,7 @@ export function getShortcuts(isStreaming: boolean, error: boolean): string[] {
 	}
 
 	if (isStreaming) {
-		return ['esc to interrupt'];
+		return ['esc to cancel'];
 	}
 
 	return ['Enter=send', 'Ctrl+L=clear', 'Ctrl+C=exit'];

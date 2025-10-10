@@ -1,4 +1,3 @@
-import React from 'react';
 import {Text, Box, Newline} from 'ink';
 import {getRegistry} from './base/index.js';
 

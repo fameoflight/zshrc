@@ -1,10 +1,12 @@
-import {useState} from 'react';
+import {useState, useMemo} from 'react';
 import {useInput} from 'ink';
 
 export interface UseTextInputOptions {
 	onSubmit?: (value: string) => void;
 	onCancel?: () => void;
 	onCommandTrigger?: () => void;
+	onCommandSelect?: (command: string) => void;
+	availableCommands?: Array<{value: string; label: string; description?: string}>;
 	shortcuts?: Record<string, () => void>;
 	multiline?: boolean;
 	disabled?: boolean;
@@ -14,6 +16,8 @@ export interface UseTextInputResult {
 	value: string;
 	setValue: (value: string) => void;
 	clear: () => void;
+	suggestions: Array<{value: string; label: string; description?: string}>;
+	showSuggestions: boolean;
 }
 
 /**
@@ -37,13 +41,35 @@ export function useTextInput(
 	const {
 		onSubmit,
 		onCancel,
-		onCommandTrigger,
+		onCommandSelect,
+		availableCommands = [],
 		shortcuts = {},
 		multiline = false,
 		disabled = false,
 	} = options;
 
 	const [value, setValue] = useState('');
+
+	// Filter suggestions based on current input
+	const suggestions = useMemo(() => {
+		if (!value.startsWith('/')) {
+			return [];
+		}
+
+		// If user just typed '/', show all commands
+		if (value.length === 1) {
+			return availableCommands.slice(0, 10); // Show up to 10 commands
+		}
+
+		// Otherwise filter commands based on input
+		const searchTerm = value.toLowerCase();
+		return availableCommands.filter(cmd =>
+			cmd.label.toLowerCase().includes(searchTerm) ||
+			cmd.value.toLowerCase().includes(searchTerm)
+		).slice(0, 5); // Limit to 5 suggestions when filtering
+	}, [value, availableCommands]);
+
+	const showSuggestions = value.startsWith('/') && suggestions.length > 0;
 
 	useInput(
 		(input, key) => {
@@ -82,16 +108,21 @@ export function useTextInput(
 				return;
 			}
 
+			// Handle Tab key for autocomplete
+			if (key.tab && showSuggestions && suggestions.length > 0) {
+				const selected = suggestions[0];
+				if (selected) {
+					setValue(selected.label);
+					if (onCommandSelect) {
+						onCommandSelect(selected.value);
+					}
+				}
+				return;
+			}
+
 			// Handle regular character input
 			if (input && !key.ctrl && !key.meta) {
 				const newValue = value + input;
-
-				// Check if user typed "/" at the beginning of input
-				if (input === '/' && value === '' && onCommandTrigger) {
-					onCommandTrigger();
-					return; // Don't add "/" to the input value
-				}
-
 				setValue(newValue);
 			}
 		},
@@ -104,5 +135,7 @@ export function useTextInput(
 		value,
 		setValue,
 		clear,
+		suggestions,
+		showSuggestions,
 	};
 }

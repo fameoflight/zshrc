@@ -1,6 +1,7 @@
-import React, {memo} from 'react';
+import {memo} from 'react';
 import {Box, Text} from 'ink';
 import {ChatMessage} from '../common/types/chat.js';
+import MarkdownRenderer from '../components/MarkdownRenderer.js';
 
 export interface SenderConfig {
 	name: string;
@@ -18,13 +19,13 @@ function getConfig(role: ChatMessage['role']) {
 			return {
 				prefix: '👤',
 				textColor: 'white',
-				backgroundColor: 'black',
+				backgroundColor: undefined,
 				name: 'You',
 			};
 		case 'assistant':
 			return {
 				prefix: '🤖',
-				textColor: undefined,
+				textColor: 'green',
 				backgroundColor: undefined,
 				name: 'Assistant',
 			};
@@ -32,14 +33,14 @@ function getConfig(role: ChatMessage['role']) {
 			return {
 				prefix: '⚙️',
 				textColor: 'yellow',
-				backgroundColor: 'black',
+				backgroundColor: undefined,
 				name: 'System',
 			};
 		default:
 			return {
 				prefix: '❓',
 				textColor: 'white',
-				backgroundColor: 'black',
+				backgroundColor: undefined,
 				name: 'Unknown',
 			};
 	}
@@ -48,6 +49,14 @@ function getConfig(role: ChatMessage['role']) {
 function MessageBubble(props: IMessageBubbleProps) {
 	const {message} = props;
 	const {prefix, textColor, backgroundColor} = getConfig(message.role);
+
+	const renderer = (text: string) => {
+		if (message.role === 'user') {
+			return <Text>{text}</Text>;
+		} else {
+			return <MarkdownRenderer content={text} isStreaming={false} />;
+		}
+	};
 
 	return (
 		<Box
@@ -59,7 +68,7 @@ function MessageBubble(props: IMessageBubbleProps) {
 			<Text color={textColor}>
 				{prefix}
 				{': '}
-				{message.content}
+				{renderer(message.content)}
 			</Text>
 		</Box>
 	);
