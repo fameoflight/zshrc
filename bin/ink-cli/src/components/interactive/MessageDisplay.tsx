@@ -1,8 +1,8 @@
 import React, {ReactElement} from 'react';
 import {Box, Text, Newline, Static} from 'ink';
-import MessageBubble from '../MessageBubble';
-import StreamingMessage from '../StreamingMessage';
-import {ChatMessage} from '../../common/types/chat';
+import MessageBubble from '../MessageBubble.js';
+import StreamingMessage from '../StreamingMessage.js';
+import {ChatMessage} from '../../common/types/chat.js';
 
 export interface ExtendedChatMessage extends ChatMessage {
 	id: string;
@@ -49,9 +49,7 @@ export function MessageDisplay({
 	compact = false,
 }: MessageDisplayProps): ReactElement {
 	// Limit messages for performance
-	const displayMessages = maxMessages
-		? messages.slice(-maxMessages)
-		: messages;
+	const displayMessages = maxMessages ? messages.slice(-maxMessages) : messages;
 
 	// Convert to MessageBubble format for compatibility
 	const compatibleMessages = displayMessages.map(msg => ({
@@ -70,7 +68,11 @@ export function MessageDisplay({
 
 	// Render static messages that won't change
 	const staticContent = staticMessages.map((message, index) => (
-		<Box key={`static-${message.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
+		<Box
+			key={`static-${message.id}`}
+			flexDirection="column"
+			marginBottom={compact ? 0 : 1}
+		>
 			{showIds && (
 				<Text color="dimColor" dimColor>
 					[{message.id}]
@@ -90,7 +92,11 @@ export function MessageDisplay({
 		<>
 			{/* Last message (might be recent and could be referenced in streaming) */}
 			{lastMessage && (
-				<Box key={`dynamic-${lastMessage.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
+				<Box
+					key={`dynamic-${lastMessage.id}`}
+					flexDirection="column"
+					marginBottom={compact ? 0 : 1}
+				>
 					{showIds && (
 						<Text color="dimColor" dimColor>
 							[{lastMessage.id}]
@@ -137,7 +143,11 @@ export function MessageDisplay({
 			{staticContent.length > 0 && (
 				<Static items={staticMessages}>
 					{(message, index) => (
-						<Box key={`static-${message.id}`} flexDirection="column" marginBottom={compact ? 0 : 1}>
+						<Box
+							key={`static-${message.id}`}
+							flexDirection="column"
+							marginBottom={compact ? 0 : 1}
+						>
 							{showIds && (
 								<Text color="dimColor" dimColor>
 									[{message.id}]
@@ -195,7 +205,7 @@ export function WelcomeMessage({
 	title = 'Welcome!',
 	description = 'Start typing your message and press Enter to send.',
 	tips = ['Type / to see available commands'],
-	shortcuts = {'Escape': 'Exit', 'Ctrl+C': 'Quit'},
+	shortcuts = {Escape: 'Exit', 'Ctrl+C': 'Quit'},
 	color = 'green',
 }: WelcomeMessageProps): ReactElement {
 	return (
@@ -295,14 +305,8 @@ export function LoadingMessage({
 }: LoadingMessageProps): ReactElement {
 	return (
 		<Box flexDirection="row" marginBottom={1}>
-			{showSpinner && (
-				<Text color={color}>
-					🔄{' '}
-				</Text>
-			)}
-			<Text color={color}>
-				{message}
-			</Text>
+			{showSpinner && <Text color={color}>🔄 </Text>}
+			<Text color={color}>{message}</Text>
 		</Box>
 	);
 }

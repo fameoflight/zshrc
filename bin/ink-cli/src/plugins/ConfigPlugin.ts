@@ -1,6 +1,8 @@
 import React, {ReactElement} from 'react';
 import {BaseInteractiveCommand, Plugin, BaseInteractiveState} from '../frameworks/interactive/BaseInteractiveCommand.js';
 import {useConfig} from '../common/hooks/useConfig.js';
+import {getConfigPath} from '../common/utils.js';
+import fs from 'fs';
 
 export interface ConfigPluginOptions<T = any> {
 	/** Configuration schema */
@@ -29,6 +31,7 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 	private config?: T;
 	private updateConfig?: (updates: Partial<T>) => Promise<void>;
 	private resetFunction?: () => Promise<void>;
+	private configManager?: any; // Will hold useConfig return value
 
 	constructor(options: ConfigPluginOptions<T> = {}) {
 		this.options = options;
@@ -38,14 +41,69 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 	async initialize(command: BaseInteractiveCommand<any>): Promise<void> {
 		this.command = command;
 
-		// Note: In a real implementation, we'd integrate with the useConfig hook
-		// For now, we'll provide a simple in-memory config
-		const defaultConfig = this.options.schema?.defaults || {} as T;
-		this.config = {...defaultConfig};
+		// Load config from file system using the same path as useConfig
+		const configPath = getConfigPath(this.namespace);
+
+		try {
+			if (fs.existsSync(configPath)) {
+				const configData = fs.readFileSync(configPath, 'utf8');
+				const parsed = JSON.parse(configData);
+				const defaults = this.options.schema?.defaults || {} as T;
+				this.config = {...defaults, ...parsed};
+			} else {
+				// Use defaults if no config file exists
+				this.config = this.options.schema?.defaults || {} as T;
+			}
+		} catch (error) {
+			console.warn(`Failed to load config from ${configPath}:`, error);
+			this.config = this.options.schema?.defaults || {} as T;
+		}
+
+		// Sync command state with loaded config
+		this.syncCommandState();
+	}
+
+	/**
+	 * Sync command state with loaded configuration
+	 * Automatically maps config properties to command state
+	 */
+	private syncCommandState(): void {
+		if (!this.command || !this.config) return;
+
+		const currentState = this.command.getState();
+		const stateUpdates: any = {};
+
+		// Map config properties to state properties
+		// Only update if the property exists in the command state
+		for (const [key, value] of Object.entries(this.config)) {
+			if (value !== undefined && key in currentState) {
+				stateUpdates[key] = value;
+			}
+		}
+
+		// Apply state updates if there are any
+		if (Object.keys(stateUpdates).length > 0) {
+			this.command.updateState(stateUpdates);
+			console.log(`[ConfigPlugin] Synced state with config:`, stateUpdates);
+		}
 	}
 
 	async cleanup(): Promise<void> {
 		// Cleanup any config-related resources
+	}
+
+	/**
+	 * Save current configuration to file
+	 */
+	private saveConfig(): void {
+		if (!this.config) return;
+
+		const configPath = getConfigPath(this.namespace);
+		try {
+			fs.writeFileSync(configPath, JSON.stringify(this.config, null, 2));
+		} catch (error) {
+			throw new Error(`Failed to save config to ${configPath}: ${error}`);
+		}
 	}
 
 	async onMessage(message: string): Promise<boolean> {
@@ -207,6 +265,9 @@ Use /config reset to restore defaults
 			const oldValue = this.config[key as keyof T];
 			this.config[key as keyof T] = convertedValue;
 
+			// Save to file for persistence
+			this.saveConfig();
+
 			// Update command state if it's a known property
 			if (this.command && key in this.command.getState()) {
 				this.command.updateState({[key]: convertedValue} as any);
@@ -242,6 +303,9 @@ Use /config reset to restore defaults
 		try {
 			const defaults = this.options.schema?.defaults || {} as T;
 			this.config = {...defaults};
+
+			// Save to file for persistence
+			this.saveConfig();
 
 			// Update command state with defaults
 			if (this.command) {
@@ -325,6 +389,9 @@ Use /config reset to restore defaults
 
 			// Merge with defaults
 			this.config = {...defaults, ...importedConfig};
+
+			// Save to file for persistence
+			this.saveConfig();
 
 			await this.command.addMessage('system', '✅ Configuration imported successfully');
 		} catch (error) {

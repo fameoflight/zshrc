@@ -224,6 +224,10 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 				await this.showHelp();
 				break;
 
+			case 'tokens':
+				await this.showTokenStats();
+				break;
+
 			default:
 				await this.handleCustomCommand(command);
 				break;
@@ -332,12 +336,127 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 
 Usage: ${help.usage || this.name()}
 
+**Available Commands:**
+• /help - Show this help message
+• /clear - Clear conversation history
+• /tokens - Show token usage statistics and session info
+• /exit or /quit - Exit the program
+
 ${help.examples ? 'Examples:\n' + help.examples.map(ex => `  • ${ex}`).join('\n') : ''}
 
 ${help.notes ? '\nNotes:\n' + help.notes.map(note => `  • ${note}`).join('\n') : ''}
 		`.trim();
 
 		await this.addMessage('system', helpText);
+	}
+
+	/**
+	 * Show token usage statistics
+	 */
+	protected async showTokenStats(): Promise<void> {
+		const conversation = contextManager.getConversation(this.sessionId);
+		const messages = this.state.messages;
+
+		if (messages.length === 0) {
+			await this.addMessage('system', '📊 No messages in this session yet.');
+			return;
+		}
+
+		// Calculate statistics
+		const userMessages = messages.filter(msg => msg.role === 'user');
+		const assistantMessages = messages.filter(msg => msg.role === 'assistant');
+		const systemMessages = messages.filter(msg => msg.role === 'system');
+		const toolMessages = messages.filter(msg => msg.role === 'tool');
+
+		// Token estimation (rough approximation: ~4 characters per token)
+		const estimateTokens = (text: string): number => Math.ceil(text.length / 4);
+
+		let totalInputTokens = 0;
+		let totalOutputTokens = 0;
+		let totalSystemTokens = 0;
+
+		// Calculate tokens by role
+		userMessages.forEach(msg => {
+			totalInputTokens += estimateTokens(msg.content);
+		});
+
+		assistantMessages.forEach(msg => {
+			totalOutputTokens += estimateTokens(msg.content);
+		});
+
+		systemMessages.forEach(msg => {
+			totalSystemTokens += estimateTokens(msg.content);
+		});
+
+		toolMessages.forEach(msg => {
+			totalSystemTokens += estimateTokens(msg.content);
+		});
+
+		const totalTokens = totalInputTokens + totalOutputTokens + totalSystemTokens;
+		const sessionDuration = this.getSessionDuration();
+
+		// Get provider info if available
+		const providerInfo = this.llmProvider ?
+			` (${this.llmProvider.getProviderType()})` : '';
+		const modelInfo = this.llmProvider ?
+			this.llmProvider.getConfig().model || 'Unknown' : 'Not configured';
+
+		const statsText = `
+📊 Token Usage Statistics${providerInfo}
+
+📈 **Session Summary:**
+• Total Messages: ${messages.length}
+  └─ User: ${userMessages.length} | Assistant: ${assistantMessages.length} | System: ${systemMessages.length + toolMessages.length}
+• Session Duration: ${sessionDuration}
+• Current Model: ${modelInfo}
+
+🔢 **Token Estimates:**
+• Total Tokens: ~${totalTokens.toLocaleString()}
+  └─ Input (User+System): ~${(totalInputTokens + totalSystemTokens).toLocaleString()}
+  └─ Output (Assistant): ~${totalOutputTokens.toLocaleString()}
+
+📝 **Message Breakdown:**
+• User Messages: ${userMessages.length} (~${totalInputTokens.toLocaleString()} tokens)
+• Assistant Responses: ${assistantMessages.length} (~${totalOutputTokens.toLocaleString()} tokens)
+• System/Tool Messages: ${systemMessages.length + toolMessages.length} (~${totalSystemTokens.toLocaleString()} tokens)
+
+💡 **Cost Estimates** (rough guide, varies by provider):
+• GPT-3.5-turbo: ~$${(totalInputTokens * 0.0005 + totalOutputTokens * 0.0015).toFixed(4)} USD
+• GPT-4: ~$${(totalInputTokens * 0.03 + totalOutputTokens * 0.06).toFixed(4)} USD
+
+💭 **Average Response Length:** ~${assistantMessages.length > 0 ? Math.round(totalOutputTokens / assistantMessages.length) : 0} tokens per response
+
+*Note: Tokens are estimated (~4 chars/token). Actual usage varies by model and tokenizer.*
+		`.trim();
+
+		await this.addMessage('system', statsText);
+	}
+
+	/**
+	 * Get formatted session duration
+	 */
+	private getSessionDuration(): string {
+		const messages = this.state.messages;
+		if (messages.length === 0) return 'No activity';
+
+		const firstMessage = messages[0]?.timestamp;
+		if (!firstMessage) return 'No activity';
+
+		const now = new Date();
+		const durationMs = now.getTime() - firstMessage.getTime();
+
+		const minutes = Math.floor(durationMs / 60000);
+		const seconds = Math.floor((durationMs % 60000) / 1000);
+
+		if (minutes === 0) {
+			return `${seconds}s`;
+		} else if (minutes < 60) {
+			return `${minutes}m ${seconds}s`;
+		} else {
+			const hours = Math.floor(minutes / 60);
+			const remainingMinutes = minutes % 60;
+			return `${hours}h ${remainingMinutes}m`;
+		}
 	}
 
 	// Utility methods

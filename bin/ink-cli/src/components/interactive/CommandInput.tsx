@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useMemo, ReactElement} from 'react';
 import {Text, Box, useInput} from 'ink';
-import {useTextInput} from '../../common/hooks/useTextInput';
+import {useTextInput} from '../../common/hooks/useTextInput.js';
 
 export interface CommandSuggestion {
 	value: string;
@@ -64,12 +64,17 @@ export function CommandInput({
 	const availableCommands = suggestions.map(s => ({
 		value: s.value,
 		label: s.label,
-		description: s.description
+		description: s.description,
 	}));
 
 	// Use the text input hook for keyboard handling
-	const {value: textInputValue, setValue: setTextInputValue, suggestions: hookSuggestions, showSuggestions: hookShowSuggestions} = useTextInput({
-		onSubmit: (submittedValue) => {
+	const {
+		value: textInputValue,
+		setValue: setTextInputValue,
+		suggestions: hookSuggestions,
+		showSuggestions: hookShowSuggestions,
+	} = useTextInput({
+		onSubmit: submittedValue => {
 			if (onSubmit) {
 				onSubmit(submittedValue);
 			}
@@ -82,7 +87,7 @@ export function CommandInput({
 			}
 			setShowAutocomplete(false);
 		},
-		onCommandSelect: (command) => {
+		onCommandSelect: command => {
 			setShowAutocomplete(false);
 		},
 		availableCommands,
@@ -98,7 +103,7 @@ export function CommandInput({
 			},
 		},
 		multiline,
-		disabled
+		disabled,
 	});
 
 	// Sync with external value
@@ -115,10 +120,13 @@ export function CommandInput({
 		}
 
 		const searchTerm = internalValue.toLowerCase();
-		return suggestions.filter(suggestion =>
-			suggestion.label.toLowerCase().includes(searchTerm) ||
-			suggestion.value.toLowerCase().includes(searchTerm)
-		).slice(0, 8); // Limit to 8 suggestions
+		return suggestions
+			.filter(
+				suggestion =>
+					suggestion.label.toLowerCase().includes(searchTerm) ||
+					suggestion.value.toLowerCase().includes(searchTerm),
+			)
+			.slice(0, 8); // Limit to 8 suggestions
 	}, [internalValue, suggestions, showAutocomplete]);
 
 	// Handle input changes
@@ -127,10 +135,13 @@ export function CommandInput({
 		onChange?.(newValue);
 
 		// Show autocomplete if we have suggestions and input starts with relevant prefix
-		const shouldShowAutocomplete = Boolean(newValue.trim() && (
-			newValue.startsWith('/') || // Commands
-			suggestions.some(s => s.label.toLowerCase().startsWith(newValue.toLowerCase()))
-		));
+		const shouldShowAutocomplete = Boolean(
+			newValue.trim() &&
+				(newValue.startsWith('/') || // Commands
+					suggestions.some(s =>
+						s.label.toLowerCase().startsWith(newValue.toLowerCase()),
+					)),
+		);
 		setShowAutocomplete(shouldShowAutocomplete);
 	};
 
@@ -148,7 +159,8 @@ export function CommandInput({
 							</Text>
 							{suggestion.description && (
 								<Text color="dimColor">
-									{' - '}{suggestion.description}
+									{' - '}
+									{suggestion.description}
 								</Text>
 							)}
 						</Box>
@@ -190,24 +202,25 @@ export function QuickCommandBar({
 	showHelp = true,
 }: QuickCommandBarProps): ReactElement {
 	return (
-		<Box flexDirection="row" justifyContent="space-between" paddingLeft={1} paddingRight={1}>
+		<Box
+			flexDirection="row"
+			justifyContent="space-between"
+			paddingLeft={1}
+			paddingRight={1}
+		>
 			<Box flexDirection="row" gap={2}>
-				{commands.map((cmd) => (
+				{commands.map(cmd => (
 					<Box key={cmd.key}>
 						<Text color="cyan" bold>
 							{cmd.key}
 						</Text>
-						<Text color="gray">
-							{' '}{cmd.label}
-						</Text>
+						<Text color="gray"> {cmd.label}</Text>
 					</Box>
 				))}
 			</Box>
 
 			{showHelp && (
-				<Text color="dimColor">
-					Type /help for commands, /exit to quit
-				</Text>
+				<Text color="dimColor">Type /help for commands, /exit to quit</Text>
 			)}
 		</Box>
 	);
