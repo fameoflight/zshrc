@@ -1,14 +1,14 @@
 import React, {ReactElement} from 'react';
 import {BaseInteractiveCommand, Plugin, BaseInteractiveState} from '../frameworks/interactive/BaseInteractiveCommand.js';
-import {LLMProvider, ToolDefinition} from '../services/LLMProvider.js';
-import {toolRegistry} from '../services/ToolRegistry.js';
+import {LLMProvider, ToolDefinition as LLMToolDefinition} from '../services/LLMProvider.js';
+import {toolRegistry, ToolDefinition as RegistryToolDefinition} from '../services/ToolRegistry.js';
 import {serviceContainer} from '../services/ServiceProvider.js';
 
 export interface ToolCallingPluginOptions {
 	/** Enable automatic tool calling */
 	enableAutoCalling?: boolean;
 	/** Tools to register for LLM */
-	tools?: ToolDefinition[];
+	tools?: RegistryToolDefinition[];
 	/** Require confirmation before tool execution */
 	requireConfirmation?: boolean;
 }
@@ -25,7 +25,7 @@ export class ToolCallingPlugin implements Plugin {
 	private command?: BaseInteractiveCommand<any>;
 	private options: ToolCallingPluginOptions;
 	private llmProvider?: LLMProvider;
-	private isToolCallingEnabled = false;
+	private _isToolCallingEnabled = false;
 
 	constructor(options: ToolCallingPluginOptions = {}) {
 		this.options = {
@@ -42,7 +42,7 @@ export class ToolCallingPlugin implements Plugin {
 		// Register tools with LLM provider if supported
 		if (this.options.tools && this.llmProvider && this.llmProvider.registerTools) {
 			this.llmProvider.registerTools(this.options.tools);
-			this.isToolCallingEnabled = true;
+			this._isToolCallingEnabled = true;
 		}
 
 		// Register tools with global registry
@@ -126,7 +126,7 @@ export class ToolCallingPlugin implements Plugin {
 
 			// Register tools with LLM provider
 			this.llmProvider.registerTools(availableTools);
-			this.isToolCallingEnabled = true;
+			this._isToolCallingEnabled = true;
 
 			await this.command.addMessage(
 				'system',
@@ -153,7 +153,7 @@ export class ToolCallingPlugin implements Plugin {
 				this.llmProvider.registerTools([]);
 			}
 
-			this.isToolCallingEnabled = false;
+			this._isToolCallingEnabled = false;
 
 			await this.command.addMessage('system', '🛑 Tool calling disabled');
 
@@ -178,7 +178,7 @@ export class ToolCallingPlugin implements Plugin {
 		let statusText = '🔧 Tool Calling Status:\n\n';
 		statusText += `🤖 LLM Provider: ${isLLMReady ? 'Ready' : 'Not Ready'}\n`;
 		statusText += `🔌 Tool Support: ${supportsToolCalling ? 'Supported' : 'Not Supported'}\n`;
-		statusText += `🟢 Tool Calling: ${this.isToolCallingEnabled ? 'Enabled' : 'Disabled'}\n`;
+		statusText += `🟢 Tool Calling: ${this._isToolCallingEnabled ? 'Enabled' : 'Disabled'}\n`;
 		statusText += `📋 Available Tools: ${availableTools.length}\n`;
 
 		if (availableTools.length > 0) {
@@ -217,11 +217,11 @@ export class ToolCallingPlugin implements Plugin {
 		try {
 			const definition = JSON.parse(definitionString);
 
-			const tool: ToolDefinition = {
-				name: toolName,
-				description: definition.description || toolName,
+			const tool: RegistryToolDefinition = {
+				name: toolName!,
+				description: definition.description || toolName!,
 				parameters: definition.parameters || {type: 'object', properties: {}},
-				execute: async (params) => {
+				execute: async (params: any) => {
 					// For dynamically registered tools, we'll just return the parameters
 					return {called: toolName, parameters: params};
 				},
@@ -230,7 +230,7 @@ export class ToolCallingPlugin implements Plugin {
 			toolRegistry.registerTool(tool);
 
 			// Re-register with LLM if tool calling is enabled
-			if (this.isToolCallingEnabled && this.llmProvider?.registerTools) {
+			if (this._isToolCallingEnabled && this.llmProvider?.registerTools) {
 				const allTools = toolRegistry.getAllTools();
 				this.llmProvider.registerTools(allTools);
 			}
@@ -258,6 +258,11 @@ export class ToolCallingPlugin implements Plugin {
 
 		const toolName = parts[1];
 		const argsString = parts.slice(2).join(' ');
+
+		if (!toolName) {
+			await this.command.addMessage('system', '❌ Tool name is required');
+			return true;
+		}
 
 		let parameters = {};
 		if (argsString) {
@@ -298,13 +303,13 @@ export class ToolCallingPlugin implements Plugin {
 	 * Check if tool calling is enabled
 	 */
 	isToolCallingEnabled(): boolean {
-		return this.isToolCallingEnabled;
+		return this._isToolCallingEnabled;
 	}
 
 	/**
 	 * Get available tools for LLM
 	 */
-	getAvailableTools(): ToolDefinition[] {
+	getAvailableTools(): RegistryToolDefinition[] {
 		return toolRegistry.getAllTools();
 	}
 }

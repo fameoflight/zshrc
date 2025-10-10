@@ -349,8 +349,8 @@ Respond with a JSON object containing:
 
 			await contextManager.addMessage(
 				context.sessionId,
-				'tool',
-				`Used tool ${toolName} with result: ${JSON.stringify(result)}`
+				'system',
+				`🔧 Used tool ${toolName} with result: ${JSON.stringify(result)}`
 			);
 
 			// Continue processing after tool execution

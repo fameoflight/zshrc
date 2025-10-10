@@ -37,7 +37,7 @@ if (commandName === 'help' || !commandName) {
 	if (command) {
 		const result = command.execute(cli.flags);
 		render(result, {
-			exitOnCtrlC: false,
+			exitOnCtrlC: true,
 			debug: isDebugMode(),
 			patchConsole: false,
 		});

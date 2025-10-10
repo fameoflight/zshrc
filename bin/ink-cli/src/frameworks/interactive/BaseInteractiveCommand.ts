@@ -1,5 +1,5 @@
 import React, {ReactElement, useState, useMemo} from 'react';
-import {Text, Box, useApp} from 'ink';
+import {Text, Box, useApp, useInput} from 'ink';
 import {Command, CommandFlags, CommandConfig, CommandHelp} from '../../base/command.js';
 import {LLMProvider} from '../../services/LLMProvider.js';
 import {serviceContainer} from '../../services/ServiceProvider.js';
@@ -43,13 +43,29 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	protected state: TState;
 	protected sessionId: string;
 	protected llmProvider?: LLMProvider;
-	protected appExit: () => void;
-	protected stateUpdater: (updates: Partial<TState>) => void;
+	protected appExit!: () => void;
+	protected stateUpdater!: (updates: Partial<TState>) => void;
+	protected flags!: CommandFlags;
+	protected logger?: any; // Command logger that plugins can use
 
 	constructor() {
 		this.sessionId = this.generateSessionId();
 		this.state = this.createInitialState() as TState;
 		// Note: useApp() will be called in the wrapper component
+	}
+
+	/**
+	 * Get the command logger for plugins to use
+	 */
+	getLogger(): any {
+		return this.logger;
+	}
+
+	/**
+	 * Set the logger (called by subclasses that have a logger)
+	 */
+	setLogger(logger: any): void {
+		this.logger = logger;
 	}
 
 	// Abstract methods that subclasses must implement
@@ -64,23 +80,28 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	protected async initializeServices(): Promise<void> {
 		// Try to get LLM provider if available
 		this.llmProvider = serviceContainer.resolve<LLMProvider>('llm-provider');
+		this.logger?.debug('LLM Provider resolved:', this.llmProvider ? this.llmProvider.getProviderType() : 'None');
 
 		// Initialize context session
 		contextManager.createSession(this.sessionId);
+		this.logger?.debug('Context session created:', this.sessionId);
 
 		// Initialize plugins
+		this.logger?.info(`Initializing ${this.plugins.length} plugins...`);
 		for (const plugin of this.plugins) {
+			this.logger?.info(`Initializing plugin: ${plugin.name}`);
 			if (plugin.initialize) {
 				await plugin.initialize(this);
+				this.logger?.info(`Plugin ${plugin.name} initialized successfully`);
 			}
 		}
+		this.logger?.info(`All services initialized`);
 	}
 
 	// Execute method from Command interface
 	execute(flags: CommandFlags): ReactElement {
-		return (
-			<InteractiveWrapper command={this} flags={flags} />
-		);
+		this.flags = flags;
+		return React.createElement(InteractiveWrapper as any, {command: this, flags});
 	}
 
 	// Plugin management
@@ -97,7 +118,7 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	}
 
 	// State management
-	protected updateState(updates: Partial<TState>): void {
+	public updateState(updates: Partial<TState>): void {
 		this.state = {...this.state, ...updates};
 
 		// Notify plugins of state change
@@ -113,12 +134,16 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 		}
 	}
 
-	protected getState(): TState {
+	public getState(): TState {
 		return this.state;
 	}
 
-	protected setStateUpdater(updater: (updates: Partial<TState>) => void): void {
+	public setStateUpdater(updater: (updates: Partial<TState>) => void): void {
 		this.stateUpdater = updater;
+	}
+
+	public getFlags(): CommandFlags {
+		return this.flags;
 	}
 
 	protected setAppExit(exit: () => void): void {
@@ -126,12 +151,14 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	}
 
 	// Message handling
-	protected async addMessage(
+	public async addMessage(
 		role: 'user' | 'assistant' | 'system' | 'tool',
 		content: string,
 		metadata?: Record<string, any>
 	): Promise<string> {
-		const messageId = contextManager.addMessage(this.sessionId, role, content, metadata);
+		// Convert 'tool' role to 'system' for contextManager compatibility
+		const contextRole = role === 'tool' ? 'system' : role;
+		const messageId = contextManager.addMessage(this.sessionId, contextRole, content, metadata);
 
 		const message = {
 			id: messageId,
@@ -141,7 +168,7 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 		};
 
 		const updatedMessages = [...this.state.messages, message];
-		this.updateState({messages: updatedMessages});
+		this.updateState({messages: updatedMessages} as Partial<TState>);
 
 		return messageId;
 	}
@@ -150,16 +177,16 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 		return this.state.messages;
 	}
 
-	protected clearMessages(): void {
+	public clearMessages(): void {
 		contextManager.clearConversation(this.sessionId);
 		this.updateState({
 			messages: [],
 			showWelcome: true,
-		});
+		} as unknown as Partial<TState>);
 	}
 
 	// Command processing
-	protected async processInput(input: string): Promise<void> {
+	public async processInput(input: string): Promise<void> {
 		if (input.trim() === '') return;
 
 		// Try to handle with plugins first
@@ -206,7 +233,7 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	protected async processUserMessage(message: string): Promise<void> {
 		// Add user message
 		await this.addMessage('user', message);
-		this.updateState({showWelcome: false});
+		this.updateState({showWelcome: false} as Partial<TState>);
 
 		// Process with LLM if available
 		if (this.llmProvider && this.llmProvider.isReady()) {
@@ -219,7 +246,7 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 	protected async processWithLLM(message: string): Promise<void> {
 		if (!this.llmProvider) return;
 
-		this.updateState({isStreaming: true, error: null, currentResponse: ''});
+		this.updateState({isStreaming: true, error: null, currentResponse: ''} as Partial<TState>);
 
 		try {
 			// Get conversation history
@@ -228,6 +255,8 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 				role: msg.role,
 				content: msg.content,
 			}));
+
+			this.logger?.debug('Calling LLM streamChat with messages:', messages);
 
 			// Stream response
 			let assistantResponse = '';
@@ -239,18 +268,25 @@ export abstract class BaseInteractiveCommand<TState extends BaseInteractiveState
 						// Update streaming state
 						this.updateState({
 							currentResponse: assistantResponse,
-						});
+						} as Partial<TState>);
+					}
+					if (chunk.error) {
+						this.logger?.error('LLM streaming error:', chunk.error);
+						throw new Error(chunk.error);
 					}
 				}
 			);
 
 			// Add final assistant message
 			await this.addMessage('assistant', assistantResponse);
+			this.logger?.debug('LLM response completed');
 		} catch (error) {
-			this.updateState({error: String(error)});
-			await this.addMessage('system', `❌ Error: ${error}`);
+			this.logger?.error('LLM processing failed:', error);
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			this.updateState({error: errorMessage} as Partial<TState>);
+			await this.addMessage('system', `❌ LLM Error: ${errorMessage}`);
 		} finally {
-			this.updateState({isStreaming: false, currentResponse: ''});
+			this.updateState({isStreaming: false, currentResponse: ''} as Partial<TState>);
 		}
 	}
 
@@ -306,18 +342,23 @@ interface InteractiveWrapperProps<T extends BaseInteractiveState> {
 function InteractiveWrapper<T extends BaseInteractiveState>({command, flags}: InteractiveWrapperProps<T>) {
 	const {exit} = useApp();
 	const [state, setState] = useState(command.getState());
+	const [forceUpdate, setForceUpdate] = useState(0);
 
 	// Set up app exit function
-	command.setAppExit(exit);
+	(command as any).setAppExit(exit);
 
 	// Sync state with command
 	const updateState = (updates: Partial<T>) => {
-		const newState = {...command.getState(), ...updates};
+		const currentCommandState = command.getState();
+		const newState = {...currentCommandState, ...updates};
+
+		// Update both React state and force re-render
 		setState(newState);
-		command.state = newState;
+		(command as any).state = newState;
+		setForceUpdate(prev => prev + 1); // Force re-render
 
 		// Notify plugins of state change
-		for (const plugin of command.plugins) {
+		for (const plugin of (command as any).plugins) {
 			if (plugin.onStateChange) {
 				plugin.onStateChange(newState);
 			}
@@ -326,15 +367,40 @@ function InteractiveWrapper<T extends BaseInteractiveState>({command, flags}: In
 
 	command.setStateUpdater(updateState);
 
+	// Add effect to sync state changes from command to React state
+	React.useEffect(() => {
+		const commandState = command.getState();
+		if (JSON.stringify(commandState) !== JSON.stringify(state)) {
+			setState(commandState);
+		}
+	});
+
 	// Initialize services on mount
 	React.useEffect(() => {
-		command.initializeServices().catch(console.error);
+		(command as any).initializeServices().then(() => {
+			try {
+				const newState = command.getState();
+				setState(newState);
+				setForceUpdate(prev => prev + 1);
+			} catch (error) {
+				command.getLogger()?.error('Error during re-render:', error);
+			}
+		}).catch((error: any) => {
+			command.getLogger()?.error('Error during initialization:', error);
+		});
 
 		// Cleanup on unmount
 		return () => {
 			command.cleanup().catch(console.error);
 		};
 	}, []);
+
+	// Remove fallback input handler to avoid conflicts with component input handlers
+
+	// Add effect to trigger re-render when state changes
+	React.useEffect(() => {
+		// This effect ensures re-render when state changes
+	}, [state, command, flags, forceUpdate]);
 
 	// Render command-specific UI
 	return command.renderInteractiveUI(state, flags);

@@ -189,7 +189,9 @@ export class ToolPlugin implements Plugin {
 			}
 		}
 
-		await this.executeTool(toolName, parameters);
+		if (toolName) {
+			await this.executeTool(toolName, parameters);
+		}
 		return true;
 	}
 
@@ -333,7 +335,9 @@ export class ToolPlugin implements Plugin {
 			statusText += `\n📝 Execution Queue:\n`;
 			for (let i = 0; i < Math.min(5, this.executionQueue.length); i++) {
 				const item = this.executionQueue[i];
-				statusText += `  ${i + 1}. ${item.toolName}\n`;
+				if (item) {
+					statusText += `  ${i + 1}. ${item.toolName}\n`;
+				}
 			}
 			if (this.executionQueue.length > 5) {
 				statusText += `  ... and ${this.executionQueue.length - 5} more\n`;

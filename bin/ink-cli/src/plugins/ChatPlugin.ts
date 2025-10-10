@@ -13,11 +13,14 @@ export class ChatPlugin implements Plugin {
 	name = 'chat';
 
 	private command?: BaseInteractiveCommand<any>;
+	private logger?: any;
 	private conversationHistory: string[] = [];
 	private maxHistoryLength = 100;
 
 	async initialize(command: BaseInteractiveCommand<any>): Promise<void> {
 		this.command = command;
+		this.logger = command.getLogger(); // Get logger from command
+		this.logger?.info('ChatPlugin initialized');
 	}
 
 	async cleanup(): Promise<void> {
@@ -56,25 +59,35 @@ export class ChatPlugin implements Plugin {
 		// Track conversation history
 		if (state.messages && state.messages.length > 0) {
 			const lastMessage = state.messages[state.messages.length - 1];
-			const messageKey = `${lastMessage.role}:${lastMessage.content.substring(0, 50)}`;
+			if (lastMessage) {
+				const messageKey = `${lastMessage.role}:${lastMessage.content.substring(0, 50)}`;
 
-			if (!this.conversationHistory.includes(messageKey)) {
-				this.conversationHistory.push(messageKey);
+				if (!this.conversationHistory.includes(messageKey)) {
+					this.conversationHistory.push(messageKey);
 
-				// Limit history length
-				if (this.conversationHistory.length > this.maxHistoryLength) {
-					this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryLength);
+					// Limit history length
+					if (this.conversationHistory.length > this.maxHistoryLength) {
+						this.conversationHistory = this.conversationHistory.slice(-this.maxHistoryLength);
+					}
 				}
 			}
 		}
 	}
 
 	renderComponents(): ReactElement[] {
-		if (!this.command) return [];
+		if (!this.command) {
+			return [];
+		}
 
 		const state = this.command.getState();
+		this.logger?.debug('ChatPlugin rendering components', {
+			messageCount: state.messages.length,
+			showWelcome: state.showWelcome,
+			isStreaming: state.isStreaming,
+			hasInput: !!state.currentInput
+		});
 
-		return [
+		const components = [
 			// Message display component
 			React.createElement(MessageDisplay, {
 				messages: state.messages,
@@ -108,13 +121,19 @@ export class ChatPlugin implements Plugin {
 			React.createElement(CommandInput, {
 				value: state.currentInput,
 				onChange: (value) => {
+					this.logger?.debug('ChatPlugin input changed:', value);
 					this.command!.updateState({currentInput: value});
 				},
 				onSubmit: async (value) => {
+					this.logger?.info('ChatPlugin input submitted:', value);
+					this.logger?.debug('ChatPlugin calling processInput...');
 					await this.command!.processInput(value);
+					this.logger?.debug('ChatPlugin processInput completed');
 					this.command!.updateState({currentInput: ''});
+					this.logger?.debug('ChatPlugin state updated after submit');
 				},
 				onCancel: () => {
+					this.logger?.debug('ChatPlugin input cancelled');
 					if (state.isStreaming && this.command) {
 						// Handle stream cancellation
 						this.command.updateState({isStreaming: false, currentResponse: ''});
@@ -123,12 +142,15 @@ export class ChatPlugin implements Plugin {
 				disabled: state.isStreaming,
 				shortcuts: {
 					l: () => {
+						this.logger?.debug('ChatPlugin clear shortcut triggered');
 						this.command!.clearMessages();
 					},
 					h: () => {
+						this.logger?.debug('ChatPlugin help shortcut triggered');
 						this.command!.processInput('/help');
 					},
 					c: () => {
+						this.logger?.debug('ChatPlugin another clear shortcut triggered');
 						this.command!.clearMessages();
 					},
 				},
@@ -136,6 +158,9 @@ export class ChatPlugin implements Plugin {
 				multiline: false,
 			}),
 		];
+
+		this.logger?.debug(`ChatPlugin rendered ${components.length} components`);
+		return components;
 	}
 
 	/**
@@ -154,7 +179,7 @@ export class ChatPlugin implements Plugin {
 
 		const historyText = messages
 			.slice(-10) // Show last 10 messages
-			.map((msg, index) => {
+			.map((msg: { role: string; content: string }, index: number) => {
 				const icon = msg.role === 'user' ? '👤' : msg.role === 'assistant' ? '🤖' : '⚙️';
 				const preview = msg.content.length > 100
 					? msg.content.substring(0, 100) + '...'
@@ -184,7 +209,7 @@ export class ChatPlugin implements Plugin {
 		}
 
 		const exportText = messages
-			.map(msg => `[${msg.role.toUpperCase()}] ${msg.content}`)
+			.map((msg: { role: string; content: string }) => `[${msg.role.toUpperCase()}] ${msg.content}`)
 			.join('\n\n');
 
 		await this.command.addMessage(
@@ -202,14 +227,14 @@ export class ChatPlugin implements Plugin {
 		const state = this.command.getState();
 		const messages = state.messages;
 
-		const userMessages = messages.filter(m => m.role === 'user').length;
-		const assistantMessages = messages.filter(m => m.role === 'assistant').length;
-		const systemMessages = messages.filter(m => m.role === 'system').length;
-		const toolMessages = messages.filter(m => m.role === 'tool').length;
+		const userMessages = messages.filter((m: { role: string }) => m.role === 'user').length;
+		const assistantMessages = messages.filter((m: { role: string }) => m.role === 'assistant').length;
+		const systemMessages = messages.filter((m: { role: string }) => m.role === 'system').length;
+		const toolMessages = messages.filter((m: { role: string }) => m.role === 'tool').length;
 
-		const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
-		const userChars = messages.filter(m => m.role === 'user').reduce((sum, m) => sum + m.content.length, 0);
-		const assistantChars = messages.filter(m => m.role === 'assistant').reduce((sum, m) => sum + m.content.length, 0);
+		const totalChars = messages.reduce((sum: number, m: { content: string }) => sum + m.content.length, 0);
+		const userChars = messages.filter((m: { role: string }) => m.role === 'user').reduce((sum: number, m: { content: string }) => sum + m.content.length, 0);
+		const assistantChars = messages.filter((m: { role: string }) => m.role === 'assistant').reduce((sum: number, m: { content: string }) => sum + m.content.length, 0);
 
 		const statsText = `
 📊 Conversation Statistics:
@@ -245,8 +270,8 @@ export class ChatPlugin implements Plugin {
 
 		const state = this.command.getState();
 		return state.messages
-			.filter(m => m.role === 'user')
-			.map(m => m.content)
+			.filter((m: { role: string }) => m.role === 'user')
+			.map((m: { content: string }) => m.content)
 			.slice(-20); // Last 20 user messages
 	}
 }

@@ -78,7 +78,7 @@ export function MessageDisplay({
 							{message.timestamp.toLocaleTimeString()}{' '}
 						</Text>
 					)}
-					<MessageRenderer message={message} />
+					<MessageRenderer {...message} />
 				</Box>
 			))}
 
@@ -121,7 +121,7 @@ export function MessageDisplay({
 /**
  * Default message renderer using MessageBubble component
  */
-function DefaultMessageRenderer({message}: {message: ExtendedChatMessage}): ReactElement {
+function DefaultMessageRenderer(message: ExtendedChatMessage): ReactElement {
 	// Use the existing MessageBubble component for compatibility
 	return (
 		<MessageBubble

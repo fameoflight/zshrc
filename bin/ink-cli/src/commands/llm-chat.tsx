@@ -1,11 +1,20 @@
 import React, {ReactElement, useMemo} from 'react';
-import {Command, CommandConfig, CommandFlags, CommandHelp} from '../base/command.js';
+import {
+	Command,
+	CommandConfig,
+	CommandFlags,
+	CommandHelp,
+} from '../base/command.js';
 import {
 	BaseInteractiveCommand,
 	BaseInteractiveState,
 	Plugin,
 } from '../frameworks/interactive/BaseInteractiveCommand.js';
-import {InteractiveLayout, InteractiveHeader, InteractiveFooter} from '../components/interactive/InteractiveLayout.js';
+import {
+	InteractiveLayout,
+	InteractiveHeader,
+	InteractiveFooter,
+} from '../components/interactive/InteractiveLayout.js';
 import {createChatPlugin} from '../plugins/ChatPlugin.js';
 import {createLLMPlugin} from '../plugins/LLMPlugin.js';
 import {createConfigPlugin} from '../plugins/ConfigPlugin.js';
@@ -44,8 +53,16 @@ interface LLMChatFlags extends CommandFlags {
  * This demonstrates how the new architecture reduces code complexity while
  * maintaining all functionality and adding new capabilities.
  */
-class LLMChatCommand extends BaseInteractiveCommand<LLMChatState> implements Command {
-	private logger = createCommandLogger('llm-chat');
+class LLMChatCommand
+	extends BaseInteractiveCommand<LLMChatState>
+	implements Command
+{
+	override logger = createCommandLogger('llm-chat');
+
+	constructor() {
+		super();
+		this.setLogger(this.logger); // Make logger available to base class and plugins
+	}
 
 	name(): string {
 		return 'llm-chat';
@@ -133,20 +150,23 @@ class LLMChatCommand extends BaseInteractiveCommand<LLMChatState> implements Com
 		};
 	}
 
-	async initializeServices(): Promise<void> {
+	override async initializeServices(): Promise<void> {
+		this.logger.info('[LLMChat] initializeServices called');
+
 		// Initialize LLM provider and register in service container
 		await this.initializeLLMProvider();
 
 		// Add plugins for chat functionality
-		this.addPlugin(createChatPlugin());
-		this.addPlugin(createLLMPlugin());
-		this.addPlugin(createConfigPlugin<LLMChatConfig>({
+		this.logger.info('[LLMChat] Adding plugins...');
+		const chatPlugin = createChatPlugin();
+		const llmPlugin = createLLMPlugin();
+		const configPlugin = createConfigPlugin<LLMChatConfig>({
 			schema: {
 				defaults: {
 					temperature: 0.7,
 				},
 				validation: {
-					temperature: (value) => {
+					temperature: value => {
 						if (typeof value !== 'number' || isNaN(value)) {
 							return 'Temperature must be a number';
 						}
@@ -155,33 +175,72 @@ class LLMChatCommand extends BaseInteractiveCommand<LLMChatState> implements Com
 						}
 						return true;
 					},
+					model: value => {
+						if (typeof value !== 'string') {
+							return 'Model must be a string';
+						}
+						return true;
+					},
+					maxTokens: value => {
+						if (
+							value !== undefined &&
+							(typeof value !== 'number' || value <= 0)
+						) {
+							return 'Max tokens must be a positive number';
+						}
+						return true;
+					},
+					systemPrompt: value => {
+						if (value !== undefined && typeof value !== 'string') {
+							return 'System prompt must be a string';
+						}
+						return true;
+					},
 				},
 			},
 			namespace: 'llm-chat',
-		}));
+		});
+
+		this.addPlugin(chatPlugin);
+		this.addPlugin(llmPlugin);
+		this.addPlugin(configPlugin);
+		this.logger.info('[LLMChat] All plugins added');
 
 		// Call parent initialization
+		this.logger.info('[LLMChat] Calling parent initializeServices...');
 		await super.initializeServices();
+		this.logger.info('[LLMChat] Parent initializeServices completed');
 	}
 
 	private async initializeLLMProvider(): Promise<void> {
 		try {
 			// Get LLM provider from flags
-			const flags = this.getCurrentFlags();
-			if (!flags) return;
+			let flags = this.getCurrentFlags();
+			this.logger.info('Current flags:', flags);
 
-			const llmProvider = await LLMProviderFactory.createFromFlags(
-				flags,
-				{
+			if (!flags) {
+				this.logger.info('No flags available, using defaults');
+				// Use default flags
+				flags = {
 					provider: 'lmstudio',
-					baseURL: 'http://localhost:1234/v1',
-					apiKey: '',
+					baseurl: 'http://localhost:1234/v1',
+					apikey: '',
 					model: 'default',
 					temperature: 0.7,
-					maxTokens: 2048,
-					systemPrompt: '',
-				}
-			);
+				};
+			}
+
+			const llmProvider = await LLMProviderFactory.createFromFlags(flags, {
+				provider: 'lmstudio',
+				baseURL: 'http://localhost:1234/v1',
+				apiKey: '',
+				model: 'default',
+				temperature: 0.7,
+				maxTokens: 2048,
+				systemPrompt: '',
+			});
+
+			this.logger.info('LLM Provider created:', llmProvider.getProviderType());
 
 			// Register as singleton for dependency injection
 			registerSingleton('llm-provider', () => llmProvider);
@@ -194,66 +253,97 @@ class LLMChatCommand extends BaseInteractiveCommand<LLMChatState> implements Com
 	}
 
 	private getCurrentFlags(): LLMChatFlags | null {
-		// In a real implementation, this would come from the command execution context
-		// For now, we'll return null and let the LLM plugin handle provider setup
-		return null;
+		// Get flags from the base class
+		return this.getFlags() as LLMChatFlags;
 	}
 
-	protected async processUserMessage(message: string): Promise<void> {
-		// Override to use LLM plugin for processing
+	protected override async processUserMessage(message: string): Promise<void> {
+		// Add user message to UI first
+		await this.addMessage('user', message);
+		this.updateState({showWelcome: false} as Partial<LLMChatState>);
+
+		// Use LLM plugin for processing
 		const llmPlugin = this.getPlugin('llm');
 		if (llmPlugin && 'processWithLLM' in llmPlugin) {
 			await (llmPlugin as any).processWithLLM(message);
 		} else {
-			// Fallback to parent implementation
+			// Fallback to parent implementation (but don't add user message again)
 			await super.processUserMessage(message);
 		}
 	}
 
 	renderInteractiveUI(state: LLMChatState, flags: CommandFlags): ReactElement {
+		this.logger.info('renderInteractiveUI called');
+		this.logger.debug('State:', JSON.stringify(state, null, 2));
+		this.logger.debug('Flags:', JSON.stringify(flags, null, 2));
+
 		// Get resolved provider from LLM plugin if available
 		const llmPlugin = this.getPlugin('llm');
-		const resolvedProvider = (llmPlugin && 'getLLMProvider' in llmPlugin)
-			? (llmPlugin as any).getLLMProvider()?.getProviderType() || 'unknown'
-			: 'lmstudio';
+		this.logger.debug('LLM plugin found:', !!llmPlugin);
+
+		const resolvedProvider =
+			llmPlugin && 'getLLMProvider' in llmPlugin
+				? (llmPlugin as any).getLLMProvider()?.getProviderType() || 'unknown'
+				: 'lmstudio';
+
+		this.logger.debug('Resolved provider:', resolvedProvider);
 
 		// Create header info
-		const headerInfo = useMemo(() => [
-			{
-				label: 'Provider',
-				value: resolvedProvider,
-				valueColor: 'cyan',
-				icon: '🤖',
-			},
-			{
-				label: 'Temperature',
-				value: state.temperature.toFixed(1),
-				valueColor: 'yellow',
-				icon: '🌡️',
-			},
-			{
-				label: 'Model',
-				value: state.model || 'default',
-				valueColor: 'gray',
-			},
-			...(state.systemPrompt ? [{
-				label: 'System Prompt',
-				value: state.systemPrompt.length > 50
-					? state.systemPrompt.substring(0, 47) + '...'
-					: state.systemPrompt,
-				valueColor: 'gray',
-				icon: '📋',
-			}] : []),
-			...(state.error ? [{
-				label: 'Error',
-				value: state.error,
-				valueColor: 'red',
-				icon: '⚠️',
-			}] : []),
-		], [resolvedProvider, state.temperature, state.model, state.systemPrompt, state.error]);
+		const headerInfo = useMemo(
+			() => [
+				{
+					label: 'Provider',
+					value: resolvedProvider,
+					valueColor: 'cyan',
+					icon: '🤖',
+				},
+				{
+					label: 'Temperature',
+					value: state.temperature.toFixed(1),
+					valueColor: 'yellow',
+					icon: '🌡️',
+				},
+				{
+					label: 'Model',
+					value: state.model || 'default',
+					valueColor: 'gray',
+				},
+				...(state.systemPrompt
+					? [
+							{
+								label: 'System Prompt',
+								value:
+									state.systemPrompt.length > 50
+										? state.systemPrompt.substring(0, 47) + '...'
+										: state.systemPrompt,
+								valueColor: 'gray',
+								icon: '📋',
+							},
+					  ]
+					: []),
+				...(state.error
+					? [
+							{
+								label: 'Error',
+								value: state.error,
+								valueColor: 'red',
+								icon: '⚠️',
+							},
+					  ]
+					: []),
+			],
+			[
+				resolvedProvider,
+				state.temperature,
+				state.model,
+				state.systemPrompt,
+				state.error,
+			],
+		);
 
 		// Render using interactive layout
-		return (
+		this.logger.debug('Rendering InteractiveLayout');
+		const result = (
 			<InteractiveLayout
 				header={
 					<InteractiveHeader
@@ -281,18 +371,32 @@ class LLMChatCommand extends BaseInteractiveCommand<LLMChatState> implements Com
 				{this.renderPluginComponents()}
 			</InteractiveLayout>
 		);
+
+		this.logger.debug('InteractiveLayout rendered');
+		return result;
 	}
 
 	private renderPluginComponents(): ReactElement[] {
+		this.logger.debug('Rendering plugin components...');
 		const components: ReactElement[] = [];
 
 		// Collect components from all plugins
 		for (const plugin of this.plugins) {
+			this.logger.debug(`Processing plugin: ${plugin.name}`);
 			if (plugin.renderComponents) {
-				components.push(...plugin.renderComponents());
+				const pluginComponents = plugin.renderComponents();
+				this.logger.debug(
+					`Plugin ${plugin.name} rendered ${pluginComponents.length} components`,
+				);
+				components.push(...pluginComponents);
+			} else {
+				this.logger.debug(
+					`Plugin ${plugin.name} has no renderComponents method`,
+				);
 			}
 		}
 
+		this.logger.debug(`Total components rendered: ${components.length}`);
 		return components;
 	}
 }

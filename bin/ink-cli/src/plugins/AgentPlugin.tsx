@@ -280,25 +280,27 @@ ${agentStatus.progress !== undefined ? `📈 Progress: ${Math.round(agentStatus.
 	 * Render agent status component
 	 */
 	private renderAgentStatus(agentStatus: any): ReactElement {
-		const statusColor = {
+		const statusColor: {[key: string]: string} = {
 			running: 'yellow',
 			waiting: 'blue',
 			stopped: 'gray',
 			error: 'red',
 			starting: 'cyan',
-		}[agentStatus.status] || 'gray';
-
-		const statusIcon = {
+		};
+		const statusIcon: {[key: string]: string} = {
 			running: '🔄',
 			waiting: '⏸️',
 			stopped: '⏹️',
 			error: '❌',
 			starting: '⏯️',
-		}[agentStatus.status] || '❓';
+		};
+
+		const color = statusColor[agentStatus.status] || 'gray';
+		const icon = statusIcon[agentStatus.status] || '❓';
 
 		return React.createElement('div', {}, [
 			React.createElement('div', {key: 'agent-status'}, [
-				React.createElement('span', {style: {color: statusColor}}, `${statusIcon} Agent: ${agentStatus.status}`),
+				React.createElement('span', {style: {color: color}}, `${icon} Agent: ${agentStatus.status}`),
 				agentStatus.currentAction && ` (${agentStatus.currentAction})`,
 			]),
 		]);

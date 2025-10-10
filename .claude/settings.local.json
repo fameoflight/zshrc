@@ -90,7 +90,8 @@
       "Bash(htpasswd:*)",
       "Read(//Library/Logs/DiagnosticReports/**)",
       "Bash(yarn build:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(yarn run tsc:*)"
     ],
     "deny": [],
     "additionalDirectories": [

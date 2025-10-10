@@ -58,8 +58,13 @@ export class LLMService implements LLMProvider {
 		const finalConfig = {...this.config, ...options};
 
 		try {
+			// Construct the URL carefully to avoid double /v1 paths
+			const baseURL = finalConfig.baseURL.endsWith('/v1')
+				? finalConfig.baseURL.slice(0, -3)  // Remove /v1 from end
+				: finalConfig.baseURL;
+
 			const response = await fetch(
-				`${finalConfig.baseURL}/v1/chat/completions`,
+				`${baseURL}/v1/chat/completions`,
 				{
 					method: 'POST',
 					headers: {
@@ -152,7 +157,12 @@ export class LLMService implements LLMProvider {
 
 	async healthCheck(): Promise<boolean> {
 		try {
-			const response = await fetch(`${this.config.baseURL}/v1/models`, {
+			// Construct the URL carefully to avoid double /v1 paths
+			const baseURL = this.config.baseURL.endsWith('/v1')
+				? this.config.baseURL.slice(0, -3)  // Remove /v1 from end
+				: this.config.baseURL;
+
+			const response = await fetch(`${baseURL}/v1/models`, {
 				method: 'GET',
 				headers: {
 					...(this.config.apiKey && {

@@ -28,7 +28,7 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 	private namespace: string;
 	private config?: T;
 	private updateConfig?: (updates: Partial<T>) => Promise<void>;
-	private resetConfig?: () => Promise<void>;
+	private resetFunction?: () => Promise<void>;
 
 	constructor(options: ConfigPluginOptions<T> = {}) {
 		this.options = options;
@@ -76,9 +76,14 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 		if (!this.command) return false;
 
 		const parts = command.trim().split(' ');
-		if (parts.length < 2) return false;
 
-		const subcommand = parts[1].toLowerCase();
+		// Default to showing config if no subcommand provided
+		if (parts.length < 2) {
+			await this.showConfig();
+			return true;
+		}
+
+		const subcommand = parts[1]?.toLowerCase() || '';
 
 		switch (subcommand) {
 			case 'list':
@@ -91,7 +96,7 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 					await this.command.addMessage('system', '❌ Usage: /config set <key> <value>');
 					return true;
 				}
-				await this.setConfigValue(parts[2], parts.slice(3).join(' '));
+				await this.setConfigValue(parts[2] || '', parts.slice(3).join(' '));
 				return true;
 
 			case 'get':
@@ -99,7 +104,7 @@ export class ConfigPlugin<T extends object = any> implements Plugin {
 					await this.command.addMessage('system', '❌ Usage: /config get <key>');
 					return true;
 				}
-				await this.getConfigValue(parts[2]);
+				await this.getConfigValue(parts[2] || '');
 				return true;
 
 			case 'reset':
@@ -202,6 +207,11 @@ Use /config reset to restore defaults
 			const oldValue = this.config[key as keyof T];
 			this.config[key as keyof T] = convertedValue;
 
+			// Update command state if it's a known property
+			if (this.command && key in this.command.getState()) {
+				this.command.updateState({[key]: convertedValue} as any);
+			}
+
 			await this.command.addMessage('system', `✅ ${key} updated: ${oldValue} → ${convertedValue}`);
 
 		} catch (error) {
@@ -233,6 +243,11 @@ Use /config reset to restore defaults
 			const defaults = this.options.schema?.defaults || {} as T;
 			this.config = {...defaults};
 
+			// Update command state with defaults
+			if (this.command) {
+				this.command.updateState(defaults as any);
+			}
+
 			await this.command.addMessage('system', '✅ Configuration reset to defaults');
 		} catch (error) {
 			await this.command.addMessage('system', `❌ Failed to reset config: ${error}`);
@@ -258,7 +273,7 @@ Use /config reset to restore defaults
 			const value = this.config[key as keyof T];
 			if (value !== undefined) {
 				try {
-					const result = rule(value);
+					const result = (rule as (value: any) => true | string)(value);
 					if (result !== true) {
 						errors.push(`${key}: ${result}`);
 					}

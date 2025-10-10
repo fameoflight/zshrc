@@ -86,17 +86,25 @@ export function CommandInput({
 			setShowAutocomplete(false);
 		},
 		availableCommands,
-		shortcuts,
+		shortcuts: {
+			...shortcuts,
+			// Add escape key handler
+			escape: () => {
+				if (showAutocomplete) {
+					setShowAutocomplete(false);
+				} else if (onCancel) {
+					onCancel();
+				}
+			},
+		},
 		multiline,
 		disabled
 	});
 
 	// Sync with external value
 	useEffect(() => {
-		if (value !== internalValue) {
-			setInternalValue(value);
+		if (value !== textInputValue) {
 			setTextInputValue(value);
-			setHistoryIndex(-1); // Reset history index when external value changes
 		}
 	}, [value, setTextInputValue]);
 
@@ -115,104 +123,25 @@ export function CommandInput({
 
 	// Handle input changes
 	const handleChange = (newValue: string) => {
-		setInternalValue(newValue);
 		setTextInputValue(newValue);
 		onChange?.(newValue);
-		setHistoryIndex(-1); // Reset history when typing
 
 		// Show autocomplete if we have suggestions and input starts with relevant prefix
-		const shouldShowAutocomplete = newValue.trim() && (
+		const shouldShowAutocomplete = Boolean(newValue.trim() && (
 			newValue.startsWith('/') || // Commands
 			suggestions.some(s => s.label.toLowerCase().startsWith(newValue.toLowerCase()))
-		);
+		));
 		setShowAutocomplete(shouldShowAutocomplete);
 	};
 
-	// Handle history navigation (custom implementation since useTextInput doesn't support history)
-	const handleHistoryNavigation = (direction: 'up' | 'down') => {
-		if (history.length === 0) return;
-
-		let newIndex: number;
-		if (direction === 'up') {
-			newIndex = Math.min(historyIndex + 1, history.length - 1);
-		} else {
-			newIndex = Math.max(historyIndex - 1, -1);
-		}
-
-		if (newIndex !== historyIndex) {
-			setHistoryIndex(newIndex);
-			if (newIndex === -1) {
-				handleChange(''); // Clear input
-			} else {
-				const historyItem = history[history.length - 1 - newIndex];
-				if (historyItem) {
-					handleChange(historyItem);
-				}
-			}
-		}
-	};
-
-	// Handle keyboard shortcuts and navigation
-	useInput((input, key) => {
-		if (disabled) return;
-
-		// Tab completion
-		if (key.tab && filteredSuggestions.length > 0) {
-			const selected = filteredSuggestions[0];
-			if (selected) {
-				handleChange(selected.value);
-				setShowAutocomplete(false);
-			}
-			return;
-		}
-
-		// Escape - cancel input or hide autocomplete
-		if (key.escape) {
-			if (showAutocomplete) {
-				setShowAutocomplete(false);
-			} else if (onCancel) {
-				onCancel();
-			}
-			return;
-		}
-
-		// History navigation (up/down arrows)
-		if (key.upArrow) {
-			handleHistoryNavigation('up');
-			return;
-		}
-
-		if (key.downArrow) {
-			handleHistoryNavigation('down');
-			return;
-		}
-
-		// Show autocomplete when typing / or other command prefixes
-		if (input && !showAutocomplete) {
-			const newValue = internalValue + input;
-			const shouldShow = newValue.trim() && (
-				newValue.startsWith('/') ||
-				suggestions.some(s => s.label.toLowerCase().startsWith(newValue.toLowerCase()))
-			);
-			if (shouldShow) {
-				setShowAutocomplete(true);
-			}
-		}
-
-		// Handle regular character input
-		if (input && !key.ctrl && !key.meta && !key.return && !key.tab && !key.escape && !key.upArrow && !key.downArrow) {
-			handleChange(internalValue + input);
-		}
-	}, {
-		isActive: !disabled,
-	});
+	// History navigation is handled by useTextInput hook
 
 	return (
 		<Box flexDirection="column" width="100%">
 			{/* Autocomplete suggestions */}
-			{showAutocomplete && filteredSuggestions.length > 0 && (
+			{hookShowSuggestions && hookSuggestions.length > 0 && (
 				<Box flexDirection="column" marginBottom={1}>
-					{filteredSuggestions.map((suggestion, index) => (
+					{hookSuggestions.map((suggestion, index) => (
 						<Box key={suggestion.value} flexDirection="row" paddingLeft={2}>
 							<Text color="gray">
 								{index === 0 ? '→' : ' '} {suggestion.label}
@@ -220,11 +149,6 @@ export function CommandInput({
 							{suggestion.description && (
 								<Text color="dimColor">
 									{' - '}{suggestion.description}
-								</Text>
-							)}
-							{suggestion.type && (
-								<Text color="cyan" dimColor>
-									{' ['}{suggestion.type}{']'}
 								</Text>
 							)}
 						</Box>
@@ -240,12 +164,7 @@ export function CommandInput({
 			{/* Input field */}
 			<Box flexDirection="row" alignItems="center">
 				<Text color={prefixColor}>{placeholder}</Text>
-				<Text>{internalValue}_</Text>
-				{historyIndex >= 0 && (
-					<Text color="dimColor">
-						{' '}(history {historyIndex + 1}/{history.length})
-					</Text>
-				)}
+				<Text>{textInputValue}_</Text>
 			</Box>
 		</Box>
 	);

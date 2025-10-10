@@ -26,6 +26,7 @@ export class LLMPlugin implements Plugin {
 	name = 'llm';
 
 	private command?: BaseInteractiveCommand<any>;
+	private logger?: any;
 	private llmProvider?: LLMProvider;
 	private options: LLMPluginOptions;
 
@@ -35,15 +36,22 @@ export class LLMPlugin implements Plugin {
 
 	async initialize(command: BaseInteractiveCommand<any>): Promise<void> {
 		this.command = command;
+		this.logger = command.getLogger(); // Get logger from command
+		this.logger?.info('LLMPlugin initializing...');
 
 		// Get LLM provider from options or service container
 		this.llmProvider = this.options.llmProvider ||
 			serviceContainer.resolve<LLMProvider>('llm-provider');
 
+		this.logger?.info('LLM Provider resolved:', this.llmProvider ? this.llmProvider.getProviderType() : 'None');
+
 		if (!this.llmProvider) {
-			console.warn('[LLMPlugin] No LLM provider available in service container');
+			this.logger?.warn('No LLM provider available in service container');
 			return;
 		}
+
+		this.logger?.debug('Provider is ready:', this.llmProvider.isReady());
+		this.logger?.debug('Provider config:', this.llmProvider.getConfig());
 
 		// Configure LLM provider if options are provided
 		if (this.options.systemPrompt || this.options.temperature !== undefined || this.options.model) {
@@ -58,7 +66,10 @@ export class LLMPlugin implements Plugin {
 			};
 
 			await this.llmProvider.updateConfig(newConfig);
+			this.logger?.debug('Provider config updated');
 		}
+
+		this.logger?.info('LLMPlugin initialization complete');
 	}
 
 	async cleanup(): Promise<void> {
@@ -114,25 +125,27 @@ export class LLMPlugin implements Plugin {
 	 * Enhanced processUserMessage method for LLM integration
 	 */
 	async processWithLLM(message: string): Promise<void> {
+		this.logger?.debug('LLMPlugin processWithLLM called with message:', message);
+
 		if (!this.command || !this.llmProvider || !this.llmProvider.isReady()) {
+			this.logger?.warn('LLMPlugin: Provider not ready, skipping LLM processing');
 			return;
 		}
 
 		const state = this.command.getState();
+		this.logger?.debug('LLMPlugin: Current state messages count:', state.messages.length);
 
 		try {
 			this.command.updateState({isStreaming: true, error: null, currentResponse: ''});
+			this.logger?.debug('LLMPlugin: Starting LLM stream...');
 
-			// Get conversation history
-			const messages = state.messages.map(msg => ({
+			// Get conversation history (user message already added to UI by command)
+			const messages = state.messages.map((msg: any) => ({
 				role: msg.role as 'user' | 'assistant' | 'system',
 				content: msg.content,
 			}));
 
-			// Add current user message if not already in messages
-			if (messages.length === 0 || messages[messages.length - 1].content !== message) {
-				messages.push({role: 'user', content: message});
-			}
+			this.logger?.debug('LLMPlugin: Calling streamChat with', messages.length, 'messages');
 
 			// Stream response from LLM
 			let assistantResponse = '';
@@ -141,17 +154,20 @@ export class LLMPlugin implements Plugin {
 				(chunk) => {
 					if (chunk.content) {
 						assistantResponse += chunk.content;
+						this.logger?.debug('LLMPlugin: Received chunk:', chunk.content);
 						this.command!.updateState({
 							currentResponse: assistantResponse,
 						});
 					}
 					if (chunk.isComplete) {
+						this.logger?.debug('LLMPlugin: Stream completed');
 						this.command!.updateState({
 							isStreaming: false,
 							currentResponse: '',
 						});
 					}
 					if (chunk.error) {
+						this.logger?.error('LLMPlugin: Stream error:', chunk.error);
 						this.command!.updateState({
 							error: chunk.error,
 							isStreaming: false,
@@ -163,10 +179,14 @@ export class LLMPlugin implements Plugin {
 
 			// Add final assistant message
 			if (assistantResponse.trim()) {
+				this.logger?.debug('LLMPlugin: Adding assistant message:', assistantResponse);
 				await this.command.addMessage('assistant', assistantResponse);
+			} else {
+				this.logger?.warn('LLMPlugin: No response received');
 			}
 
 		} catch (error) {
+			this.logger?.error('LLMPlugin: Error in processWithLLM:', error);
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			this.command.updateState({
 				error: errorMessage,
