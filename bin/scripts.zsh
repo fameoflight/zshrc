@@ -63,14 +63,13 @@ _execute_rust_program() {
 
 
 _execute_ink_program() {
-  local ink_cli_dir="$ZSH_CONFIG/bin/ink-cli"
+  local ink_cli_dir="$INK_CLI"
   local ink_cli_path="$ink_cli_dir/dist/cli.js"
 
   if [[ ! -d "$ink_cli_dir" ]]; then
     log_error "Ink CLI directory not found at $ink_cli_dir"
     return 1
   fi
-
 
 
   # Store current directory and change to ink-cli directory

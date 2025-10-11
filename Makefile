@@ -575,7 +575,7 @@ rust:
 
 ink:
 	@echo -e "$(BOLD)$(CYAN)🖌️  Building React Ink programs...$(NC)"
-	@cd bin/ink-cli && { \
+	@cd ~/workspace/ink-cli && { \
 		if [ "$(CLEAN)" = "true" ] || [ "$(CLEAN)" = "1" ]; then \
 			echo -e "$(YELLOW)🧹 Cleaning previous builds...$(NC)"; \
 			rm -rf node_modules; \

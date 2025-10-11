@@ -91,6 +91,7 @@ Three-tier Ruby-based scripts system with centralized dependency management and 
 **Architecture**: Executables in `bin/` directory, setup scripts in `scripts/` directory
 
 ⚠️ **BEFORE WRITING ANY NEW SCRIPT**: Always read `/Users/hemantv/zshrc/bin/SCRIPTS.md` first to understand:
+
 - Available base classes (ScriptBase, InteractiveScriptBase, etc.)
 - Existing utilities (Logger, System, ErrorUtils, etc.)
 - Services you can reuse (LLMService, FileCache, etc.)
@@ -136,6 +137,7 @@ make find-orphans      # Find orphaned Makefile targets
 ### Ruby Script Development
 
 ⚠️ **MANDATORY FIRST STEP**: Read `/Users/hemantv/zshrc/bin/SCRIPTS.md` before writing any script. This comprehensive documentation covers:
+
 - All available base classes and utilities
 - Complete service catalog with usage examples
 - Helper modules and mixins
@@ -214,6 +216,7 @@ log_info "Script started"
 ## PyTorch Image Inference
 
 ### Overview
+
 Modular PyTorch inference framework for image processing with support for multiple model types. Located in `bin/python-cli/` package with CLI script at `bin/pytorch_inference.py`.
 
 ### Model Setup
@@ -227,10 +230,12 @@ make pytorch-setup    # Run PyTorch models setup script
 ```
 
 **Configuration Files:**
+
 - `scripts/requirements.txt` - Python dependencies for PyTorch environment
 - `scripts/pytorch-models.json` - Model definitions with URLs and descriptions
 
 **Setup Process:**
+
 1. Creates isolated Python environment in `~/.config/zsh/.models/venv`
 2. Installs dependencies from requirements.txt
 3. Downloads PyTorch models from JSON configuration
@@ -239,6 +244,7 @@ make pytorch-setup    # Run PyTorch models setup script
 
 **Adding New Models:**
 Update `scripts/pytorch-models.json`:
+
 ```json
 {
   "ModelName": {
@@ -250,6 +256,7 @@ Update `scripts/pytorch-models.json`:
 ```
 
 ### Features
+
 - **Smart Auto-Optimization**: Automatically determines optimal tile size, batch size, and worker count based on image size and device capabilities
 - **Multi-Device Support**: CUDA GPU, Apple Silicon (MPS), and CPU with automatic device detection
 - **Memory-Efficient Processing**: Tiled inference and streaming mode for large images
@@ -258,11 +265,13 @@ Update `scripts/pytorch-models.json`:
 ### Usage
 
 **Basic Usage (Recommended - Auto-Optimized):**
+
 ```bash
 python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth
 ```
 
 **Advanced Usage:**
+
 ```bash
 # Override specific parameters
 python pytorch_inference.py --input image.jpg --output result.jpg --model model.pth --tile 256
@@ -279,16 +288,19 @@ python pytorch_inference.py --input image.jpg --output result.jpg --model model.
 The system analyzes image dimensions and available device memory to determine optimal parameters:
 
 **CUDA GPU:**
+
 - Larger tiles (256-1024px) for better parallelization
 - Higher batch sizes (2-8)
 - Multiple workers (2-4) based on image size
 
 **Apple Silicon (MPS):**
+
 - Moderate tiles (100-400px) due to memory constraints
 - Smaller batches (1-4)
 - Single worker to prevent memory issues
 
 **CPU:**
+
 - Smaller tiles (75-350px) to avoid memory pressure
 - Small batches (1-4)
 - Single worker to avoid oversubscription
@@ -296,17 +308,20 @@ The system analyzes image dimensions and available device memory to determine op
 ### Architecture
 
 **`python_cli/utils.py`** - Base inference framework:
+
 - `BaseImageInference` class for generic PyTorch models
 - Device detection and memory optimization
 - Tiled and streaming inference methods
 - Image preprocessing and postprocessing
 
 **`python_cli/esrgan.py`** - ESRGAN-specific implementation:
+
 - RRDBNet architecture definitions
 - ESRGAN model loading logic
 - Factory methods for easy instantiation
 
 **`pytorch_inference.py`** - CLI interface:
+
 - Command-line argument parsing
 - Model type selection
 - Error handling with helpful suggestions
@@ -332,36 +347,11 @@ class MyModelInference(BaseImageInference):
 ### Memory Management
 
 The framework includes automatic memory management:
+
 - Estimates memory requirements based on image size and scale factor
 - Falls back to streaming mode for very large images
 - Provides helpful error messages with optimization suggestions
 - Handles device-specific memory constraints
-
-## INK CLI Framework
-
-Interactive command-line interface framework built with React and Ink. Located in `bin/ink-cli/` with plugin-based architecture.
-
-**Quick Start:**
-```bash
-cd bin/ink-cli && yarn install && yarn build && yarn start
-```
-
-**ZSH Integration:**
-The ink-cli is available as a ZSH function through `bin/scripts.zsh`:
-```bash
-ink-cli add --a=5 --b=3      # Direct usage
-scripts ink-cli add --a=5    # Via scripts interface
-scripts                      # Interactive fuzzy finder
-```
-
-**Adding Commands:**
-1. Create command in `src/commands/` following the pattern in `INK.md`
-2. Register in `src/commands/index.ts`
-3. Build with `yarn build`
-
-**Documentation:** See `bin/ink-cli/INK.md` for complete architecture and examples.
-
-**IMPORTANT:** Always use `yarn` instead of `npm` for ink-cli project.
 
 ## Git Integration
 
