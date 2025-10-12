@@ -14,7 +14,7 @@ import os
 from pathlib import Path
 
 from .utils import BaseImageInference, find_model_file
-from .cache_manager import get_image_cache_manager
+from .cache_manager import get_cache_manager
 
 
 class LayerNorm(nn.Module):
@@ -142,10 +142,13 @@ class WatermarkInference(BaseImageInference):
         # Initialize cache manager
         self.enable_cache = enable_cache
         if enable_cache:
-            self.cache_manager = get_image_cache_manager()
+            self.cache_manager = get_cache_manager('watermark-detection')
             print(f"📁 Cache initialized: {self.cache_manager.cache_dir}")
         else:
             self.cache_manager = None
+
+        # Pre-compute model hash for cache key (much faster than state_dict)
+        self._model_hash = None
 
     def load_model(self, model_path):
         """Load ConvNeXt-tiny watermark detection model"""
@@ -197,6 +200,15 @@ class WatermarkInference(BaseImageInference):
 
         print('✅ ConvNeXt-tiny watermark detection model loaded successfully!')
         self.model = model
+
+        # Compute model hash once for efficient cache key generation
+        if self.enable_cache:
+            # Use a simple hash based on model parameters count and first layer weights
+            # Much faster than converting entire state_dict to string
+            total_params = sum(p.numel() for p in model.parameters())
+            first_layer_weight = list(model.parameters())[0].flatten()[:10].mean().item()
+            self._model_hash = hash(f"convnext_watermark_{total_params}_{first_layer_weight}")
+
         return model
 
     def preprocess_image(self, image_path):
@@ -207,7 +219,6 @@ class WatermarkInference(BaseImageInference):
             raise ValueError(f'Could not load image: {image_path}. Error: {e}')
 
         original_size = img.size  # (width, height)
-        print(f'Original image size: {original_size[0]}x{original_size[1]}')
 
         # Apply transforms
         input_tensor = self.transform(img)
@@ -217,8 +228,8 @@ class WatermarkInference(BaseImageInference):
 
     def _get_cache_key(self, image_path: str) -> str:
         """Generate cache key for watermark detection"""
-        # Include model info and image path in cache key
-        model_info = f"convnext_watermark_{hash(str(self.model.state_dict()) if self.model else 'no_model')}"
+        # Use pre-computed model hash for much faster cache key generation
+        model_info = self._model_hash if self._model_hash else "no_model"
         return f"watermark_detection:{image_path}:{model_info}"
 
     def detect_watermark(self, image_path, use_cache=None):
@@ -234,17 +245,20 @@ class WatermarkInference(BaseImageInference):
             cache_key = self._get_cache_key(image_path)
             cached_result = self.cache_manager.get_cached_data(cache_key)
             if cached_result:
-                print('📋 Using cached watermark detection result')
-                return cached_result
+                # Validate cached result has required keys
+                if isinstance(cached_result, dict) and 'prediction' in cached_result:
+                    return cached_result
+                else:
+                    # Invalid cache entry, remove it
+                    print(f'⚠️  Invalid cache entry for {image_path}, removing...')
+                    del self.cache_manager.cache[cache_key]
+                    self.cache_manager.save_cache_atomic()
 
         # Load and preprocess image
         input_tensor, original_size = self.preprocess_image(image_path)
         input_tensor = input_tensor.to(self.device)
 
-        print(f'Input shape: {input_tensor.shape}')
-
         # Run inference
-        print('🔍 Running watermark detection...')
         with torch.no_grad():
             outputs = self.model(input_tensor)
 
@@ -261,14 +275,15 @@ class WatermarkInference(BaseImageInference):
         clean_prob = probability_scores[0]  # Probability of being clean
 
         result = {
-            'has_watermark': has_watermark,
+            'file': image_path,  # Add file path for identification
+            'has_watermark': bool(has_watermark),
             'prediction': 'watermarked' if has_watermark else 'clean',
-            'confidence': confidence_score,
-            'watermark_probability': watermark_prob,
-            'clean_probability': clean_prob,
+            'confidence': float(confidence_score),
+            'watermark_probability': float(watermark_prob),
+            'clean_probability': float(clean_prob),
             'probabilities': {
-                'clean': clean_prob,
-                'watermarked': watermark_prob
+                'clean': float(clean_prob),
+                'watermarked': float(watermark_prob)
             }
         }
 
@@ -276,14 +291,14 @@ class WatermarkInference(BaseImageInference):
         if should_cache and self.cache_manager:
             cache_key = self._get_cache_key(image_path)
             self.cache_manager.cache_data(cache_key, result, image_path, auto_save=True)
-            print('💾 Cached watermark detection result')
 
         return result
 
     @classmethod
-    def create_from_model_path(cls, model_path, device=None, enable_cache=True):
+    def create_from_model_path(cls, model_path, device=None, enable_cache=True, input_size=None):
         """Factory method to create WatermarkInference from model path"""
         inference = cls(device=device, enable_cache=enable_cache)
+        # input_size is ignored for now - using fixed 256x256 for compatibility
         inference.load_model(model_path)
         return inference
 

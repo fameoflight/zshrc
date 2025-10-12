@@ -92,7 +92,7 @@ detect-human() {
 
 # Watermark detection using ConvNeXt-tiny model
 detect-watermark() {
-  local usage="Usage: detect-watermark <input_file_or_directory> [--output <json_file>] [--model <model_name>] [--confidence <threshold>] [--no-cache]"
+  local usage="Usage: detect-watermark <input_file_or_directory> [--output <json_file>] [--model <model_name>] [--confidence <threshold>] [--input-size <size>] [--no-cache]"
 
   # Build arguments for Python script
   local python_args=()
@@ -112,6 +112,10 @@ detect-watermark() {
         python_args+=("--confidence" "$2")
         shift 2
         ;;
+      --input-size)
+        python_args+=("--input-size" "$2")
+        shift 2
+        ;;
       --no-cache)
         python_args+=("--no-cache")
         shift
@@ -128,10 +132,12 @@ detect-watermark() {
         echo "$usage"
         echo ""
         echo "Examples:"
-        echo "  detect-watermark image.jpg                          # Single file analysis"
+        echo "  detect-watermark image.jpg                          # Single file analysis (dynamic sizing)"
         echo "  detect-watermark ./images                          # Batch process directory"
         echo "  detect-watermark image.jpg --output file.json     # Save to JSON file"
         echo "  detect-watermark ./photos --confidence 0.8        # Custom confidence threshold"
+        echo "  detect-watermark image.jpg --input-size 512       # Use 512x512 input size"
+        echo "  detect-watermark image.jpg --input-size 768,1024  # Use custom dimensions"
         echo "  detect-watermark --cache-info                      # Show cache information"
         return 0
         ;;

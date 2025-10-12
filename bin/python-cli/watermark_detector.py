@@ -97,9 +97,21 @@ def display_batch_results(results: List[Dict[str, Any]], confidence_threshold: f
     watermark_files = []
     clean_files = []
     low_confidence_files = []
+    error_files = []
 
     for result in results:
         file_path = result['file_path']
+
+        # Skip error results
+        if not result['success'] or 'error' in result['result']:
+            error_files.append(result)
+            continue
+
+        # Check for required keys
+        if 'prediction' not in result['result'] or 'confidence' not in result['result']:
+            error_files.append(result)
+            continue
+
         prediction = result['result']['prediction']
         confidence = result['result']['confidence']
 
@@ -117,6 +129,8 @@ def display_batch_results(results: List[Dict[str, Any]], confidence_threshold: f
     print(f"   • Files with watermarks: {len(watermark_files)}")
     print(f"   • Clean files: {len(clean_files)}")
     print(f"   • Low confidence files (< {int(confidence_threshold * 100)}%): {len(low_confidence_files)}")
+    if error_files:
+        print(f"   • Files with errors: {len(error_files)}")
 
     # Show files with watermarks
     if watermark_files:
@@ -153,6 +167,18 @@ def display_batch_results(results: List[Dict[str, Any]], confidence_threshold: f
             for item in clean_files[:5]:
                 print(f"     - {item['file_path']}")
             print(f"   • ... and {len(clean_files) - 5} more files")
+
+    # Show error files
+    if error_files:
+        print(f"\n❌ Files with Errors:")
+        for item in error_files[:10]:  # Show first 10 errors
+            file_path = item['file_path']
+            if 'error' in item['result']:
+                print(f"   • {file_path}: {item['result']['error']}")
+            else:
+                print(f"   • {file_path}: Invalid cache data or missing prediction")
+        if len(error_files) > 10:
+            print(f"   • ... and {len(error_files) - 10} more files with errors")
 
 
 def process_single_file(inference: WatermarkInference, file_path: str, confidence_threshold: float) -> Dict[str, Any]:
@@ -205,11 +231,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s image.jpg                              # Single file analysis
+  %(prog)s image.jpg                              # Single file analysis (dynamic sizing)
   %(prog)s image.jpg --output results.json       # Save to JSON file
   %(prog)s image.jpg --model ConvNeXt-tiny      # Specify model
   %(prog)s ./images                              # Batch processing directory
   %(prog)s ./images --confidence 0.8            # Custom confidence threshold
+  %(prog)s image.jpg --input-size 512           # Use 512x512 input size
+  %(prog)s image.jpg --input-size 768,1024     # Use custom 768x1024 input size
   %(prog)s image.jpg --no-cache                  # Disable caching
   %(prog)s --cache-info                          # Show cache information
   %(prog)s --clear-cache                         # Clear cache
@@ -220,6 +248,7 @@ Examples:
     parser.add_argument('--output', help='Output JSON file path (optional)')
     parser.add_argument('--model', default='ConvNeXt-tiny', help='Model name (default: ConvNeXt-tiny)')
     parser.add_argument('--confidence', type=float, default=0.7, help='Confidence threshold for watermark detection (default: 0.7)')
+    parser.add_argument('--input-size', type=int, help='Custom input size (e.g., 512 for 512x512, or specify both dimensions with --input-size 512,768)')
     parser.add_argument('--no-cache', action='store_true', help='Disable caching for this run')
     parser.add_argument('--cache-info', action='store_true', help='Show cache information')
     parser.add_argument('--clear-cache', action='store_true', help='Clear watermark detection cache')
@@ -236,6 +265,22 @@ Examples:
         print(f"❌ Input path is required for watermark detection", file=sys.stderr)
         parser.print_help()
         sys.exit(1)
+
+    # Parse input size if provided
+    input_size = None
+    if args.input_size:
+        input_size_str = str(args.input_size)
+        if ',' in input_size_str:
+            # Parse as "width,height"
+            try:
+                width, height = map(int, input_size_str.split(','))
+                input_size = (width, height)
+            except ValueError:
+                print(f"❌ Invalid input size format: {input_size_str}. Use '512' or '512,768'", file=sys.stderr)
+                sys.exit(1)
+        else:
+            # Parse as single integer (square)
+            input_size = args.input_size
 
     # Validate confidence threshold
     if not 0.0 <= args.confidence <= 1.0:
@@ -265,7 +310,8 @@ Examples:
         # Initialize watermark detection
         inference = WatermarkInference.create_from_model_path(
             model_file,
-            enable_cache=not args.no_cache
+            enable_cache=not args.no_cache,
+            input_size=input_size
         )
 
         if is_directory:

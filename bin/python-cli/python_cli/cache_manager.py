@@ -62,14 +62,26 @@ class CacheManager:
         """Save cache to disk atomically (write to temp file then rename)"""
         temp_file = self.cache_file.with_suffix('.tmp')
         try:
-            with open(temp_file, 'w') as f:
-                json.dump(self.cache, f, indent=2)
-            temp_file.replace(self.cache_file)  # Atomic operation
-        except IOError as e:
+            # Write to temp file with explicit encoding and error handling
+            with open(temp_file, 'w', encoding='utf-8') as f:
+                json.dump(self.cache, f, indent=2, ensure_ascii=False)
+                f.flush()  # Ensure data is written to disk
+                os.fsync(f.fileno())  # Force write to disk
+
+            # Verify temp file is valid before replacing
+            if temp_file.exists() and temp_file.stat().st_size > 0:
+                temp_file.replace(self.cache_file)  # Atomic operation
+            else:
+                raise IOError(f"Temp file {temp_file} is empty or doesn't exist after writing")
+
+        except (IOError, OSError, TypeError, ValueError) as e:
             print(f"⚠️  Warning: Could not save cache {self.cache_name}: {e}")
             # Clean up temp file if it exists
             if temp_file.exists():
-                temp_file.unlink()
+                try:
+                    temp_file.unlink()
+                except OSError:
+                    pass
 
     def clear_cache(self):
         """Clear all cache data"""
@@ -135,7 +147,7 @@ class CacheManager:
 
         # Auto-save if requested
         if auto_save:
-            self.save_cache()
+            self.save_cache_atomic()
 
     def get_cache_info(self) -> Dict[str, Any]:
         """Get cache information"""
