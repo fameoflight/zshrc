@@ -66,6 +66,10 @@ gem 'httparty', '~> 0.21'        # HTTP requests with retries
 gem 'nokogiri', '~> 1.15'        # HTML/XML parsing
 gem 'ruby-readability', '~> 0.7' # Content extraction (reader view)
 
+# Browser automation for web scraping
+gem 'selenium-webdriver', '~> 4.16'  # Selenium WebDriver for browser automation
+gem 'webdrivers', '~> 5.0'           # Automatic WebDriver management
+
 # Google API for Gmail integration
 gem 'google-api-client', '~> 0.53'
 gem 'googleauth', '~> 1.2'

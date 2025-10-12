@@ -1,0 +1,557 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require_relative '.common/script_base'
+require_relative '.common/file_filter'
+require_relative '.common/image_utils'
+require_relative '.common/utils/parallel_utils'
+require_relative '.common/utils/device_utils'
+require 'tty-progressbar'
+
+class UpscaleDirectory < ScriptBase
+
+  def script_emoji; '🖼️'; end
+  def script_title; 'Directory Image Upscaler'; end
+  def script_description; 'Analyze and upscale images smaller than median size in a directory'; end
+  def script_arguments; '[OPTIONS] <directory>'; end
+
+  def add_custom_options(opts)
+    opts.on('-m', '--model MODEL', 'CoreML model name (default: RealESRGAN_x4plus)') do |model|
+      @options[:model] = model
+    end
+    opts.on('-s', '--scale FACTOR', 'Upscale factor: 2 or 4 (default: 4)') do |factor|
+      @options[:scale] = factor
+    end
+    opts.on('-t', '--tile SIZE', 'Tile size for large images (default: 512, max: 1024)') do |size|
+      @options[:tile] = size
+    end
+    opts.on('-o', '--output DIR', 'Output directory (default: creates subdirectory)') do |dir|
+      @options[:output] = dir
+    end
+    opts.on('--dry-run', 'Show what would be processed without upscaling') do
+      @options[:dry_run] = true
+    end
+    opts.on('--all', 'Upscale all images regardless of size') do
+      @options[:all] = true
+    end
+    opts.on('--min-size SIZE', 'Minimum size threshold (WIDTHxHEIGHT)') do |size|
+      @options[:min_size] = size
+    end
+    opts.on('-j', '--workers COUNT', 'Number of parallel workers (default: auto)') do |count|
+      @options[:workers] = count.to_i
+    end
+    opts.on('-l', '--limit COUNT', 'Limit number of images to process (default: all)') do |count|
+      @options[:limit] = count.to_i
+    end
+    opts.on('--skip DIMENSION', Integer, 'Skip images where minimum dimension >= VALUE (default: 1080)') do |dimension|
+      @options[:skip_dimension] = dimension
+    end
+  end
+
+  def validate!
+    super
+
+    if args.empty?
+      log_error("Missing required argument: directory")
+      show_usage
+      exit 1
+    end
+
+    @directory = File.expand_path(args[0])
+
+    unless Dir.exist?(@directory)
+      log_error("Directory not found: #{@directory}")
+      exit 1
+    end
+
+    # Validate scale factor
+    scale = @options[:scale] || '4'
+    unless scale == '2' || scale == '4'
+      log_error("Scale factor must be 2 or 4, got: #{scale}")
+      exit 1
+    end
+
+    # Parse minimum size if provided
+    if @options[:min_size]
+      parse_min_size
+    end
+  end
+
+  def run
+    # Set default skip dimension if not specified
+    @options[:skip_dimension] = 1080 unless @options.key?(:skip_dimension)
+
+    log_banner(script_title)
+
+    # Find all images in directory
+    log_info("Scanning directory: #{@directory}")
+    image_files = find_images
+
+    if image_files.empty?
+      log_warning("No images found in directory")
+      return
+    end
+
+    log_success("Found #{image_files.length} images")
+
+    # Analyze image sizes
+    size_analysis = analyze_image_sizes(image_files)
+
+    if size_analysis[:errors].any?
+      log_warning("Could not read #{size_analysis[:errors].length} images:")
+      size_analysis[:errors].each { |error| log_info("  • #{error}") }
+    end
+
+    # Determine which images to upscale
+    images_to_process = select_images_for_upscaling(size_analysis[:valid_images])
+
+    if images_to_process.empty?
+      log_info("No images selected for upscaling")
+      return
+    end
+
+    log_section("Images to Upscale (#{images_to_process.length})")
+    images_to_process.each do |img|
+      size_info = "#{img[:width]}×#{img[:height]} (#{format_pixels(img[:pixels])})"
+      puts "  📄 #{img[:path]} - #{size_info}"
+    end
+
+    # Setup output directory
+    setup_output_directory
+
+    # Confirm processing
+    unless dry_run?
+      return unless force? || interactive_confirm("Proceed with upscaling #{images_to_process.length} images?", default: true)
+    end
+
+    # Process images
+    process_images(images_to_process)
+
+    show_completion(script_title)
+  end
+
+  private
+
+  def find_images
+    # Supported image extensions
+    image_extensions = %w[.jpg .jpeg .png .webp .bmp .tiff .tif]
+
+    # Find all image files in directory (including subfolders)
+    all_files = Dir.glob(File.join(@directory, '**', '*')).select { |f| File.file?(f) }
+    image_files = FileFilter.filter_by_extensions(all_files, image_extensions)
+
+    log_info("Found images in subdirectories:") if image_files.any? { |f| f.include?('/') }
+
+    # Filter out already upscaled images
+    filter_existing_upscaled_images(image_files)
+  end
+
+  def filter_existing_upscaled_images(image_files)
+    filtered_files = []
+
+    image_files.each do |file_path|
+      basename = File.basename(file_path, '.*') # Remove extension
+
+      # Skip if already upscaled (matches patterns like "name_upscaled" or "name_20_upscaled")
+      if basename.match?(/(?:\d+_)?upscaled$/)
+        log_info("Skipping already upscaled image: #{File.basename(file_path)}")
+        next
+      end
+
+      # Also check if corresponding upscaled file exists
+      relative_path = Pathname.new(file_path).relative_path_from(Pathname.new(@directory)).to_s
+      upscaled_relative = relative_path.sub(/(\.[^.]+)$/, '_upscaled\1')
+      upscaled_path = File.join(@directory, 'upscaled', upscaled_relative)
+
+      if File.exist?(upscaled_path)
+        log_info("Skipping image with existing upscale: #{File.basename(file_path)}")
+        next
+      end
+
+      filtered_files << file_path
+    end
+
+    filtered_files
+  end
+
+  def analyze_image_sizes(image_files)
+    valid_images = []
+    errors = []
+    results = []
+
+    log_progress("Analyzing image dimensions...")
+
+    # Use parallel processing for large directories
+    workers = determine_workers(image_files.length)
+
+    if workers > 1 && image_files.length > 10
+      # Create helper object for parallel processing
+      parallel_helper = Object.new
+      parallel_helper.extend(ParallelUtils)
+      results = parallel_helper.process_in_parallel(image_files, worker_count: workers, progress: false) do |file_path|
+        analyze_single_image(file_path)
+      end
+    else
+      # Sequential processing with progress logging for small directories
+      results = []
+      image_files.each_with_index do |file_path, index|
+        log_progress("Analyzing image #{index + 1}/#{image_files.length}: #{File.basename(file_path)}")
+        results << analyze_single_image(file_path)
+      end
+    end
+
+    # Separate valid results from errors
+    results.each do |result|
+      if result[:success]
+        valid_images << result[:data]
+      else
+        errors << result[:error]
+      end
+    end
+
+    log_info("Analyzed #{image_files.length} images: #{valid_images.length} valid, #{errors.length} errors")
+    { valid_images: valid_images, errors: errors }
+  end
+
+  def select_images_for_upscaling(images)
+    if @options[:all]
+      log_info("Upscaling all images (--all specified)")
+      selected = images
+    elsif @options[:min_size]
+      selected = filter_by_min_size(images)
+    else
+      # Calculate median pixel count
+      pixel_counts = images.map { |img| img[:pixels] }.sort
+      median_pixels = calculate_median(pixel_counts)
+
+      log_info("Median image size: #{format_pixels(median_pixels)}")
+
+      # Select images smaller than median
+      selected = images.select { |img| img[:pixels] < median_pixels }
+
+      log_info("Selected #{selected.length} images smaller than median (#{format_pixels(median_pixels)})")
+    end
+
+    # Apply dimension filter (always applies with default 1080)
+    selected = filter_by_min_dimension(selected, @options[:skip_dimension])
+
+    # Apply limit if specified
+    if @options[:limit] && selected.length > @options[:limit]
+      log_info("Limiting to #{@options[:limit]} images (from #{selected.length} selected)")
+      # Sample diverse sizes by sorting and taking evenly distributed samples
+      selected = selected.sort_by { |img| img[:pixels] }
+      step = selected.length / @options[:limit].to_f
+      selected = @options[:limit].times.map { |i| selected[(i * step).round] }.compact
+    end
+
+    selected
+  end
+
+  def filter_by_min_dimension(images, skip_dimension)
+    log_info("Filtering out images where minimum dimension >= #{skip_dimension}px")
+
+    filtered = images.select do |img|
+      min_dimension = [img[:width], img[:height]].min
+      if min_dimension >= skip_dimension
+        log_info("Skipping image: #{File.basename(img[:path])} (#{img[:width]}×#{img[:height]}) - min dimension: #{min_dimension}px")
+        false
+      else
+        true
+      end
+    end
+
+    log_info("After dimension filter: #{filtered.length} images remaining")
+    filtered
+  end
+
+  def filter_by_min_size(images)
+    min_width, min_height = @options[:min_width], @options[:min_height]
+    min_pixels = min_width * min_height
+
+    log_info("Minimum size threshold: #{min_width}×#{min_height} (#{format_pixels(min_pixels)})")
+
+    selected = images.select do |img|
+      img[:width] < min_width || img[:height] < min_height
+    end
+
+    log_info("Selected #{selected.length} images below minimum size")
+    selected
+  end
+
+  def parse_min_size
+    size_str = @options[:min_size]
+    match = size_str.match(/^(\d+)x(\d+)$/i)
+
+    unless match
+      log_error("Invalid size format: #{size_str}. Use WIDTHxHEIGHT format (e.g., 1920x1080)")
+      exit 1
+    end
+
+    @options[:min_width] = match[1].to_i
+    @options[:min_height] = match[2].to_i
+  end
+
+  def calculate_median(sorted_array)
+    len = sorted_array.length
+    return 0 if len == 0
+
+    mid = len / 2
+    len.odd? ? sorted_array[mid] : (sorted_array[mid - 1] + sorted_array[mid]) / 2
+  end
+
+  def format_pixels(pixels)
+    if pixels >= 1_000_000
+      "#{(pixels / 1_000_000.0).round(1)}MP"
+    elsif pixels >= 1_000
+      "#{(pixels / 1_000.0).round(1)}K"
+    else
+      "#{pixels}px"
+    end
+  end
+
+  def setup_output_directory
+    if @options[:output]
+      @output_dir = File.expand_path(@options[:output])
+    else
+      @output_dir = File.join(@directory, 'upscaled')
+    end
+
+    unless Dir.exist?(@output_dir)
+      if dry_run?
+        log_info("Would create output directory: #{@output_dir}")
+      else
+        Dir.mkdir(@output_dir)
+        log_success("Created output directory: #{@output_dir}")
+      end
+    end
+  end
+
+  def process_images(images)
+    success_count = 0
+    error_count = 0
+    results = []
+
+    if dry_run?
+      log_section("Dry Run - Images to Upscale")
+      images.each do |img|
+        size_info = "#{img[:width]}×#{img[:height]} (#{format_pixels(img[:pixels])})"
+        log_info("Would upscale: #{File.basename(img[:path])} - #{size_info}")
+        success_count += 1
+      end
+    else
+      # Use parallel processing for upscaling
+      workers = determine_workers(images.length)
+
+      # Log processing configuration
+      log_section("Processing Configuration")
+      log_info("Images to process: #{images.length}")
+      log_info("Parallel workers: #{workers}")
+      log_info("Model: #{@options[:model] || 'RealESRGAN_x4plus (default)'}")
+      log_info("Scale factor: #{@options[:scale] || '4'}x")
+      log_info("Tile size: #{@options[:tile] || '512 (default)'}")
+
+      log_progress("Starting image upscaling...")
+
+      # Create a simple progress bar that we know works
+      bar = TTY::ProgressBar.new(
+        "Upscaling [:bar] :current/:total (:percent)",
+        total: images.length,
+        bar_format: :block,
+        incomplete: '░',
+        complete: '█',
+        width: 50
+      )
+
+      # Create helper object for parallel processing
+      parallel_helper = Object.new
+      parallel_helper.extend(ParallelUtils)
+
+      # Use ParallelUtils with manual progress tracking
+      results = parallel_helper.process_in_parallel(
+        images,
+        worker_count: workers,
+        progress: false  # Disable built-in progress, we'll handle it ourselves
+      ) do |img|
+        result = upscale_image(img)
+        bar.advance if result
+        result
+      end
+
+      puts # Add spacing after progress bar
+      bar.finish
+
+      log_info("Processing complete. Checking results...")
+
+      # Count results
+      if results.empty?
+        log_warning("No results returned from processing")
+      else
+        log_info("Analyzing #{results.length} results...")
+
+        results.each_with_index do |result, index|
+          if result.nil?
+            log_error("✗ Result #{index + 1} is nil")
+            error_count += 1
+          elsif result[:success]
+            log_success("✓ #{File.basename(result[:input_path])} → #{File.basename(result[:output_path])}")
+            success_count += 1
+          else
+            log_error("✗ #{File.basename(result[:input_path])}: #{result[:error]}")
+            error_count += 1
+          end
+        end
+      end
+    end
+
+    log_section("Processing Summary")
+    log_success("Successfully upscaled: #{success_count} images")
+    log_error("Failed: #{error_count} images") if error_count > 0
+  end
+
+  def upscale_image(img)
+    input_path = img[:path]
+
+    # Generate output path, preserving subdirectory structure
+    relative_path = img[:relative_path]
+    output_path = File.join(@output_dir, relative_path)
+
+    # Add _upscaled suffix before extension
+    output_dir = File.dirname(output_path)
+    basename = File.basename(output_path, '.*')
+    extension = File.extname(output_path)
+    output_path = File.join(output_dir, "#{basename}_upscaled#{extension}")
+
+    # Ensure output subdirectory exists
+    Dir.mkdir(output_dir) unless Dir.exist?(output_dir)
+
+    # Verify input file exists
+    unless File.exist?(input_path)
+      return { success: false, input_path: input_path, error: "Input file not found: #{input_path}" }
+    end
+
+    # Build upscale command with proper shell escaping
+    cmd = build_upscale_command(input_path, output_path)
+
+    begin
+      # Execute and check for errors
+      require 'open3'
+      stdout, stderr, status = Open3.capture3(cmd)
+
+      if status.success? && File.exist?(output_path)
+        return { success: true, input_path: input_path, output_path: output_path }
+      else
+        error_msg = stderr.strip.empty? ? "Command failed with exit code #{status.exitstatus}" : stderr.strip
+        return { success: false, input_path: input_path, error: error_msg }
+      end
+    rescue => e
+      return { success: false, input_path: input_path, error: e.message }
+    end
+  end
+
+  def build_upscale_command(input_path, output_path)
+    require 'shellwords'
+
+    # Get the full path to upscale-image script
+    zsh_config = ENV['ZSH_CONFIG'] || File.expand_path('~/.config/zsh')
+    script_path = File.join(zsh_config, 'bin', 'upscale-image')
+
+    # Build command with proper shell escaping, using bash directly
+    cmd_parts = ["bash", Shellwords.escape(script_path), Shellwords.escape(input_path), Shellwords.escape(output_path)]
+
+    if @options[:model]
+      cmd_parts += ["--model", Shellwords.escape(@options[:model])]
+    end
+
+    if @options[:scale]
+      cmd_parts += ["--scale", @options[:scale]]
+    end
+
+    # Use 512 as default tile size (CoreML max is 1024)
+    tile_size = @options[:tile] || '512'
+    cmd_parts += ["--tile", tile_size]
+
+    cmd_parts.join(' ')
+  end
+
+  def dry_run?
+    @options[:dry_run] || super
+  end
+
+  def analyze_single_image(file_path)
+    begin
+      dims = ImageUtils::General.get_dimensions(file_path)
+      width = dims[:width]
+      height = dims[:height]
+      pixels = width * height
+
+      {
+        success: true,
+        data: {
+          path: file_path,
+          width: width,
+          height: height,
+          pixels: pixels,
+          relative_path: Pathname.new(file_path).relative_path_from(Pathname.new(@directory)).to_s
+        }
+      }
+    rescue => e
+      {
+        success: false,
+        error: "#{File.basename(file_path)}: #{e.message}"
+      }
+    end
+  end
+
+  def determine_workers(item_count)
+    return 1 if dry_run? || item_count <= 5
+
+    if @options[:workers]
+      [[@options[:workers], 1].max, item_count].min
+    else
+      # Auto-determine optimal workers using DeviceUtils
+      begin
+        # Create a helper object to access DeviceUtils methods
+        device_helper = Object.new
+        device_helper.extend(DeviceUtils)
+        optimal = device_helper.optimal_worker_count(task_type: :cpu_intensive)
+        [optimal, item_count].min
+      rescue
+        # Fallback to simple CPU count detection
+        fallback_cpu_count
+      end
+    end
+  end
+
+  def fallback_cpu_count
+    case RbConfig::CONFIG['host_os']
+    when /darwin/
+      `sysctl -n hw.logicalcpu`.to_i rescue 4
+    when /linux/
+      `nproc`.to_i rescue 4
+    else
+      ENV['NUMBER_OF_PROCESSORS']&.to_i || 4
+    end
+  end
+
+  def show_examples
+    puts "Examples:"
+    puts "  #{script_name} ~/Photos/vacation              # Upscale images smaller than median (skips >=1080px by default)"
+    puts "  #{script_name} --all ~/Photos                 # Upscale all images (still respects --skip)"
+    puts "  #{script_name} --skip 720 ~/Photos            # Skip images with min dimension >= 720px"
+    puts "  #{script_name} --skip 1440 ~/Photos           # Skip images with min dimension >= 1440px"
+    puts "  #{script_name} --dry-run ~/Photos             # Show what would be processed"
+    puts "  #{script_name} --limit 5 ~/Photos             # Process only 5 sample images"
+    puts "  #{script_name} --min-size 1920x1080 ~/Photos # Upscale images below 1080p"
+    puts "  #{script_name} --scale 2 --output ./large ~/Photos  # 2x upscale to custom output"
+    puts "  #{script_name} -j 4 ~/Photos                   # Use 4 parallel workers"
+    puts ""
+    puts "Skip parameter behavior:"
+    puts "  • Images skipped if min(width,height) >= skip dimension"
+    puts "  • --skip 1080  # Skip 4K, 2K, 1080p+ images (default)"
+    puts "  • --skip 720   # Skip HD+ images, keep only SD"
+    puts "  • --skip 1440  # Skip 2K+ images, keep up to 1080p"
+    puts "  • Applies by default with 1080px threshold"
+  end
+end
+
+UpscaleDirectory.execute if __FILE__ == $0

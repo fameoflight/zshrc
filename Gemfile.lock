@@ -208,6 +208,14 @@ GEM
       nokogiri (>= 1.6.0)
     rubyzip (2.3.2)
     securerandom (0.4.1)
+    selenium-webdriver (4.36.0)
+      base64 (~> 0.2)
+      json (<= 2.13.2)
+      logger (~> 1.4)
+      prism (~> 1.0, < 1.5)
+      rexml (~> 3.2, >= 3.2.5)
+      rubyzip (>= 1.2.2, < 4.0)
+      websocket (~> 1.0)
     signet (0.21.0)
       addressable (~> 2.8)
       faraday (>= 0.17.5, < 3.a)
@@ -275,7 +283,12 @@ GEM
     unicode-display_width (2.6.0)
     unicode_utils (1.4.0)
     uri (0.13.2)
+    webdrivers (5.2.0)
+      nokogiri (~> 1.6)
+      rubyzip (>= 1.3.0)
+      selenium-webdriver (~> 4.0)
     webrick (1.9.1)
+    websocket (1.2.11)
     websocket-driver (0.8.0)
       base64
       websocket-extensions (>= 0.1.0)
@@ -317,6 +330,7 @@ DEPENDENCIES
   rubocop-rails (~> 2.21)
   rubocop-rspec (~> 2.24)
   ruby-readability (~> 0.7)
+  selenium-webdriver (~> 4.16)
   sqlite3 (~> 1.6)
   tempfile (~> 0.2)
   tty
@@ -332,6 +346,7 @@ DEPENDENCIES
   tty-tree (~> 0.4)
   tty-which (~> 0.5)
   uri (~> 0.13)
+  webdrivers (~> 5.0)
 
 RUBY VERSION
    ruby 3.2.4p170

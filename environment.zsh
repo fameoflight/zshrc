@@ -11,7 +11,15 @@ export ZSH_CONFIG="$XDG_CONFIG_HOME/zsh"
 export ZSH_CACHE="$XDG_CACHE_HOME/zsh"
 export WORKSPACE="$HOME/workspace"
 export INK_CLI="$WORKSPACE/ink-cli"
+
+# Cache directories for CLI tools
+export PYTHON_CLI_CACHE="$XDG_CACHE_HOME/zshrc/python-cli"
+export RUBY_CLI_CACHE="$XDG_CACHE_HOME/zshrc/ruby-cli"
+
+# Create cache directories
 mkdir -p $ZSH_CACHE
+mkdir -p $PYTHON_CLI_CACHE
+mkdir -p $RUBY_CLI_CACHE
 
 # Homebrew configuration
 export HOMEBREW_NO_ENV_HINTS=1

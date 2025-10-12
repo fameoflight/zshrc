@@ -1,0 +1,93 @@
+#compdef run-tmp
+
+# Tab completion for run-tmp function
+# Completes Ruby scripts from bin/tmp directory
+
+_run_tmp() {
+  local context state state_descr line
+  typeset -A opt_args
+
+  # Define the completion specification
+  _arguments -C \
+    '1: :->script_name' \
+    '*: :->script_args' \
+    && return 0
+
+  case $state in
+    script_name)
+      local -a scripts
+      local tmp_dir="${ZSH_CONFIG:-$HOME/.config/zsh}/bin/tmp"
+
+      if [[ -d "$tmp_dir" ]]; then
+        # Get all Ruby scripts in tmp directory
+        for script in "$tmp_dir"/*.rb; do
+          if [[ -f "$script" ]]; then
+            local basename=$(basename "$script" .rb)
+
+            # Try to extract description from script comments
+            local desc=$(grep -E "^#.*[Dd]escription:" "$script" | head -1 | sed 's/^#.*[Dd]escription: *//')
+            if [[ -z "$desc" ]]; then
+              desc=$(grep -E "^#.*[Ss]cript.*[Dd]escription" "$script" | head -1 | sed 's/^# *//')
+            fi
+            if [[ -z "$desc" ]]; then
+              desc=$(grep -E "^#.*[Pp]urpose:" "$script" | head -1 | sed 's/^#.*[Pp]urpose: *//')
+            fi
+            [[ -z "$desc" ]] && desc="Ruby script"
+
+            scripts+=("${basename}:${desc}")
+          fi
+        done
+      else
+        scripts+=("no-scripts:No tmp directory found")
+      fi
+
+      _describe 'tmp scripts' scripts
+      ;;
+    script_args)
+      # Dynamic argument completion based on the script being executed
+      local script_name="$words[2]"
+      local tmp_dir="${ZSH_CONFIG:-$HOME/.config/zsh}/bin/tmp"
+      local script_path="$tmp_dir/${script_name}.rb"
+
+      # Check for specific script argument patterns
+      case $script_name in
+        organize-images)
+          local -a organize_options
+          organize_options=(
+            '--rename:Rename images sequentially'
+            '--help:Show help for organize-images'
+            '--dry-run:Preview organization without moving files'
+          )
+          _describe 'organize-images options' organize_options
+          _files -/
+          ;;
+        *convert*|*process*)
+          # Common image processing options
+          local -a image_options
+          image_options=(
+            '--output:Specify output directory'
+            '--format:Output format'
+            '--quality:Output quality'
+            '--help:Show help'
+          )
+          _describe 'image options' image_options
+          _files -g "*.(jpg|jpeg|png|gif|bmp|tiff|webp)"
+          ;;
+        *)
+          # Default: complete with files and common options
+          local -a common_options
+          common_options=(
+            '--help:Show help'
+            '--verbose:Enable verbose output'
+            '--debug:Enable debug output'
+          )
+          _describe 'common options' common_options
+          _files
+          ;;
+      esac
+      ;;
+  esac
+}
+
+# Register the completion function
+_run_tmp "$@"
