@@ -21,7 +21,7 @@ show_usage() {
     echo "  input          Input image path"
     echo "  output         Output image path (optional: auto-generates)"
     echo "  --model        CoreML model name (default: ${DEFAULT_MODEL})"
-    echo "  --tile         Tile size for large images (auto-optimized for 60-core GPU, default: 1536)"
+    echo "  --tile         Tile size for large images (auto-optimized for 60-core GPU, default: 1024)"
     echo "  --scale        Upscale factor: 2 or 4 (default: 4)"
     echo "  --list-models  List available CoreML models"
     echo "  --help         Show this help"

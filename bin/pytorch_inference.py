@@ -14,6 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'python-cli'))
 from python_cli.esrgan import ESRGANInference
 from python_cli.yolo import YOLOInference
 from python_cli.coreml_inference import CoreMLInference
+from python_cli.watermark import WatermarkInference
 from python_cli.utils import get_optimal_device
 
 
@@ -27,7 +28,7 @@ def main():
     parser.add_argument('--workers', type=int, default=None, help='Number of parallel workers (default: auto-optimize)')
     parser.add_argument('--batch-size', type=int, default=None, help='Batch size for processing (default: auto-optimize)')
     parser.add_argument('--auto-tile', action='store_true', help='Automatically optimize tile size for performance')
-    parser.add_argument('--model-type', choices=['esrgan', 'yolo', 'coreml'], default='esrgan', help='Model type (default: esrgan)')
+    parser.add_argument('--model-type', choices=['esrgan', 'yolo', 'coreml', 'watermark'], default='esrgan', help='Model type (default: esrgan)')
     parser.add_argument('--confidence', type=float, default=0.25, help='Confidence threshold for YOLO detection (default: 0.25)')
     parser.add_argument('--visualize', action='store_true', help='Create visualization with bounding boxes (YOLO only)')
 
@@ -122,6 +123,45 @@ def main():
             if result['confidence_scores']:
                 avg_conf = sum(result['confidence_scores']) / len(result['confidence_scores'])
                 print(f'   • Average confidence: {avg_conf:.2%}')
+
+        elif args.model_type == 'watermark':
+            inference_engine = WatermarkInference.create_from_model_path(
+                args.model,
+                device=device
+            )
+
+            # Run watermark detection
+            result = inference_engine.detect_watermark(
+                image_path=args.input
+            )
+
+            print('')
+            print('✅ Watermark detection completed successfully!')
+            print(f'📊 Results:')
+            print(f'   • Prediction: {result["prediction"]}')
+            print(f'   • Has watermark: {result["has_watermark"]}')
+            print(f'   • Confidence: {result["confidence"]:.2%}')
+            print(f'   • Watermark probability: {result["watermark_probability"]:.2%}')
+            print(f'   • Clean probability: {result["clean_probability"]:.2%}')
+
+            # Save results to output file if specified
+            if args.output:
+                import json
+                with open(args.output, 'w') as f:
+                    # Convert numpy floats to regular floats for JSON serialization
+                    json_result = {
+                        'prediction': result['prediction'],
+                        'has_watermark': result['has_watermark'],
+                        'confidence': float(result['confidence']),
+                        'watermark_probability': float(result['watermark_probability']),
+                        'clean_probability': float(result['clean_probability']),
+                        'probabilities': {
+                            'clean': float(result['clean_probability']),
+                            'watermarked': float(result['watermark_probability'])
+                        }
+                    }
+                    json.dump(json_result, f, indent=2)
+                print(f'📄 Results saved to: {args.output}')
 
         else:
             print(f'❌ Unsupported model type: {args.model_type}')

@@ -58,6 +58,19 @@ class CacheManager:
         except IOError as e:
             print(f"⚠️  Warning: Could not save cache {self.cache_name}: {e}")
 
+    def save_cache_atomic(self):
+        """Save cache to disk atomically (write to temp file then rename)"""
+        temp_file = self.cache_file.with_suffix('.tmp')
+        try:
+            with open(temp_file, 'w') as f:
+                json.dump(self.cache, f, indent=2)
+            temp_file.replace(self.cache_file)  # Atomic operation
+        except IOError as e:
+            print(f"⚠️  Warning: Could not save cache {self.cache_name}: {e}")
+            # Clean up temp file if it exists
+            if temp_file.exists():
+                temp_file.unlink()
+
     def clear_cache(self):
         """Clear all cache data"""
         try:
@@ -100,7 +113,7 @@ class CacheManager:
 
         return cached.get('data') if isinstance(cached, dict) and 'data' in cached else cached
 
-    def cache_data(self, key: str, data: Any, file_path: Optional[str] = None):
+    def cache_data(self, key: str, data: Any, file_path: Optional[str] = None, auto_save: bool = False):
         """
         Cache data with optional file signature
 
@@ -108,6 +121,7 @@ class CacheManager:
             key: Cache key (usually file path)
             data: Data to cache
             file_path: Path to file for signature validation (optional)
+            auto_save: Whether to immediately save cache to disk (optional)
         """
         if file_path:
             signature = self.get_file_signature(file_path)
@@ -118,6 +132,10 @@ class CacheManager:
                 }
         else:
             self.cache[key] = data
+
+        # Auto-save if requested
+        if auto_save:
+            self.save_cache()
 
     def get_cache_info(self) -> Dict[str, Any]:
         """Get cache information"""

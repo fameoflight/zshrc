@@ -35,7 +35,7 @@ function promptSetup () {
         case $VCS_TYPE in
             'hg')
                 VCS_LINE+='☿ '
-                VCS_CHANGES=`hg st 2>/dev/null | wc -l`
+                VCS_CHANGES=$(hg st 2>/dev/null | wc -l)
                 ;;
             'git')
                 VCS_LINE+='± '
@@ -61,13 +61,13 @@ function promptSetup () {
     fi
 
     # rootshell gets another prompt sign
-    CURRENT_USER=`whoami`
+    CURRENT_USER=$(whoami)
     PR_SIGN=$NOCOLOR
     PR_SIGN+="%F{160}%B"
 
-    HOSTNAME_LINE="`hostname`"
+    HOSTNAME_LINE="$(hostname)"
 
-    PR_SIGN+="`pwd`"
+    PR_SIGN+="$(pwd)"
 
     # setup the main sign
     if [[ $CURRENT_USER == 'root' ]]; then

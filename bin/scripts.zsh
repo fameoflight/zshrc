@@ -4,6 +4,11 @@
 
 # Note: Color logging functions are loaded from logging.zsh
 
+# Load Python CLI scripts and functions
+if [[ -f "$ZSH_CONFIG/bin/python-cli/scripts.zsh" ]]; then
+  source "$ZSH_CONFIG/bin/python-cli/scripts.zsh"
+fi
+
 # ⚠️  IMPORTANT FOR DEVELOPERS:
 # Before creating any new script, ALWAYS read /Users/hemantv/zshrc/bin/SCRIPTS.md
 # It contains comprehensive documentation on:
@@ -240,38 +245,7 @@ ink-cli() {
 }
 
 # Image upscaling utility - AI-powered image upscaling
-upscale-image() {
-  local script_path="$ZSH_CONFIG/bin/upscale-image"
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "upscale-image script not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making upscale-image executable..."
-    chmod +x "$script_path"
-  fi
-
-  bash "$script_path" "$@"
-}
-
-# Video upscaling utility - AI-powered video upscaling with selective frame processing
-upscale-video() {
-  local script_path="$ZSH_CONFIG/bin/upscale-video"
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "upscale-video script not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making upscale-video executable..."
-    chmod +x "$script_path"
-  fi
-
-  bash "$script_path" "$@"
-}
+# (Now available from python-cli/scripts.zsh)
 
 # Video clipping utility - Extract clips from videos using FFmpeg
 clip-video() {
@@ -321,55 +295,13 @@ auto-retry() {
 }
 
 # Human detection utility using YOLOv8 models
-detect-human() {
-  local script_path="$ZSH_CONFIG/bin/detect-human"
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "detect-human script not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making detect-human script executable..."
-    chmod +x "$script_path"
-  fi
-
-  bash "$script_path" "$@"
-}
+# (Now available from python-cli/scripts.zsh)
 
 # Similar image search using computer vision
-find-similar-images() {
-  local script_path="$ZSH_CONFIG/bin/find-similar-images.py"
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Similar image search script not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making find-similar-images.py executable..."
-    chmod +x "$script_path"
-  fi
-
-  python3 "$script_path" "$@"
-}
+# (Now available from python-cli/scripts.zsh)
 
 # Find duplicate images in a folder
-find-duplicate-images() {
-  local script_path="$ZSH_CONFIG/bin/find-duplicate-images.py"
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "Duplicate image finder script not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making find-duplicate-images.py executable..."
-    chmod +x "$script_path"
-  fi
-
-  python3 "$script_path" "$@"
-}
+# (Now available from python-cli/scripts.zsh)
 
 rust-cli() {
   _execute_rust_program "$@"
@@ -470,11 +402,12 @@ list-scripts() {
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
   echo " 🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
-  echo " 🖼️  upscale-image        - Upscale images using PyTorch models with CoreML"
+  echo " 🖼️  upscale-image        - Upscale images using PyTorch models (Python CLI)"
   echo " 🎬 clip-video            - Extract clips from videos using FFmpeg"
-  echo " 👤 detect-human          - Detect humans in images using YOLOv8"
-  echo " 🔍 find-similar-images  - Find similar images using computer vision"
-  echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
+  echo " 👤 detect-human          - Detect humans in images using YOLOv8 (Python CLI)"
+  echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny (Python CLI)"
+  echo " 🔍 find-similar-images  - Find similar images using computer vision (Python CLI)"
+  echo " 🔄 find-duplicate-images - Find duplicate images in a folder (Python CLI)"
   echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
   echo " 📱 xcode-view-files      - View files in Xcode project by category"
   echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -682,9 +615,15 @@ scripts() {
     echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo " 🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
     echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
+    echo " 🖼️  upscale-image        - Upscale images using PyTorch models"
+    echo " 🎬 upscale-video        - Upscale videos using AI models"
     echo " 👤 detect-human          - Detect humans in images using YOLOv8"
+    echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny"
     echo " 🔍 find-similar-images  - Find similar images using computer vision"
     echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
+    echo " 🧠 pytorch-infer         - Generic PyTorch model inference"
+    echo " ⚙️  setup-pytorch-models - Download and setup PyTorch models"
+    echo " 📋 list-pytorch-models  - List available PyTorch models"
     echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
     echo " 📱 xcode-view-files      - View files in Xcode project by category"
     echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
@@ -784,7 +723,8 @@ scripts() {
     "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
-    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "upscale-image" "detect-human" "find-similar-images" "find-duplicate-images"
+    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry"
+    "upscale-image" "upscale-video" "detect-human" "detect-watermark" "find-similar-images" "find-duplicate-images" "pytorch-infer" "setup-pytorch-models" "list-pytorch-models"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
   )
   

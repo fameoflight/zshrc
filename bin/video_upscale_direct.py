@@ -90,7 +90,7 @@ class CoreMLVideoUpscaler:
         """Calculate optimal tile size for CoreML on high-performance systems"""
         # With 60-core GPU, we can handle much larger tiles for better performance
         # Optimized for high-end GPUs with many cores (matches image processing)
-        return 1536
+        return 1024
 
     def load_model(self):
         """Load CoreML model directly"""

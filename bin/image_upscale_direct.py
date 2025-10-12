@@ -22,7 +22,8 @@ except ImportError:
     class tqdm:
         def __init__(self, iterable=None, **kwargs):
             self.iterable = iterable
-            self.total = kwargs.get('total', len(iterable) if hasattr(iterable, '__len__') else None)
+            self.total = kwargs.get('total', len(
+                iterable) if hasattr(iterable, '__len__') else None)
             self.desc = kwargs.get('desc', '')
             self.unit = kwargs.get('unit', 'it')
             self.current = 0
@@ -34,20 +35,25 @@ except ImportError:
                     self.current += 1
                     if self.total:
                         percent = (self.current * 100) // self.total
-                        print(f"\r{self.desc}: {percent}% ({self.current}/{self.total})", end="", flush=True)
+                        print(
+                            f"\r{self.desc}: {percent}% ({self.current}/{self.total})", end="", flush=True)
                     else:
-                        print(f"\r{self.desc}: {self.current} {self.unit}", end="", flush=True)
+                        print(
+                            f"\r{self.desc}: {self.current} {self.unit}", end="", flush=True)
 
         def update(self, n=1):
             self.current += n
             if self.total:
                 percent = (self.current * 100) // self.total
-                print(f"\r{self.desc}: {percent}% ({self.current}/{self.total})", end="", flush=True)
+                print(
+                    f"\r{self.desc}: {percent}% ({self.current}/{self.total})", end="", flush=True)
             else:
-                print(f"\r{self.desc}: {self.current} {self.unit}", end="", flush=True)
+                print(f"\r{self.desc}: {self.current} {self.unit}",
+                      end="", flush=True)
 
         def close(self):
             print()  # New line when done
+
 
 class CoreMLImageUpscaler:
     """Image upscaler using direct CoreML implementation for optimal Apple Silicon performance"""
@@ -60,7 +66,7 @@ class CoreMLImageUpscaler:
     def _calculate_optimal_tile_size(self) -> int:
         """Calculate optimal tile size for CoreML on high-performance systems"""
         # With 60-core GPU, we can handle much larger tiles for better performance
-        return 1536  # Optimized for high-end GPUs with many cores
+        return 1024  # Optimized for high-end GPUs with many cores
 
     def load_model(self):
         """Load CoreML model directly"""
@@ -71,7 +77,8 @@ class CoreMLImageUpscaler:
         print(f"   • Tile size: {self.tile_size}")
 
         if not os.path.exists(self.model_path):
-            raise FileNotFoundError(f"CoreML model file not found: {self.model_path}")
+            raise FileNotFoundError(
+                f"CoreML model file not found: {self.model_path}")
 
         try:
             # Load CoreML model
@@ -117,7 +124,8 @@ class CoreMLImageUpscaler:
             output_dict = self.model.predict(input_dict)
             return self.postprocess_image(output_dict)
 
-        print(f"   Processing image with tiles ({h}x{w} -> {output_h}x{output_w})")
+        print(
+            f"   Processing image with tiles ({h}x{w} -> {output_h}x{output_w})")
 
         # Initialize output
         output = np.zeros((output_h, output_w, 3), dtype=np.uint8)
@@ -170,14 +178,18 @@ class CoreMLImageUpscaler:
                         # Top edge blending
                         if y > 0 and out_y < output_h:
                             blend_start = max(0, out_y - blend_overlap // 2)
-                            blend_end = min(out_y + blend_overlap // 2, output_h)
+                            blend_end = min(
+                                out_y + blend_overlap // 2, output_h)
                             if blend_start < blend_end and blend_end <= out_y_end:
                                 # Calculate alpha weights
-                                alpha_weights = np.linspace(0.3, 1.0, blend_end - blend_start)
+                                alpha_weights = np.linspace(
+                                    0.3, 1.0, blend_end - blend_start)
                                 for c in range(3):
                                     output[blend_start:blend_end, out_x:out_x_end, c] = (
                                         alpha_weights * upscaled_tile[blend_start - out_y:blend_end - out_y, c] +
-                                        (1 - alpha_weights) * output[blend_start:blend_end, out_x:out_x_end, c]
+                                        (1 - alpha_weights) *
+                                        output[blend_start:blend_end,
+                                               out_x:out_x_end, c]
                                     ).astype(np.uint8)
 
                         # Left edge blending
@@ -186,11 +198,14 @@ class CoreMLImageUpscaler:
                             blend_end = min(out_x + blend_overlap // 2, out_w)
                             if blend_start < blend_end and blend_end <= out_x_end:
                                 # Calculate alpha weights
-                                alpha_weights = np.linspace(0.3, 1.0, blend_end - blend_start)
+                                alpha_weights = np.linspace(
+                                    0.3, 1.0, blend_end - blend_start)
                                 for c in range(3):
                                     output[out_y:out_y_end, blend_start:blend_end, c] = (
                                         alpha_weights * upscaled_tile[blend_start - out_x:blend_end - out_x, c] +
-                                        (1 - alpha_weights) * output[out_y:out_y_end, blend_start:blend_end, c]
+                                        (1 - alpha_weights) *
+                                        output[out_y:out_y_end,
+                                               blend_start:blend_end, c]
                                     ).astype(np.uint8)
 
                         # Fill non-overlapping region
@@ -205,13 +220,15 @@ class CoreMLImageUpscaler:
                             src_y_end = fill_y_end - out_y
                             src_x_end = fill_x_end - out_x
 
-                            output[fill_y:fill_y_end, fill_x:fill_x_end] = upscaled_tile[src_y:src_y_end, src_x:src_x_end]
+                            output[fill_y:fill_y_end,
+                                   fill_x:fill_x_end] = upscaled_tile[src_y:src_y_end, src_x:src_x_end]
 
                 except Exception as e:
-                    print(f"⚠️  Warning: Failed to process tile at ({x}, {y}): {e}")
+                    print(
+                        f"⚠️  Warning: Failed to process tile at ({x}, {y}): {e}")
                     # Fallback to simple resize for this region
                     fallback_tile = cv2.resize(tile, (tile.shape[1] * scale, tile.shape[0] * scale),
-                                            interpolation=cv2.INTER_LANCZOS4)
+                                               interpolation=cv2.INTER_LANCZOS4)
                     output[y * scale:(y + tile.shape[0]) * scale,
                            x * scale:(x + tile.shape[1]) * scale] = fallback_tile
 
@@ -254,7 +271,8 @@ class CoreMLImageUpscaler:
 
         print(f"   • Output resolution: {output_w}x{output_h}")
         print(f"   • Processing time: {processing_time:.2f}s")
-        print(f"   • Processing speed: {(w*h)/(processing_time*1000000):.2f} MP/s")
+        print(
+            f"   • Processing speed: {(w*h)/(processing_time*1000000):.2f} MP/s")
 
         # Save output image
         try:
@@ -280,8 +298,10 @@ def find_coreml_model_file(model_name: str) -> str:
         os.path.join(models_dir, f"{model_name}.mlpackage"),
         os.path.join(models_dir, "coreml", f"{model_name}.mlmodel"),
         os.path.join(models_dir, "coreml", f"{model_name}.mlpackage"),
-        os.path.join(models_dir, "apple-silicon", "models", f"{model_name}.mlmodel"),
-        os.path.join(models_dir, "apple-silicon", "models", f"{model_name}.mlpackage"),
+        os.path.join(models_dir, "apple-silicon",
+                     "models", f"{model_name}.mlmodel"),
+        os.path.join(models_dir, "apple-silicon",
+                     "models", f"{model_name}.mlpackage"),
         os.path.join(models_dir, f"{model_name}.mlmodelc"),  # Compiled model
     ]
 
@@ -313,12 +333,17 @@ def find_coreml_model_file(model_name: str) -> str:
 
 def main():
     """Main function for image upscaling"""
-    parser = argparse.ArgumentParser(description='Optimized image upscaling using direct CoreML')
+    parser = argparse.ArgumentParser(
+        description='Optimized image upscaling using direct CoreML')
     parser.add_argument('input', help='Input image path')
-    parser.add_argument('output', nargs='?', help='Output image path (optional)')
-    parser.add_argument('--model', default='RealESRGAN_x4plus', help='CoreML model name')
-    parser.add_argument('--scale', type=int, default=4, help='Upscale factor (2, 4)')
-    parser.add_argument('--tile', type=int, help='Tile size for large images (auto-optimized)')
+    parser.add_argument('output', nargs='?',
+                        help='Output image path (optional)')
+    parser.add_argument(
+        '--model', default='RealESRGAN_x4plus', help='CoreML model name')
+    parser.add_argument('--scale', type=int, default=4,
+                        help='Upscale factor (2, 4)')
+    parser.add_argument('--tile', type=int,
+                        help='Tile size for large images (auto-optimized)')
 
     args = parser.parse_args()
 
@@ -330,7 +355,8 @@ def main():
     # Generate output path if not provided
     if args.output is None:
         input_path = Path(args.input)
-        args.output = str(input_path.parent / f"{input_path.stem}_upscaled{input_path.suffix}")
+        args.output = str(input_path.parent /
+                          f"{input_path.stem}_upscaled{input_path.suffix}")
 
     # Validate scale factor
     if args.scale not in [2, 4]:

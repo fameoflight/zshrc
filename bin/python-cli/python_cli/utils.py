@@ -18,6 +18,7 @@ import os
 import json
 from pathlib import Path
 from typing import Optional, List
+from tqdm import tqdm
 
 
 def get_models_dir() -> Path:
@@ -642,6 +643,25 @@ def safe_remove_directory(dir_path):
     except Exception as e:
         print(f"❌ Failed to delete directory: {e}")
         return False
+
+
+# Progress utilities
+def create_progress_bar(iterable, desc=None, total=None, disable=False):
+    """Create a tqdm progress bar with common settings."""
+    return tqdm(
+        iterable,
+        desc=desc,
+        total=total,
+        disable=disable,
+        bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]',
+        ncols=80,
+        ascii=True  # Use ASCII characters for better compatibility
+    )
+
+
+def scan_with_progress(items, desc="Processing"):
+    """Wrap items with a progress bar for scanning operations."""
+    return create_progress_bar(items, desc=desc)
 
 
 # Backward compatibility aliases

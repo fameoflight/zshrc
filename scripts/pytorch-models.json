@@ -23,5 +23,10 @@
     "url": "https://huggingface.co/wavespeed/misc/resolve/main/rife/rife47.pth",
     "filename": "rife47.pth",
     "description": "RIFE 4.7 frame interpolation model - stable version"
+  },
+  "ConvNeXt-tiny": {
+    "url": "https://huggingface.co/boomb0om/watermark-detectors/resolve/main/convnext-tiny_watermarks_detector.pth",
+    "filename": "convnext-tiny_watermarks_detector.pth",
+    "description": "ConvNeXt-tiny model for watermark detection (93.44% accuracy)"
   }
 }
