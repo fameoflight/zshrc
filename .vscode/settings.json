@@ -1,13 +1,4 @@
 {
-  "workbench.colorTheme": "Behave",
-  "workbench.iconTheme": "vs-seti",
-  "search.followSymlinks": false,
-  "workbench.colorCustomizations": {
-    "[Behave]": {
-      "sideBar.background": "#201c1c",
-      "editor.background": "#02283d"
-    }
-  },
   "files.exclude": {
     "build/**": true,
     "**/node_modules/**": true,

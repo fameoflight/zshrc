@@ -1,11 +1,20 @@
 {
+  "workbench.colorTheme": "Behave",
+  "workbench.iconTheme": "vs-seti",
+  "search.followSymlinks": false,
+  "workbench.colorCustomizations": {
+    "[Behave]": {
+      "sideBar.background": "#201c1c",
+      "editor.background": "#002133"
+    }
+  },
   "[ruby]": {
     "editor.defaultFormatter": "misogi.ruby-rubocop"
   },
   "files.exclude": {
     "**/node_modules/**": true,
     "**/.DS_Store": true,
-    "**/dist/**": true,
+    "**/__generated__": true,
     "**/.git": true,
     "**/bundle/ruby/**": true
   },
@@ -15,25 +24,27 @@
   },
   "search.exclude": {
     "**/node_modules": true,
-    "**/dist": true,
-    "**/build": true,
     "**/.git": true,
     "**/.DS_Store": true,
     "**/__generated__": true,
     "**/bundle/ruby/**": true
   },
-  "security.workspace.trust.untrustedFiles": "open",
-  "workbench.colorCustomizations": {
-    "[Behave]": {
-      "sideBar.background": "#061728",
-      "editor.background": "#02283d"
-    }
+  "window.zoomLevel": 2,
+  "editor.fontSize": 14,
+  "editor.cursorStyle": "line",
+  "editor.cursorBlinking": "blink",
+  "explorer.openEditors.visible": 6,
+  "editor.formatOnSave": true,
+  "files.autoSave": "onFocusChange",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.tslint": "explicit",
+    "source.fixAll": "explicit"
   },
+  "security.workspace.trust.untrustedFiles": "open",
   "[typescript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "vscode.typescript-language-features"
   },
-  "files.autoSave": "onFocusChange",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "[typescriptreact]": {
     "editor.formatOnSave": true,
@@ -47,7 +58,6 @@
   },
   "editor.inlineSuggest.enabled": true,
   "typescript.updateImportsOnFileMove.enabled": "always",
-  "editor.cursorStyle": "line",
   "redhat.telemetry.enabled": true,
   "npm.packageManager": "yarn",
   "github.copilot.enable": {
@@ -68,19 +78,16 @@
   "[graphql]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "workbench.colorTheme": "Behave",
   "diffEditor.ignoreTrimWhitespace": false,
   "editor.renderWhitespace": "all",
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "git.enableSmartCommit": true,
-  "explorer.openEditors.visible": 6,
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "javascript.updateImportsOnFileMove.enabled": "always",
-  "workbench.iconTheme": "vs-seti",
   "[javascriptreact]": {
     "editor.formatOnSave": true
   },
@@ -89,16 +96,12 @@
   "xml.server.binary.trustedHashes": [
     "1facb3e258f78f295a988276a27ddd28465b10ab2ce9d81a07f9decee26abd39"
   ],
-  "editor.formatOnSave": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "sync.quietSync": true,
   "editor.suggestSelection": "first",
-  "editor.fontSize": 14,
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "editor.minimap.enabled": false,
   "editor.tabSize": 2,
-  "editor.cursorBlinking": "blink",
-  "editor.codeActionsOnSave": {},
   "[javascript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
@@ -115,7 +118,6 @@
   "explorer.confirmDragAndDrop": false,
   "explorer.confirmDelete": false,
   "python.defaultInterpreterPath": "/Users/hemantv/anaconda3/envs/tf",
-  "window.zoomLevel": 2,
   "[scss]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
@@ -129,5 +131,7 @@
     "editor.wordBasedSuggestions": "off"
   },
   "github.copilot.editor.enableAutoCompletions": true,
-  "git.openRepositoryInParentFolders": "always"
+  "git.openRepositoryInParentFolders": "always",
+  "git.ignoreLimitWarning": true,
+  "typescript.tsserver.maxTsServerMemory": 4096
 }
