@@ -9,6 +9,11 @@ if [[ -f "$ZSH_CONFIG/bin/python-cli/scripts.zsh" ]]; then
   source "$ZSH_CONFIG/bin/python-cli/scripts.zsh"
 fi
 
+# Load Rust CLI scripts and functions
+if [[ -f "$ZSH_CONFIG/bin/rust/scripts.zsh" ]]; then
+  source "$ZSH_CONFIG/bin/rust/scripts.zsh"
+fi
+
 # ⚠️  IMPORTANT FOR DEVELOPERS:
 # Before creating any new script, ALWAYS read /Users/hemantv/zshrc/bin/SCRIPTS.md
 # It contains comprehensive documentation on:
@@ -303,41 +308,10 @@ auto-retry() {
 # Find duplicate images in a folder
 # (Now available from python-cli/scripts.zsh)
 
-rust-cli() {
-  _execute_rust_program "$@"
-}
+# YouTube subtitle downloader with parallel processing and caching
+# (Available from python-cli/scripts.zsh)
 
-# Disk usage analyzer - Fast analysis of du output
-disk-usage() {
-  local input="$1"
-
-  if [[ -z "$input" ]]; then
-    log_error "Usage: disk-usage <directory_or_file>"
-    return 1
-  fi
-
-  # If input is a directory, create du output file and pass to Rust program
-  if [[ -d "$input" ]]; then
-    log_info "Analyzing directory: $input"
-    local temp_file="/tmp/du_output_$(date +%s).txt"
-
-    # Generate du output
-    du "$input" > "$temp_file"
-    if [[ $? -ne 0 ]]; then
-      log_error "Failed to run du on directory: $input"
-      return 1
-    fi
-
-    # Call Rust program with the generated file
-    _execute_rust_program "disk-usage" "$temp_file" "${@:2}"
-
-    # Cleanup temp file
-    rm -f "$temp_file"
-  else
-    # Input is a file, pass directly to Rust program
-    _execute_rust_program "disk-usage" "$@"
-  fi
-}
+# Rust CLI functions are now loaded from bin/rust/scripts.zsh
 
 # =============================================================================
 # XCODE PROJECT MANAGEMENT
@@ -366,6 +340,11 @@ xcode-list-categories() {
 # Generate app icons for Xcode projects with customizable themes
 xcode-icon-generator() {
   _execute_ruby_script "xcode-icon-generator.rb" "$@"
+}
+
+# File extension association manager - easy wrapper for duti with fuzzy matching
+change-extension() {
+  _execute_ruby_script "change-extension.rb" "$@"
 }
 
 # =============================================================================
@@ -408,11 +387,14 @@ list-scripts() {
   echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny (Python CLI)"
   echo " 🔍 find-similar-images  - Find similar images using computer vision (Python CLI)"
   echo " 🔄 find-duplicate-images - Find duplicate images in a folder (Python CLI)"
+  echo " 📺 youtube-info          - Extract YouTube channel video information to JSON (Python CLI)"
+  echo " 📺 youtube-subs          - Download YouTube channel subtitles with parallel processing (Python CLI)"
   echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
   echo " 📱 xcode-view-files      - View files in Xcode project by category"
   echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
   echo " 📱 xcode-list-categories - List available Xcode file categories"
   echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
+  echo " 📄 change-extension      - Change file extension associations with fuzzy app matching"
   echo " 📜 list-scripts          - Show this help"
   echo "  📚 calibre-update        - Update Calibre to the latest version"
   echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
@@ -621,6 +603,8 @@ scripts() {
     echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny"
     echo " 🔍 find-similar-images  - Find similar images using computer vision"
     echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
+    echo " 📺 youtube-info          - Extract YouTube channel video information to JSON"
+    echo " 📺 youtube-subs          - Download YouTube channel subtitles with parallel processing"
     echo " 🧠 pytorch-infer         - Generic PyTorch model inference"
     echo " ⚙️  setup-pytorch-models - Download and setup PyTorch models"
     echo " 📋 list-pytorch-models  - List available PyTorch models"
@@ -629,6 +613,7 @@ scripts() {
     echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
     echo " 📱 xcode-list-categories - List available Xcode file categories"
     echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
+    echo " 📄 change-extension      - Change file extension associations with fuzzy app matching"
     echo "  📚 calibre-update        - Update Calibre to the latest version"
     echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
     echo "  🎮 game-mode            - Enable game mode (LG OLED only with HDR)"
@@ -724,8 +709,9 @@ scripts() {
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
     "agent-setup" "spotlight-manage" "llm-generate" "auto-retry"
-    "upscale-image" "upscale-video" "detect-human" "detect-watermark" "find-similar-images" "find-duplicate-images" "pytorch-infer" "setup-pytorch-models" "list-pytorch-models"
+    "upscale-image" "upscale-video" "detect-human" "detect-watermark" "find-similar-images" "find-duplicate-images" "youtube-info" "youtube-subs" "pytorch-infer" "setup-pytorch-models" "list-pytorch-models"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
+    "change-extension"
   )
   
   for func in "${utility_functions[@]}"; do

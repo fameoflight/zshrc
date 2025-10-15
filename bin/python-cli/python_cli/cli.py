@@ -15,6 +15,12 @@ from rich.table import Table
 
 from python_cli.coreml_inference import CoreMLInference
 from python_cli.config import Config
+from python_cli.youtube_subtitles import (
+    VideoInfoExtractor,
+    ParallelSubtitleDownloader,
+    CacheManager,
+    display_channel_info
+)
 
 app = typer.Typer(
     name="python-cli",
@@ -144,6 +150,132 @@ def _list_models():
 
     except Exception as e:
         console.print(f"[red]Error loading models: {str(e)}[/red]")
+
+
+@app.command()
+def youtube_info(
+    channel_url: str = typer.Argument(..., help="YouTube channel URL"),
+    output_file: Optional[str] = typer.Option(
+        None, "--output", "-o", help="Output JSON file (default: channel_videos.json)"),
+    force_refresh: bool = typer.Option(
+        False, "--force", "-f", help="Force refresh and ignore cache"),
+):
+    """
+    Extract YouTube channel video information to JSON.
+
+    Examples:
+        python-cli youtube-info https://www.youtube.com/@channelname/videos
+        python-cli youtube-info https://www.youtube.com/@channelname/videos --output my_channel.json
+        python-cli youtube-info https://www.youtube.com/@channelname/videos --force
+    """
+    try:
+        extractor = VideoInfoExtractor()
+        videos = extractor.extract_channel_videos(channel_url, force_refresh=force_refresh)
+
+        if not videos:
+            console.print("[yellow]No videos found for this channel.[/yellow]")
+            raise typer.Exit(1)
+
+        # Display summary
+        console.print(f"[bold green]📊 Channel Information[/bold green]")
+        console.print(f"Total videos: {len(videos)}")
+        console.print(f"Channel: {videos[0].uploader if videos else 'Unknown'}")
+        console.print()
+
+        # Display first few videos
+        display_channel_info(videos)
+
+        # Export to JSON
+        if output_file is None:
+            channel_name = videos[0].uploader if videos else "channel"
+            safe_name = "".join(c for c in channel_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+            safe_name = safe_name.replace(' ', '_')[:50]
+            output_file = f"{safe_name}_videos.json"
+
+        output_path = Path(output_file)
+        downloader = ParallelSubtitleDownloader()
+        downloader.export_video_info(videos, output_path)
+
+    except Exception as e:
+        console.print(f"[red]❌ Error: {str(e)}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def youtube_subs(
+    channel_url: str = typer.Argument(..., help="YouTube channel URL"),
+    output_dir: Optional[str] = typer.Option(
+        None, "--output-dir", "-d", help="Output directory (default: ~/Downloads/ChannelName)"),
+    lang: str = typer.Option(
+        "en", "--lang", "-l", help="Subtitle language"),
+    max_workers: int = typer.Option(
+        4, "--workers", "-w", help="Maximum parallel download workers"),
+    force_refresh: bool = typer.Option(
+        False, "--force", "-f", help="Force refresh and ignore cache"),
+    skip_cached: bool = typer.Option(
+        True, "--no-skip-cached", help="Download even if already cached", flag_value=False),
+):
+    """
+    Download YouTube channel subtitles with parallel processing and caching.
+
+    Examples:
+        python-cli youtube-subs https://www.youtube.com/@channelname/videos
+        python-cli youtube-subs https://www.youtube.com/@channelname/videos --output-dir ./subs
+        python-cli youtube-subs https://www.youtube.com/@channelname/videos --lang es --workers 8
+        python-cli youtube-subs https://www.youtube.com/@channelname/videos --force
+    """
+    try:
+        # Initialize components
+        cache_manager = CacheManager()
+        extractor = VideoInfoExtractor(cache_manager)
+        downloader = ParallelSubtitleDownloader(max_workers, cache_manager)
+
+        # Extract channel videos
+        videos = extractor.extract_channel_videos(channel_url, force_refresh=force_refresh)
+
+        if not videos:
+            console.print("[yellow]No videos found for this channel.[/yellow]")
+            raise typer.Exit(1)
+
+        console.print(f"[bold green]📺 Channel Subtitle Downloader[/bold green]")
+        console.print(f"Channel: {videos[0].uploader if videos else 'Unknown'}")
+        console.print(f"Total videos: {len(videos)}")
+        console.print(f"Language: {lang}")
+        console.print(f"Workers: {max_workers}")
+        console.print()
+
+        # Set output directory
+        if output_dir is not None:
+            output_path = Path(output_dir)
+        else:
+            channel_name = videos[0].uploader if videos else "Channel"
+            safe_name = "".join(c for c in channel_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+            safe_name = safe_name.replace(' ', '_')[:50]
+            output_path = Path.home() / "Downloads" / safe_name
+
+        console.print(f"Output directory: {output_path}")
+        console.print()
+
+        # Download subtitles
+        results = downloader.download_subtitles(
+            videos=videos,
+            lang=lang,
+            output_dir=output_path,
+            skip_cached=skip_cached
+        )
+
+        # Summary
+        console.print(f"[bold green]📋 Download Summary[/bold green]")
+        console.print(f"Total videos processed: {len(videos)}")
+        console.print(f"Subtitles downloaded: {len(results)}")
+        console.print(f"Success rate: {len(results)/len(videos)*100:.1f}%")
+
+        if results:
+            console.print(f"Files saved in: {output_path}")
+
+    except Exception as e:
+        console.print(f"[red]❌ Error: {str(e)}[/red]")
+        raise typer.Exit(1)
 
 
 @app.command()

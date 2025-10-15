@@ -302,6 +302,20 @@ list-pytorch-models() {
 }
 
 # =============================================================================
+# YOUTUBE PROCESSING FUNCTIONS
+# =============================================================================
+
+# YouTube channel video information extractor - Extract channel video list to JSON
+youtube-info() {
+  python -m python_cli.cli youtube-info "$@"
+}
+
+# YouTube subtitle downloader - Download channel subtitles with parallel processing
+youtube-subs() {
+  python -m python_cli.cli youtube-subs "$@"
+}
+
+# =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
 
@@ -323,6 +337,11 @@ list-python-cli-scripts() {
   echo "   find-duplicate-images   - Find duplicate images in a folder"
   echo ""
 
+  echo "📺 YouTube Processing:"
+  echo "   youtube-info            - Extract YouTube channel video information to JSON"
+  echo "   youtube-subs            - Download YouTube channel subtitles with parallel processing"
+  echo ""
+
   echo "⚙️  Model Management:"
   echo "   setup-pytorch-models    - Download and setup PyTorch models"
   echo "   list-pytorch-models     - List available PyTorch models"
@@ -336,4 +355,6 @@ list-python-cli-scripts() {
   echo "   upscale-image input.jpg output.jpg --model RealESRGAN_x4plus"
   echo "   detect-human photo.jpg --visualize"
   echo "   pytorch-infer input.jpg output.jpg ConvNeXt-tiny watermark"
+  echo "   youtube-info https://youtube.com/@channel/videos"
+  echo "   youtube-subs https://youtube.com/@channel/videos --output-dir ./subs"
 }

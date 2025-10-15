@@ -222,6 +222,9 @@ configure_dock() {
     log_info "Making Dock icons of hidden applications translucent"
     defaults write com.apple.dock showhidden -bool true
 
+    log_info "Reducing window corner radius for sharper appearance"
+    defaults write com.apple.Dock windowCornerRadius -int 4
+
     # Clean up unwanted dock items
     log_info "Removing unwanted applications from dock"
     if command -v dockutil >/dev/null 2>&1; then
@@ -556,10 +559,10 @@ show_macos_completion() {
     echo " • Display and screen settings"
     echo " • Finder enhancements (show extensions, hidden files)"
     if [[ "$DEVICE_TYPE" == "desktop" ]]; then
-        echo " • Desktop-optimized Dock settings (larger size, always visible)"
+        echo " • Desktop-optimized Dock settings (larger size, always visible, reduced corner radius)"
         echo " • Desktop-optimized power management"
     else
-        echo " • Laptop-optimized Dock settings (smaller size, auto-hide)"
+        echo " • Laptop-optimized Dock settings (smaller size, auto-hide, reduced corner radius)"
         echo " • Laptop-optimized power management"
     fi
     echo " • Menu bar cleanup (hide keyboard, search, and AI icons)"
@@ -633,6 +636,7 @@ dry_run() {
     echo "• Keyboard and trackpad optimizations (fast repeat, tap to click)"  
     echo "• Display settings (require password after sleep, better fonts)"
     echo "• Finder enhancements (show extensions, status bar, path bar)"
+    echo "• Dock improvements (reduced window corner radius for sharper appearance)"
     echo "• Security improvements (enable firewall, disable remote access)"
     echo "• Performance tweaks (disable motion sensor, optimize sleep)"
     echo "• Developer settings (show hidden files, enable locate database)"

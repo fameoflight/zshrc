@@ -22,3 +22,6 @@ rich>=13.0.0
 # Video processing dependencies
 moviepy>=1.0.3
 tqdm>=4.64.0
+
+# YouTube processing dependencies
+yt-dlp>=2024.1.0

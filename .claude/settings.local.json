@@ -92,7 +92,8 @@
       "Bash(yarn build:*)",
       "Bash(ls:*)",
       "Bash(yarn run tsc:*)",
-      "Bash(kill-grep:*)"
+      "Bash(kill-grep:*)",
+      "Bash(duti:*)"
     ],
     "deny": [],
     "additionalDirectories": [
