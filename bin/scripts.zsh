@@ -299,6 +299,11 @@ auto-retry() {
   _execute_ruby_script "auto-retry.rb" "$@"
 }
 
+# OpenRouter usage checker - Check API usage and account statistics
+openrouter-usage() {
+  _execute_ruby_script "openrouter-usage.rb" "$@"
+}
+
 # Human detection utility using YOLOv8 models
 # (Now available from python-cli/scripts.zsh)
 
@@ -381,6 +386,7 @@ list-scripts() {
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
   echo " 🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
+  echo " 📊 openrouter-usage      - Check OpenRouter API usage and account statistics"
   echo " 🖼️  upscale-image        - Upscale images using PyTorch models (Python CLI)"
   echo " 🎬 clip-video            - Extract clips from videos using FFmpeg"
   echo " 👤 detect-human          - Detect humans in images using YOLOv8 (Python CLI)"
@@ -708,7 +714,7 @@ scripts() {
     "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
     "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
     "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
-    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry"
+    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "openrouter-usage"
     "upscale-image" "upscale-video" "detect-human" "detect-watermark" "find-similar-images" "find-duplicate-images" "youtube-info" "youtube-subs" "pytorch-infer" "setup-pytorch-models" "list-pytorch-models"
     "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
     "change-extension"
