@@ -14,8 +14,8 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
-    text::{Line, Span, Text},
-    widgets::{Block, Borders, List, ListItem, Paragraph, Wrap},
+    text::{Line, Span},
+    widgets::{Block, Borders, List, ListItem, Paragraph},
     Frame, Terminal,
 };
 use std::io;
@@ -227,10 +227,7 @@ fn parse_markdown_wrapped(text: &str, max_width: usize) -> Vec<Line<'static>> {
     let mut current_line = Vec::new();
     let mut current_style = Style::default();
     let mut in_code_block = false;
-    let mut in_code = false;
-    let mut in_bold = false;
-    let mut in_italic = false;
-    let mut in_heading = false;
+    let in_code = false;
 
     for event in parser {
         match event {
@@ -244,17 +241,14 @@ fn parse_markdown_wrapped(text: &str, max_width: usize) -> Vec<Line<'static>> {
                     current_style = Style::default().fg(Color::Cyan);
                 }
                 Tag::Heading { .. } => {
-                    in_heading = true;
                     current_style = Style::default()
                         .fg(Color::Yellow)
                         .add_modifier(Modifier::BOLD);
                 }
                 Tag::Emphasis => {
-                    in_italic = true;
                     current_style = current_style.add_modifier(Modifier::ITALIC);
                 }
                 Tag::Strong => {
-                    in_bold = true;
                     current_style = current_style.add_modifier(Modifier::BOLD);
                 }
                 Tag::Link { .. } => {
@@ -277,15 +271,12 @@ fn parse_markdown_wrapped(text: &str, max_width: usize) -> Vec<Line<'static>> {
                         current_line.clear();
                     }
                     lines.push(Line::from(""));
-                    in_heading = false;
                     current_style = Style::default();
                 }
                 Tag::Emphasis => {
-                    in_italic = false;
                     current_style = current_style.remove_modifier(Modifier::ITALIC);
                 }
                 Tag::Strong => {
-                    in_bold = false;
                     current_style = current_style.remove_modifier(Modifier::BOLD);
                 }
                 Tag::Link { .. } => {

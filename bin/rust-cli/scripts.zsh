@@ -53,8 +53,64 @@ _execute_rust_cli() {
 
 # Rust-based disk usage analyzer with parallel processing
 disk-usage() {
-  log_info "Running Rust disk usage analyzer..."
-  _execute_rust_cli "rust-cli" disk-usage "$@"
+  # Check if an argument was provided
+  if [[ $# -eq 0 ]]; then
+    log_error "Usage: disk-usage <path-or-file> [options]"
+    log_info "Example: disk-usage ~/Documents --depth 3 --files 10"
+    return 1
+  fi
+
+  local target="$1"
+  shift # Remove the target from arguments
+  local temp_file=""
+  local exit_code=0
+
+  # Check if target is a directory
+  if [[ -d "$target" ]]; then
+    log_info "Target is a directory, generating du output..."
+
+    # Create a temporary file with a unique name
+    temp_file="/tmp/du_output_$$_${RANDOM}.tmp"
+
+    # Ensure cleanup on exit and signals
+    cleanup_temp_file() {
+      [[ -f "$temp_file" ]] && rm "$temp_file" 2>/dev/null
+    }
+    trap cleanup_temp_file EXIT INT TERM
+
+    log_progress "Analyzing disk usage for: $target"
+
+    # Generate du output to temporary file
+    if ! du -k "$target" > "$temp_file" 2>/dev/null; then
+      log_error "Failed to generate du output for: $target"
+      cleanup_temp_file
+      trap - EXIT INT TERM
+      return 1
+    fi
+
+    log_info "Generated du output: $(wc -l < "$temp_file") entries"
+
+    # Call the Rust analyzer with the temporary file
+    log_info "Running Rust disk usage analyzer..."
+    _execute_rust_cli "rust-cli" disk-usage "$temp_file" "$@"
+    exit_code=$?
+
+    # Clean up the temporary file
+    cleanup_temp_file
+    trap - EXIT INT TERM  # Remove the trap
+
+  elif [[ -f "$target" ]]; then
+    # Target is already a file, pass it directly
+    log_info "Running Rust disk usage analyzer..."
+    _execute_rust_cli "rust-cli" disk-usage "$target" "$@"
+    exit_code=$?
+
+  else
+    log_error "Target is neither a file nor a directory: $target"
+    return 1
+  fi
+
+  return $exit_code
 }
 
 # Rust-based LLM chat interface with TUI support

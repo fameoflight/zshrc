@@ -79,6 +79,7 @@ impl LLMClient {
         }
     }
 
+    #[allow(dead_code)]
     pub fn lm_studio_default() -> Self {
         Self::new(
             "http://localhost:1234/v1".to_string(),
@@ -127,6 +128,7 @@ impl LLMClient {
         Ok(content_stream)
     }
 
+    #[allow(dead_code)]
     pub async fn chat(&self, messages: Vec<Message>) -> Result<Message> {
         let openai_messages: Vec<ChatCompletionMessage> =
             messages.into_iter().map(|m| m.into()).collect();
