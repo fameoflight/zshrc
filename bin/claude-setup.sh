@@ -50,6 +50,7 @@ show_help() {
     echo " • Global CLAUDE.md configuration"
     echo " • Claude Code settings.json"
     echo " • Project configurations directory (if available)"
+    echo " • Agents directory (if available)"
     echo ""
     echo "Source location: $CLAUDE_SOURCE_DIR"
     echo "Target location: $CLAUDE_USER_DIR"
@@ -175,12 +176,20 @@ setup_claude_symlinks() {
     done
 
     mkdir -p "$CLAUDE_SOURCE_DIR/projects"
-    
+    mkdir -p "$CLAUDE_SOURCE_DIR/agents"
+
     # Symlink projects directory if available
     if [ -d "$CLAUDE_SOURCE_DIR/projects" ]; then
         create_symlink "$CLAUDE_SOURCE_DIR/projects" "$CLAUDE_USER_DIR/projects" "projects directory"
     else
         log_info "No projects directory found in source"
+    fi
+
+    # Symlink agents directory if available
+    if [ -d "$CLAUDE_SOURCE_DIR/agents" ]; then
+        create_symlink "$CLAUDE_SOURCE_DIR/agents" "$CLAUDE_USER_DIR/agents" "agents directory"
+    else
+        log_info "No agents directory found in source"
     fi
     
     log_success "Claude settings symlinks setup completed!"
@@ -190,7 +199,7 @@ setup_claude_symlinks() {
         log_info "Symlinks created in: $CLAUDE_USER_DIR"
         echo ""
         echo "📁 Current Claude directory contents:"
-        ls -la "$CLAUDE_USER_DIR" | grep -E "(CLAUDE\.md|settings\.json|projects)" || echo " No relevant symlinks found"
+        ls -la "$CLAUDE_USER_DIR" | grep -E "(CLAUDE\.md|settings\.json|projects|agents)" || echo " No relevant symlinks found"
         echo ""
         log_info "Changes to files in $CLAUDE_SOURCE_DIR will be immediately"
         log_info "reflected in Claude Code (no restart required for most changes)"

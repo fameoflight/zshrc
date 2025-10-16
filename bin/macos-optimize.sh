@@ -74,9 +74,9 @@ configure_input() {
     log_info "Disabling press-and-hold for keys in favor of key repeat"
     defaults write NSGlobalDomain ApplePressAndHoldEnabled -bool false
     
-    log_info "Setting fast keyboard repeat rate for productivity"
-    defaults write NSGlobalDomain KeyRepeat -int 1
-    defaults write NSGlobalDomain InitialKeyRepeat -int 10
+    log_info "Setting comfortable keyboard repeat rate"
+    defaults write NSGlobalDomain KeyRepeat -int 2
+    defaults write NSGlobalDomain InitialKeyRepeat -int 25
     
     log_info "Setting trackpad and mouse speed"
     defaults write -g com.apple.trackpad.scaling 2
