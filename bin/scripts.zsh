@@ -15,8 +15,8 @@ if [[ -f "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh" ]]; then
 fi
 
 # Load Rust CLI scripts and functions
-if [[ -f "$ZSH_CONFIG/bin/rust/scripts.zsh" ]]; then
-  source "$ZSH_CONFIG/bin/rust/scripts.zsh"
+if [[ -f "$ZSH_CONFIG/bin/rust-cli/scripts.zsh" ]]; then
+  source "$ZSH_CONFIG/bin/rust-cli/scripts.zsh"
 fi
 
 # ⚠️  IMPORTANT FOR DEVELOPERS:
@@ -34,7 +34,7 @@ fi
 # Execute a Rust program with automatic building
 _execute_rust_program() {
   local program_name="$1"
-  local rust_binary="$ZSH_CONFIG/bin/rust/target/release/rust-cli"
+  local rust_binary="$ZSH_CONFIG/bin/rust-cli/target/release/rust-cli"
   shift # Remove program name from arguments
 
   # Build the Rust binary if it doesn't exist

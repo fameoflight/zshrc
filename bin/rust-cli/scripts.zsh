@@ -11,13 +11,13 @@
 # Execute the Rust CLI utility with proper path setup
 _execute_rust_cli() {
   local binary_name="$1"
-  local binary_path="$ZSH_CONFIG/bin/rust/target/release/$binary_name"
+  local binary_path="$ZSH_CONFIG/bin/rust-cli/target/release/$binary_name"
   shift # Remove binary name from arguments
 
   if [[ ! -f "$binary_path" ]]; then
     log_error "$binary_name not found at $binary_path"
     log_info "Building $binary_name in release mode..."
-    cd "$ZSH_CONFIG/bin/rust" || return 1
+    cd "$ZSH_CONFIG/bin/rust-cli" || return 1
 
     # Try to build the project
     if command -v cargo >/dev/null 2>&1; then
@@ -69,7 +69,7 @@ llm-chat() {
 
 # Build the Rust CLI project in release mode
 build-rust-cli() {
-  local rust_dir="$ZSH_CONFIG/bin/rust"
+  local rust_dir="$ZSH_CONFIG/bin/rust-cli"
 
   if [[ ! -d "$rust_dir" ]]; then
     log_error "Rust project directory not found: $rust_dir"
@@ -99,7 +99,7 @@ build-rust-cli() {
 
 # Build the Rust CLI project in debug mode
 build-rust-cli-debug() {
-  local rust_dir="$ZSH_CONFIG/bin/rust"
+  local rust_dir="$ZSH_CONFIG/bin/rust-cli"
 
   if [[ ! -d "$rust_dir" ]]; then
     log_error "Rust project directory not found: $rust_dir"
@@ -129,7 +129,7 @@ build-rust-cli-debug() {
 
 # Run tests for the Rust CLI project
 test-rust-cli() {
-  local rust_dir="$ZSH_CONFIG/bin/rust"
+  local rust_dir="$ZSH_CONFIG/bin/rust-cli"
 
   if [[ ! -d "$rust_dir" ]]; then
     log_error "Rust project directory not found: $rust_dir"
@@ -155,7 +155,7 @@ test-rust-cli() {
 
 # Clean build artifacts
 clean-rust-cli() {
-  local rust_dir="$ZSH_CONFIG/bin/rust"
+  local rust_dir="$ZSH_CONFIG/bin/rust-cli"
 
   if [[ ! -d "$rust_dir" ]]; then
     log_error "Rust project directory not found: $rust_dir"
@@ -226,6 +226,6 @@ list-rust-scripts() {
   echo ""
 
   echo "📚 Project Documentation:"
-  echo "   See bin/rust/RUST.md for architecture details"
-  echo "   See bin/rust/src/ for source code"
+  echo "   See bin/rust-cli/RUST.md for architecture details"
+  echo "   See bin/rust-cli/src/ for source code"
 }

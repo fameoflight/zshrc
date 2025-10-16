@@ -5,7 +5,7 @@
 This is a modular command-line utility system built in Rust that provides an extensible architecture for building CLI tools. The system uses traits to define a common interface for all commands, making it easy to add new functionality while maintaining type safety and zero-cost abstractions.
 
 **Binary name**: `utils`
-**Location**: `/Users/hemantv/zshrc/bin/rust/`
+**Location**: `/Users/hemantv/zshrc/bin/rust-cli/`
 
 ## Architecture Pattern
 
@@ -25,11 +25,13 @@ pub trait CommandTrait {
 ```
 
 **Why `where Self: Sized`?**
+
 - Allows trait to be object-safe while using associated functions
 - Enables static dispatch for zero-cost abstraction
 - Required because these are associated functions (not methods)
 
 This is equivalent to abstract classes in other languages:
+
 - **Python**: `class Command(ABC): @abstractmethod def execute(self, *args)`
 - **Java**: `abstract class Command { abstract String name(); abstract void execute(); }`
 - **Go**: Interface with Name(), Help(), Execute() methods
@@ -53,6 +55,7 @@ static COMMANDS: Lazy<HashMap<&'static str, CommandFunctions>> = Lazy::new(|| {
 ```
 
 **Key benefits:**
+
 - **Lazy initialization**: Commands loaded only when first accessed
 - **Thread-safe**: `once_cell::sync::Lazy` guarantees single initialization
 - **Function pointers**: Zero overhead for command lookup
@@ -110,6 +113,7 @@ impl CommandTrait for MyCommand {
 ### 2. Update Module Declaration
 
 Add to `src/commands/mod.rs`:
+
 ```rust
 pub mod my_command;
 pub use my_command::MyCommand;
@@ -118,6 +122,7 @@ pub use my_command::MyCommand;
 ### 3. Register Command
 
 Add to the global registry in `src/commands/mod.rs`:
+
 ```rust
 // In get_command_registry() function
 commands.insert("my-command", CommandFunctions {
@@ -127,6 +132,7 @@ commands.insert("my-command", CommandFunctions {
 ```
 
 That's it! The system automatically:
+
 - Registers the command
 - Ensures name uniqueness (via HashMap)
 - Handles CLI argument parsing
@@ -135,18 +141,23 @@ That's it! The system automatically:
 ## Key Benefits
 
 ### 1. **Single Source of Truth**
+
 All commands are registered in one central HashMap. No more scattered command definitions.
 
 ### 2. **Type Safety**
+
 The trait system ensures all commands implement the required methods with correct signatures.
 
 ### 3. **Zero Overhead**
+
 Commands are only loaded when needed (lazy initialization) and function pointers are efficient.
 
 ### 4. **Easy Extension**
+
 Add new commands by implementing the trait and adding one registration line.
 
 ### 5. **Automatic Uniqueness**
+
 HashMap guarantees command names are unique - no duplicate command handling needed.
 
 ## Example: disk-usage Command
@@ -193,12 +204,12 @@ impl CommandTrait for DiskUsageCommand {
 
 ## Comparison to Other Languages
 
-| Feature | Rust | Python | Java |
-|---------|------|--------|------|
-| Abstract Base | `trait CommandTrait` | `class Command(ABC)` | `abstract class Command` |
-| Global Registry | `static HashMap` | `global dict` | `static Map` |
-| Function Pointers | `fn() -> Result` | `callable objects` | `Method references` |
-| Type Safety | Compile-time | Runtime | Compile-time |
-| Memory Safety | ✅ | ❌ | ❌ |
+| Feature           | Rust                 | Python               | Java                     |
+| ----------------- | -------------------- | -------------------- | ------------------------ |
+| Abstract Base     | `trait CommandTrait` | `class Command(ABC)` | `abstract class Command` |
+| Global Registry   | `static HashMap`     | `global dict`        | `static Map`             |
+| Function Pointers | `fn() -> Result`     | `callable objects`   | `Method references`      |
+| Type Safety       | Compile-time         | Runtime              | Compile-time             |
+| Memory Safety     | ✅                   | ❌                   | ❌                       |
 
 This architecture provides the extensibility of dynamic languages while maintaining Rust's type safety and performance guarantees.

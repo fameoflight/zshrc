@@ -28,7 +28,7 @@ credentials/gmail-token.yaml
 /bin/python-cli/python_cli/__pycache__
 .saved_hot_corners.plist
 *.pyc
-/bin/rust/target
+/bin/rust-cli/target
 /.yarn
 .yarnrc
 /node_modules

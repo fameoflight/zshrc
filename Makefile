@@ -552,7 +552,7 @@ doctor:
 rust:
 	@echo -e "$(BOLD)$(CYAN)🦀 Building Rust programs with optimizations...$(NC)"
 
-	@cd bin/rust && \
+	@cd bin/rust-cli && \
 		if [ "$(CLEAN)" = "true" ] || [ "$(CLEAN)" = "1" ]; then \
 			echo -e "$(YELLOW)🧹 Cleaning previous builds...$(NC)"; \
 			cargo clean; \
@@ -561,7 +561,7 @@ rust:
 		RUSTC_WRAPPER=sccache \
 		cargo build --release
 	@echo -e "$(BOLD)$(GREEN)✅ Rust programs built successfully$(NC)"
-	@echo -e "$(CYAN)📦 Optimized binaries available at: bin/rust/target/release/$(NC)"
+	@echo -e "$(CYAN)📦 Optimized binaries available at: bin/rust-cli/target/release/$(NC)"
 	@if [ "$(CLEAN)" = "true" ] || [ "$(CLEAN)" = "1" ]; then \
 		echo -e "$(CYAN)💡 For faster builds next time, run: make rust$(NC)"; \
 	else \
