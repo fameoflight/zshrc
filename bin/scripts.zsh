@@ -9,6 +9,11 @@ if [[ -f "$ZSH_CONFIG/bin/python-cli/scripts.zsh" ]]; then
   source "$ZSH_CONFIG/bin/python-cli/scripts.zsh"
 fi
 
+# Load Ruby CLI scripts and functions
+if [[ -f "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh" ]]; then
+  source "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh"
+fi
+
 # Load Rust CLI scripts and functions
 if [[ -f "$ZSH_CONFIG/bin/rust/scripts.zsh" ]]; then
   source "$ZSH_CONFIG/bin/rust/scripts.zsh"
@@ -25,30 +30,6 @@ fi
 # =============================================================================
 # COMMON UTILITY FUNCTIONS
 # =============================================================================
-
-# Execute a Ruby script with proper bundle setup and error handling
-_execute_ruby_script() {
-  local script_name="$1"
-  local script_path="$ZSH_CONFIG/bin/$1"
-  shift # Remove script name from arguments
-
-  if [[ ! -f "$script_path" ]]; then
-    log_error "$script_name not found at $script_path"
-    return 1
-  fi
-
-  if [[ ! -x "$script_path" ]]; then
-    log_info "Making $script_name executable..."
-    chmod +x "$script_path"
-  fi
-
-  # Store the current working directory and change to script's directory
-  local current_dir="$(pwd)"
-  (
-    cd "$ZSH_CONFIG" || return
-    ORIGINAL_WORKING_DIR="$current_dir" bundle exec ruby "bin/$script_name" "$@"
-  )
-}
 
 # Execute a Rust program with automatic building
 _execute_rust_program() {
@@ -117,131 +98,41 @@ _execute_ink_program() {
 }
 
 # =============================================================================
-# UTILITY SCRIPT FUNCTIONS (Available in ZSH)
+# SHELL SCRIPT FUNCTIONS (Available in ZSH)
 # =============================================================================
-
-# Monitor arrangement script for stacked external monitors
-stack-monitors() {
-  _execute_ruby_script "stacked-monitor.rb" "$@"
-}
-
-# Game mode script - enable only LG OLED monitor with HDR
-game-mode() {
-  # Handle simple on/off commands intuitively
-  case "${1:-}" in
-    on)
-      shift
-      _execute_ruby_script "game-mode.rb" "$@"
-      ;;
-    off)
-      shift
-      _execute_ruby_script "game-mode.rb" --restore "$@"
-      ;;
-    *)
-      _execute_ruby_script "game-mode.rb" "$@"
-      ;;
-  esac
-}
-
-# Test LLM element detection functionality
-test-llm-detection() {
-  _execute_ruby_script "test-llm-detection.rb" "$@"
-}
-
-# YouTube transcript chat - Download transcripts and chat with video content
-youtube-transcript-chat() {
-  _execute_ruby_script "youtube-transcript-chat.rb" "$@"
-}
-
-# Alias for easier access
-yt-chat() {
-  youtube-transcript-chat "$@"
-}
 
 # Calibre e-book manager updater
 calibre-update() {
   local script_path="$ZSH_CONFIG/bin/calibre-update.sh"
-  
+
   if [[ ! -f "$script_path" ]]; then
     log_error "Calibre update script not found at $script_path"
     return 1
   fi
-  
+
   if [[ ! -x "$script_path" ]]; then
     log_info "Making calibre-update.sh executable..."
     chmod +x "$script_path"
   fi
-  
-  bash "$script_path" "$@"
-}
 
-# PDF merger script (Ruby)
-merge-pdf() {
-  _execute_ruby_script "merge-pdf.rb" "$@"
+  bash "$script_path" "$@"
 }
 
 # Dropbox backup utility
 dropbox-backup() {
   local script_path="$ZSH_CONFIG/bin/dropbox-backup.sh"
-  
+
   if [[ ! -f "$script_path" ]]; then
     log_error "Dropbox backup script not found at $script_path"
     return 1
   fi
-  
+
   if [[ ! -x "$script_path" ]]; then
     log_info "Making dropbox-backup.sh executable..."
     chmod +x "$script_path"
   fi
-  
+
   bash "$script_path" "$@"
-}
-
-# Application uninstaller - comprehensive removal of apps, processes, and files
-uninstall-app() {
-  _execute_ruby_script "uninstall-app.rb" "$@"
-}
-
-# Comment-only changes detector - identify low-risk comment changes for safe commits
-comment-only-changes() {
-  _execute_ruby_script "comment-only-changes.rb" "$@"
-}
-
-# Markdown file merger - merge markdown files with their references into a single file
-merge-md() {
-  _execute_ruby_script "merge-markdown.rb" "$@"
-}
-
-# Git commit pure renames - commits only R100 renames after user confirmation
-git-commit-renames() {
-  _execute_ruby_script "git-commit-renames.rb" "$@"
-}
-
-# Git commit deletes - commits only deletions (D) after user confirmation
-git-commit-deletes() {
-  _execute_ruby_script "git-commit-deletes.rb" "$@"
-}
-
-# Git commit directory - stage and commit changes in a specific directory
-git-commit-dir() {
-  _execute_ruby_script "git-commit-dir.rb" "$@"
-}
-
-# Git compress - compress git history to single initial commit
-git-compress() {
-  _execute_ruby_script "git-compress.rb" "$@"
-}
-
-
-
-# Gmail inbox fetcher
-gmail-inbox() {
-  _execute_ruby_script "gmail-inbox.rb" "$@"
-}
-
-# Camera & microphone usage checker
-check-camera-mic() {
-  _execute_ruby_script "check-camera-mic.rb" "$@"
 }
 
 # Interactive Command Line Interface - ink-cli tool
@@ -249,181 +140,54 @@ ink-cli() {
   _execute_ink_program "$@"
 }
 
-# Image upscaling utility - AI-powered image upscaling
-# (Now available from python-cli/scripts.zsh)
-
-# Video clipping utility - Extract clips from videos using FFmpeg
-clip-video() {
-  _execute_ruby_script "clip-video.rb" "$@"
-}
-
-# Website URL extractor and EPUB creator
-website-epub() {
-  _execute_ruby_script "website-epub.rb" "$@"
-}
-
-# Safari reading list to EPUB converter
-safari-epub() {
-  _execute_ruby_script "safari-epub.rb" "$@"
-}
-
 # Agent documentation setup - convert CLAUDE.md to AGENT.md with symlinks
 agent-setup() {
   local script_path="$ZSH_CONFIG/bin/agent-setup.sh"
-  
+
   if [[ ! -f "$script_path" ]]; then
     log_error "Agent setup script not found at $script_path"
     return 1
   fi
-  
+
   if [[ ! -x "$script_path" ]]; then
     log_info "Making agent-setup.sh executable..."
     chmod +x "$script_path"
   fi
-  
+
   bash "$script_path" "$@"
 }
 
-# Spotlight indexing management - control macOS Spotlight settings
-spotlight-manage() {
-  _execute_ruby_script "spotlight-manage.rb" "$@"
-}
-
-# LLM command and script generator - create commands/scripts from natural language
-llm-generate() {
-  _execute_ruby_script "llm-generate.rb" "$@"
-}
-
-# Auto-retry utility that uses local LLM to analyze command failures and determine retry strategies
-auto-retry() {
-  _execute_ruby_script "auto-retry.rb" "$@"
-}
-
-# OpenRouter usage checker - Check API usage and account statistics
-openrouter-usage() {
-  _execute_ruby_script "openrouter-usage.rb" "$@"
-}
-
-# Human detection utility using YOLOv8 models
-# (Now available from python-cli/scripts.zsh)
-
-# Similar image search using computer vision
-# (Now available from python-cli/scripts.zsh)
-
-# Find duplicate images in a folder
-# (Now available from python-cli/scripts.zsh)
-
-# YouTube subtitle downloader with parallel processing and caching
-# (Available from python-cli/scripts.zsh)
-
-# Rust CLI functions are now loaded from bin/rust/scripts.zsh
-
 # =============================================================================
-# XCODE PROJECT MANAGEMENT
-# =============================================================================
-
-# Add file to Xcode project with automatic category detection
-xcode-add-file() {
-  _execute_ruby_script "xcode-add-file.rb" "$@"
-}
-
-# View files in Xcode project, optionally filtered by category
-xcode-view-files() {
-  _execute_ruby_script "xcode-view-files.rb" "$@"
-}
-
-# Remove file from Xcode project and filesystem
-xcode-delete-file() {
-  _execute_ruby_script "xcode-delete-file.rb" "$@"
-}
-
-# List available file categories for Xcode project organization
-xcode-list-categories() {
-  _execute_ruby_script "xcode-list-categories.rb" "$@"
-}
-
-# Generate app icons for Xcode projects with customizable themes
-xcode-icon-generator() {
-  _execute_ruby_script "xcode-icon-generator.rb" "$@"
-}
-
-# File extension association manager - easy wrapper for duti with fuzzy matching
-change-extension() {
-  _execute_ruby_script "change-extension.rb" "$@"
-}
-
-# =============================================================================
-# UTILITY FUNCTIONS
+# LIST ALL AVAILABLE SCRIPTS
 # =============================================================================
 
 # List all available custom scripts and functions
 list-scripts() {
   local scripts_dir="$ZSH_CONFIG/bin"
-  
+
   echo "📜 Custom Scripts Organization:"
   echo ""
-  
+
   # Show utility scripts available in ZSH
   echo "🐚 ZSH Utility Functions (interactive use):"
   echo " 📚 calibre-update        - Update Calibre to the latest version"
-  echo " 🖥️  stack-monitors        - Configure stacked monitor setup"
-  echo " 🎮 game-mode            - Toggle game mode (on/off) for gaming displays"
-  echo " 📄 merge-pdf             - Merge multiple PDF files"
-  echo " 📝 merge-md              - Merge markdown files with their references into a single file"
-  echo " 🎥 youtube-transcript-chat - Download YouTube transcripts and chat with video content using local LLM"
-  echo " 🎬 yt-chat               - Alias for youtube-transcript-chat"
   echo " ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
-  echo " 🗑️  uninstall-app         - Comprehensive application uninstaller"
-  echo " 🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
-  echo " 🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
-  echo " 🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
-  echo " 📁 git-commit-dir        - Stage and commit changes in a specific directory"
-  echo " 📥 gmail-inbox           - Fetch and manage Gmail inbox"
-  echo " 📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
   echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
-  echo " 🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
-  echo " 🧭 safari-epub          - Convert Safari reading list to EPUB"
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
-  echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
-  echo " 🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
-  echo " 📊 openrouter-usage      - Check OpenRouter API usage and account statistics"
-  echo " 🖼️  upscale-image        - Upscale images using PyTorch models (Python CLI)"
-  echo " 🎬 clip-video            - Extract clips from videos using FFmpeg"
-  echo " 👤 detect-human          - Detect humans in images using YOLOv8 (Python CLI)"
-  echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny (Python CLI)"
-  echo " 🔍 find-similar-images  - Find similar images using computer vision (Python CLI)"
-  echo " 🔄 find-duplicate-images - Find duplicate images in a folder (Python CLI)"
-  echo " 📺 youtube-info          - Extract YouTube channel video information to JSON (Python CLI)"
-  echo " 📺 youtube-subs          - Download YouTube channel subtitles with parallel processing (Python CLI)"
-  echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
-  echo " 📱 xcode-view-files      - View files in Xcode project by category"
-  echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
-  echo " 📱 xcode-list-categories - List available Xcode file categories"
-  echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
-  echo " 📄 change-extension      - Change file extension associations with fuzzy app matching"
-  echo " 📜 list-scripts          - Show this help"
-  echo "  📚 calibre-update        - Update Calibre to the latest version"
-  echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
-  echo "  📄 merge-pdf             - Merge multiple PDF files"
-  echo "  📝 merge-md              - Merge markdown files with their references into a single file"
-  echo "  🎥 youtube-transcript-chat - Download YouTube transcripts and chat with video content using local LLM"
-  echo "  🎬 yt-chat               - Alias for youtube-transcript-chat"
-  echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
-  echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
-  echo "  🔍 comment-only-changes  - Detect files with only comment changes for low-risk commits"
-  echo "  🔄 git-commit-renames    - Commit only pure renames (R100) after user confirmation"
-  echo "  🗑️  git-commit-deletes    - Commit only deletions (D) after user confirmation"
-  echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
-  echo "  📹🎤 check-camera-mic     - Check which apps are using camera or microphone"
-  echo "  🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
-  echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
-  echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
-  echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
-  echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
-  echo "  🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
-  echo "  📜 list-scripts          - Show this help"
   echo ""
-  
+
+  # Show Ruby CLI scripts are loaded from ruby-cli
+  echo "💎 Ruby CLI Functions (loaded from ruby-cli/scripts.zsh):"
+  echo "   Xcode tools, Game mode, AI/Chat utilities, File utilities"
+  echo "   Git utilities, Email utilities, Video processing"
+  echo ""
+
+  # Show Python CLI scripts are loaded from python-cli
+  echo "🐍 Python CLI Functions (loaded from python-cli/scripts.zsh):"
+  echo "   AI/ML Model Inference, Computer Vision, YouTube Processing"
+  echo "   Model Management, System utilities"
+  echo ""
+
   # Show setup/backup scripts available via Makefile only
   echo "🔧 Setup/Backup Scripts (Makefile targets only):"
   echo " 🛠️  make macos-optimize - Optimize macOS system settings"
@@ -439,7 +203,7 @@ list-scripts() {
   echo "🧹 Repository Maintenance (Makefile targets only):"
   echo " 🔍 make find-orphans   - Find and report orphaned Makefile targets"
   echo ""
-  
+
   # Show all script files for reference
   echo "📂 All Script Files in $scripts_dir:"
   if [[ -d "$scripts_dir" ]]; then
@@ -447,13 +211,13 @@ list-scripts() {
       if [[ -f "$script" && $(basename "$script") != "scripts.zsh" ]]; then
         local basename_script=$(basename "$script")
         local extension="${basename_script##*.}"
-        
+
         case "$extension" in
           sh)
             echo " 🔧 $basename_script"
             ;;
           rb)
-            echo " 💎 $basename_script"
+            echo " 💎 $basename_script (now in ruby-cli/bin/)"
             ;;
           py)
             echo " 🐍 $basename_script"
@@ -505,32 +269,52 @@ _fuzzy_select_script() {
     log_error "fzf not found. Install with: brew install fzf"
     return 1
   fi
-  
+
   local -a all_scripts
   local zsh_config_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
-  
+
   # Collect all available scripts with descriptions and categories
-  
+
   # Add ZSH utility functions
   if [[ -f "$zsh_config_dir/bin/scripts.zsh" ]]; then
     local -a utility_functions
     utility_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-scripts\(\)' | cut -d'(' -f1))
-    
+
     for func in $utility_functions; do
       all_scripts+=("🐚 $func - ZSH utility function")
     done
   fi
-  
+
+  # Add Ruby CLI functions from ruby-cli
+  if [[ -f "$zsh_config_dir/bin/ruby-cli/scripts.zsh" ]]; then
+    local -a ruby_functions
+    ruby_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/ruby-cli/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-ruby-cli-scripts\(\)' | cut -d'(' -f1))
+
+    for func in $ruby_functions; do
+      all_scripts+=("💎 $func - Ruby CLI function")
+    done
+  fi
+
+  # Add Python CLI functions from python-cli
+  if [[ -f "$zsh_config_dir/bin/python-cli/scripts.zsh" ]]; then
+    local -a python_functions
+    python_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/python-cli/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-python-cli-scripts\(\)' | cut -d'(' -f1))
+
+    for func in $python_functions; do
+      all_scripts+=("🐍 $func - Python CLI function")
+    done
+  fi
+
   # Add Makefile targets
   if [[ -f "$zsh_config_dir/Makefile" ]]; then
     local -a makefile_targets
     makefile_targets=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*:' "$zsh_config_dir/Makefile" | grep -v '^\.PHONY' | cut -d':' -f1 | grep -E '^(macos|claude|gemini|vscode|xcode|iterm|find-orphans)' | head -20))
-    
+
     for target in $makefile_targets; do
       all_scripts+=("🔧 $target - Makefile target")
     done
   fi
-  
+
   # Add recently used scripts at the top
   if [[ -f "$zsh_config_dir/.scripts_history" ]]; then
     local -a recent_scripts
@@ -541,7 +325,7 @@ _fuzzy_select_script() {
       all_scripts=("⭐ $script - Recently used" "${all_scripts[@]}")
     done
   fi
-  
+
   # Use fzf to select script
   local selected
   selected=$(printf "%s\n" "${all_scripts[@]}" | fzf \
@@ -552,10 +336,10 @@ _fuzzy_select_script() {
     --preview='echo {}' \
     --preview-window=down:1 \
     --header="Tab: select, Enter: run, Esc: cancel")
-  
+
   if [[ -n "$selected" ]]; then
     # Extract script name from selection
-    local script_name=$(echo "$selected" | sed -E 's/^[🐚🔧⭐] ([^ ]+) -.*/\1/')
+    local script_name=$(echo "$selected" | sed -E 's/^[🐚💎🐍🔧⭐] ([^ ]+) -.*/\1/')
     echo "$script_name"
   fi
 }
@@ -564,14 +348,14 @@ _fuzzy_select_script() {
 scripts() {
   local script_name="$1"
   shift  # Remove script name from arguments
-  
+
   # Interactive fuzzy finder if no arguments
   if [[ -z "$script_name" ]]; then
     script_name=$(_fuzzy_select_script)
     [[ -z "$script_name" ]] && return 0  # User cancelled
     log_info "Selected: $script_name"
   fi
-  
+
   # Show help if --help
   if [[ "$script_name" == "--help" ]] || [[ "$script_name" == "-h" ]]; then
     echo -e "\033[1m\033[0;36m📜 Scripts Interface\033[0m"
@@ -586,58 +370,17 @@ scripts() {
     echo ""
     echo -e "\033[1m🐚 Available ZSH Utility Functions:\033[0m"
     echo " 📚 calibre-update        - Update Calibre to the latest version"
-    echo " 🖥️  stack-monitors        - Configure stacked monitor setup"
-  echo " 🎮 game-mode            - Toggle game mode (on/off) for gaming displays"
-    echo " 📄 merge-pdf             - Merge multiple PDF files"
-    echo " 📝 merge-md              - Merge markdown files with their references"
     echo " ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
-    echo " 🗑️  uninstall-app         - Comprehensive application uninstaller"
-    echo " 🔍 comment-only-changes  - Detect files with only comment changes"
-    echo " 🔄 git-commit-renames    - Commit only pure renames after confirmation"
-    echo " 🗑️  git-commit-deletes    - Commit only deletions after confirmation"
-    echo " 📁 git-commit-dir        - Stage and commit changes in a specific directory"
-    echo " 📥 gmail-inbox           - Fetch and manage Gmail inbox"
-    echo " 📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
-    echo " 🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
-    echo " 🧭 safari-epub          - Convert Safari reading list to EPUB"
+    echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
     echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
-    echo " 🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
-    echo " 🤖 llm-generate          - Generate commands and scripts using local LLM"
-    echo " 🖼️  upscale-image        - Upscale images using PyTorch models"
-    echo " 🎬 upscale-video        - Upscale videos using AI models"
-    echo " 👤 detect-human          - Detect humans in images using YOLOv8"
-    echo " 🔍 detect-watermark      - Detect watermarks using ConvNeXx-tiny"
-    echo " 🔍 find-similar-images  - Find similar images using computer vision"
-    echo " 🔄 find-duplicate-images - Find duplicate images in a folder"
-    echo " 📺 youtube-info          - Extract YouTube channel video information to JSON"
-    echo " 📺 youtube-subs          - Download YouTube channel subtitles with parallel processing"
-    echo " 🧠 pytorch-infer         - Generic PyTorch model inference"
-    echo " ⚙️  setup-pytorch-models - Download and setup PyTorch models"
-    echo " 📋 list-pytorch-models  - List available PyTorch models"
-    echo " 📱 xcode-add-file        - Add file to Xcode project with category detection"
-    echo " 📱 xcode-view-files      - View files in Xcode project by category"
-    echo " 📱 xcode-delete-file     - Remove file from Xcode project and filesystem"
-    echo " 📱 xcode-list-categories - List available Xcode file categories"
-    echo " 🎨 xcode-icon-generator  - Generate app icons for Xcode projects"
-    echo " 📄 change-extension      - Change file extension associations with fuzzy app matching"
-    echo "  📚 calibre-update        - Update Calibre to the latest version"
-    echo "  🖥️  stack-monitors        - Configure stacked monitor setup"
-    echo "  🎮 game-mode            - Enable game mode (LG OLED only with HDR)"
-    echo "  📄 merge-pdf             - Merge multiple PDF files"
-    echo "  📝 merge-md              - Merge markdown files with their references"
-    echo "  ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
-    echo "  🗑️  uninstall-app         - Comprehensive application uninstaller"
-    echo "  🔍 comment-only-changes  - Detect files with only comment changes"
-    echo "  🔄 git-commit-renames    - Commit only pure renames after confirmation"
-    echo "  🗑️  git-commit-deletes    - Commit only deletions after confirmation"
-    echo "  📥 gmail-inbox           - Fetch and manage Gmail inbox"
-    echo "  📹🎤 check-camera-mic     - Check which apps are using camera/microphone"
-    echo "  🌐 website-epub         - Extract all HTTP/HTTPS URLs from a website"
-    echo "  🧭 safari-epub          - Convert Safari reading list to EPUB"
-    echo "  🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
-    echo "  🔍 spotlight-manage     - Manage macOS Spotlight indexing settings"
-    echo "  🤖 llm-generate          - Generate commands and scripts using local LLM"
-    echo "  🔄 auto-retry            - Auto-retry failed commands with LLM analysis"
+    echo ""
+    echo -e "\033[1m💎 Ruby CLI Functions (from ruby-cli):\033[0m"
+    echo " Xcode tools, Game mode, AI/Chat, File utilities, Git tools"
+    echo " Email, Video processing, System utilities"
+    echo ""
+    echo -e "\033[1m🐍 Python CLI Functions (from python-cli):\033[0m"
+    echo " AI/ML Model Inference, Computer Vision, YouTube processing"
+    echo " Model Management, System utilities"
     echo ""
     echo -e "\033[1m🔧 Setup/Backup Scripts (via Makefile):\033[0m"
     echo " 🛠️  macos-optimize       - Optimize macOS system settings"
@@ -653,23 +396,23 @@ scripts() {
     echo " scripts                               # Interactive fuzzy finder"
     echo " scripts --recent                      # Show recently used scripts"
     echo " scripts make                          # Show all Makefile targets"
-    echo " scripts merge-pdf output.pdf *.pdf    # Merge PDF files"
-    echo " scripts stack-monitors --dry-run      # Test monitor setup"
-    echo " scripts game-mode on                  # Enable game mode for gaming"
-    echo " scripts game-mode off                 # Restore all monitors"
-    echo " scripts spotlight-manage --status     # Check Spotlight status"
-    echo " scripts uninstall-app Docker          # Uninstall application"
-    echo " scripts macos-optimize --dry-run      # Preview macOS optimizations"
+    echo " scripts calibre-update               # Update Calibre"
+    echo " scripts dropbox-backup ~/Documents    # Backup to Dropbox"
+    echo " scripts ink-cli                        # Interactive CLI tool"
+    echo " scripts game-mode on                  # Ruby: Enable game mode"
+    echo " scripts xcode-add-file MyFile.swift  # Ruby: Add to Xcode project"
+    echo " scripts upscale-image photo.jpg      # Python: Upscale image"
+    echo " scripts agent-setup                   # Shell: Setup agent docs"
     echo ""
     return 0
   fi
-  
+
   # Show list if --list
   if [[ "$script_name" == "--list" ]] || [[ "$script_name" == "-l" ]]; then
     list-scripts
     return 0
   fi
-  
+
   # Show recently used scripts
   if [[ "$script_name" == "--recent" ]] || [[ "$script_name" == "-r" ]]; then
     echo -e "\033[1m\033[0;36m⭐ Recently Used Scripts\033[0m"
@@ -701,26 +444,20 @@ scripts() {
     echo "💡 Run any script to start tracking usage"
     return 0
   fi
-  
+
   # Show Makefile help if make
   if [[ "$script_name" == "make" ]]; then
     echo -e "\033[0;34mℹ️  Running: make help from $ZSH_CONFIG\033[0m"
     cd "$ZSH_CONFIG" && make help
     return $?
   fi
-  
+
   # First, check if it's a ZSH utility function
-  local utility_functions=(
-    "calibre-update" "stack-monitors" "game-mode" "merge-pdf" "merge-md" "dropbox-backup"
-    "uninstall-app" "comment-only-changes" "git-commit-renames" "git-commit-deletes" "git-commit-dir"
-    "gmail-inbox" "check-camera-mic" "ink-cli" "website-epub" "safari-epub"
-    "agent-setup" "spotlight-manage" "llm-generate" "auto-retry" "openrouter-usage"
-    "upscale-image" "upscale-video" "detect-human" "detect-watermark" "find-similar-images" "find-duplicate-images" "youtube-info" "youtube-subs" "pytorch-infer" "setup-pytorch-models" "list-pytorch-models"
-    "xcode-add-file" "xcode-view-files" "xcode-delete-file" "xcode-list-categories" "xcode-icon-generator"
-    "change-extension"
+  local shell_functions=(
+    "calibre-update" "dropbox-backup" "ink-cli" "agent-setup"
   )
-  
-  for func in "${utility_functions[@]}"; do
+
+  for func in "${shell_functions[@]}"; do
     if [[ "$script_name" == "$func" ]]; then
       # Track usage before execution
       _track_script_usage "$script_name"
@@ -729,13 +466,13 @@ scripts() {
       return $?
     fi
   done
-  
+
   # Check if it's a setup/backup script (run via Makefile)
   local makefile_scripts=(
     "macos-optimize" "macos-oled-optimize" "claude-setup" "gemini-setup"
     "vscode-backup" "xcode-backup" "iterm-backup" "iterm-setup" "find-orphans"
   )
-  
+
   for script in "${makefile_scripts[@]}"; do
     if [[ "$script_name" == "$script" ]]; then
       # Track usage before execution
@@ -745,22 +482,16 @@ scripts() {
       return $?
     fi
   done
-  
+
   # Check if it's a raw script file in bin/
   local script_path="$ZSH_CONFIG/bin/$script_name"
   if [[ -f "$script_path" ]] && [[ -x "$script_path" ]]; then
     # Track usage before execution
     _track_script_usage "$script_name"
     echo -e "\033[0;34mℹ️  Running script: $script_path $*\033[0m"
-    
+
     # Determine how to execute based on file extension
     case "$script_path" in
-      *.rb)
-        BUNDLE_GEMFILE="$ZSH_CONFIG/Gemfile" ruby "$script_path" "$@"
-        ;;
-      *.py)
-        python3 "$script_path" "$@"
-        ;;
       *.sh)
         bash "$script_path" "$@"
         ;;
@@ -773,7 +504,7 @@ scripts() {
     esac
     return $?
   fi
-  
+
   # If we get here, script wasn't found
   echo -e "\033[0;31m❌ Script '$script_name' not found\033[0m"
   echo ""

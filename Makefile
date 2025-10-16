@@ -238,7 +238,8 @@ ruby: brew ruby-gems
 	@bash scripts/setup-languages.sh ruby
 
 ruby-gems:
-	@bash scripts/setup-languages.sh ruby-gems
+	@echo -e "$(BLUE)💎 Installing Ruby gems for CLI tools...$(NC)"
+	@cd bin/ruby-cli && bundle install
 
 .PHONY: postgres
 postgres: brew
@@ -464,7 +465,7 @@ clean:
 .PHONY: find-orphans
 find-orphans:
 	@echo "🔍 Finding orphaned targets in Makefile..."
-	@bundle exec ruby bin/internal-find-orphaned-targets.rb
+	@cd bin/ruby-cli && bundle exec ruby bin/internal-find-orphaned-targets.rb
 
 # =============================================================================
 # TROUBLESHOOTING
