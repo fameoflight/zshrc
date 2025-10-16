@@ -40,7 +40,7 @@ EMAIL := fameoflight@gmail.com
 UNAME := $(shell uname)
 
 # Package Lists for Homebrew
-CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq
+CORE_UTILS_BREW := tree wget watch ripgrep fd bat eza htop jq yq rg
 DEV_UTILS_BREW := duti fswatch ssh-copy-id rmtrash sleepwatcher pkgconf dockutil librsvg opencv cloudflare/cloudflare/cloudflared sccache llvm
 MODERN_CLI_BREW := zoxide starship fzf claude-code gemini-cli yt-dlp displayplacer uhubctl
 EDITORS_CASK := visual-studio-code zed lm-studio ollama

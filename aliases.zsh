@@ -157,7 +157,19 @@ alias rscp='rsync -aP'
 alias rsmv='rsync -aP --remove-source-files'
 
 path() {
-  find . -iname "*$1*"
+  if [[ -z "$1" ]]; then
+    log_error "Usage: path <pattern>"
+    log_info "Examples:"
+    log_info "  path config"
+    log_info "  path '*.py'"
+    log_info "  path test"
+    return 1
+  fi
+
+  # Use fd for fast, gitignore-aware file searching
+  # --hidden to include hidden files (like the original find command)
+  # --ignore-case for case-insensitive matching (like -iname in find)
+  fd --hidden --ignore-case --type f --type d "$1" .
 }
 
 fix-pep8() {
