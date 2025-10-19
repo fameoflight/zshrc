@@ -29,7 +29,8 @@ _execute_ruby_cli_script() {
   local gemfile_path="$ruby_cli_dir/Gemfile"
 
   if [[ -f "$gemfile_path" ]]; then
-    cd "$ruby_cli_dir" && bundle exec ruby "bin/$script_name" "$@"
+    # Preserve current working directory by running from original dir
+    (cd "$ruby_cli_dir" && bundle exec ruby "bin/$script_name" "$@")
   else
     # Fallback to system ruby
     ruby "$script_path" "$@"
@@ -148,7 +149,8 @@ git-commit-renames() {
 
 # Compress git repository by cleaning history
 git-compress() {
-  _execute_ruby_cli_script "git-compress.rb" "$@"
+  local original_dir="$(pwd)"
+  ORIGINAL_WORKING_DIR="$original_dir" _execute_ruby_cli_script "git-compress.rb" "$@"
 }
 
 # =============================================================================

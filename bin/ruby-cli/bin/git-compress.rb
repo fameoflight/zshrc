@@ -28,6 +28,12 @@ class GitCompress < ScriptBase
   def run
     log_banner('Git History Compression')
 
+    # Change to original working directory if specified
+    if ENV['ORIGINAL_WORKING_DIR']
+      log_info("Changing to original directory: #{ENV['ORIGINAL_WORKING_DIR']}")
+      Dir.chdir(ENV['ORIGINAL_WORKING_DIR'])
+    end
+
     # Check if we have any pending changes
     check_pending_changes
 
