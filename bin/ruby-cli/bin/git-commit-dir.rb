@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 class GitCommitDir < ScriptBase
   def add_custom_options(opts)

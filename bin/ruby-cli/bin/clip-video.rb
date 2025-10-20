@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 require 'optparse'
 
 class ClipVideo < ScriptBase

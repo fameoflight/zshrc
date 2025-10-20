@@ -22,18 +22,36 @@ This document provides comprehensive documentation for the Ruby-based scripts sy
 
 ## Architecture Overview
 
-The scripts system follows a **Ruby-first** design philosophy with clear separation between stateless utilities and stateful services:
+The scripts system follows a **modular CLI design** with separate language-specific directories and shared utilities:
 
-- **Utils** = Stateless modules providing pure functions and helper methods
-- **Services** = Stateful classes with initialization, configuration, and persistent state
-- **Base Classes** = Foundation classes providing common script functionality
-- **Concerns** = Mixins providing specialized functionality to be included in other classes
+- **Ruby CLI** - Ruby-based scripts with advanced functionality and interactive features
+- **Python CLI** - Python-based scripts focused on AI/ML and data processing
+- **Rust CLI** - Rust-based high-performance utilities
+- **.common/** - Shared utilities, base classes, and services available to all CLI systems
 
 ### Directory Structure
 
 ```
-bin/.common/
-├── Base Classes
+bin/
+├── ruby-cli/
+│   ├── bin/                       # Ruby executable scripts
+│   │   ├── largest-files.rb       # Find largest files respecting .gitignore
+│   │   ├── game-mode.rb           # System optimization for gaming
+│   │   ├── gmail-inbox.rb         # Gmail management and automation
+│   │   ├── youtube-transcript-chat.rb # YouTube transcript processing
+│   │   └── ... (other Ruby scripts)
+│   ├── scripts.zsh                # ZSH wrapper functions for Ruby scripts
+│   └── Gemfile                    # Ruby dependencies
+├── python-cli/
+│   ├── bin/                       # Python executable scripts
+│   ├── scripts.zsh                # ZSH wrapper functions for Python scripts
+│   └── requirements.txt           # Python dependencies
+├── rust-cli/
+│   ├── src/                       # Rust source code
+│   ├── target/                    # Compiled binaries
+│   └── scripts.zsh                # ZSH wrapper functions for Rust scripts
+├── .common/                       # Shared utilities and services
+│   ├── Base Classes
 │   ├── script_base.rb              # Universal script foundation
 │   ├── interactive_script_base.rb  # Interactive menu systems
 │   ├── git_commit_script_base.rb   # Git workflow automation
@@ -1230,6 +1248,9 @@ end
 
 ### 1. Script Creation Pattern
 
+**⚠️ IMPORTANT: Working Directory Handling**
+All Ruby CLI scripts should use `original_working_dir` instead of `Dir.pwd` to ensure they run in the user's original working directory, not the ruby-cli directory.
+
 **Always start with this template**:
 ```ruby
 #!/usr/bin/env ruby
@@ -1252,6 +1273,8 @@ class MyUtilityScript < ScriptBase
 
   def validate!
     # Add validation logic
+    # Use original_working_dir instead of Dir.pwd to run in user's directory
+    @target_dir = args.empty? ? original_working_dir : File.expand_path(args[0])
     super
   end
 

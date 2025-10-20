@@ -3,7 +3,7 @@
 
 require 'json'
 require 'fileutils'
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 # Script to configure game mode by enabling only the LG OLED monitor
 class GameMode < ScriptBase

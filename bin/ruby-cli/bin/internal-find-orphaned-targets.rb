@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'set'
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 # Description: Finds and displays orphaned Makefile targets.
 class FindOrphanedTargets < ScriptBase

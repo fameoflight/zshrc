@@ -86,9 +86,9 @@ setup-gemini-key "AIzaSyYour-gemini-key-here"
 
 ## Custom Scripts System
 
-Three-tier Ruby-based scripts system with centralized dependency management and shared utilities.
+Multi-language CLI system with Ruby, Python, and Rust components, sharing common utilities and base classes.
 
-**Architecture**: Executables in `bin/` directory, setup scripts in `scripts/` directory
+**Architecture**: Language-specific directories in `bin/` with shared utilities in `bin/.common/`
 
 ⚠️ **BEFORE WRITING ANY NEW SCRIPT**: Always read `/Users/hemantv/zshrc/bin/SCRIPTS.md` first to understand:
 
@@ -110,6 +110,7 @@ merge-pdf              # Merge multiple PDF files
 dropbox-backup         # Move directories to Dropbox with symlinks
 uninstall-app          # Comprehensive application uninstaller
 xcode-icon-generator   # Generate app icons for Xcode projects
+largest-files          # Find largest files respecting .gitignore patterns
 list-scripts           # Show all available scripts
 ```
 
@@ -135,6 +136,9 @@ make find-orphans      # Find orphaned Makefile targets
 ```
 
 ### Ruby Script Development
+
+⚠️ **IMPORTANT: Working Directory**
+All Ruby CLI scripts should use `original_working_dir` instead of `Dir.pwd` to ensure they run in the user's original working directory, not the ruby-cli directory. The script system automatically sets `ORIGINAL_WORKING_DIR` and provides an `original_working_dir` method in ScriptBase.
 
 ⚠️ **MANDATORY FIRST STEP**: Read `/Users/hemantv/zshrc/bin/SCRIPTS.md` before writing any script. This comprehensive documentation covers:
 

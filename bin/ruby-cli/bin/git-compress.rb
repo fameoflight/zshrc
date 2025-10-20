@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'tmpdir'
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 class GitCompress < ScriptBase
   def script_emoji; '🗜️'; end

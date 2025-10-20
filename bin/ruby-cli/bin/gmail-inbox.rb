@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/interactive_script_base'
+require_relative '../../.common/interactive_script_base'
 require_relative '../lib/archive/logger'
 require_relative '../lib/archive/gmail_database'
 require_relative '../lib/archive/gmail_service'

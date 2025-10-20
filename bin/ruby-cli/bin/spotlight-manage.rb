@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 # Spotlight Indexing Management Script
 # Comprehensive management of macOS Spotlight indexing with privacy focus

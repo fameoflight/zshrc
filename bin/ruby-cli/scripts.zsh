@@ -30,7 +30,8 @@ _execute_ruby_cli_script() {
 
   if [[ -f "$gemfile_path" ]]; then
     # Preserve current working directory by running from original dir
-    (cd "$ruby_cli_dir" && bundle exec ruby "bin/$script_name" "$@")
+    local original_dir="$(pwd)"
+    (cd "$ruby_cli_dir" && ORIGINAL_WORKING_DIR="$original_dir" bundle exec ruby "bin/$script_name" "$@")
   else
     # Fallback to system ruby
     ruby "$script_path" "$@"
@@ -106,6 +107,11 @@ check-camera-mic() {
 # Merge multiple PDF files into a single document
 merge-pdf() {
   _execute_ruby_cli_script "merge-pdf.rb" "$@"
+}
+
+# Find largest files while respecting .gitignore patterns
+largest-files() {
+  _execute_ruby_cli_script "largest-files.rb" "$@"
 }
 
 # Merge multiple markdown files into one
@@ -189,6 +195,11 @@ spotlight-manage() {
 # SYSTEM UTILITIES
 # =============================================================================
 
+# Show battery and power charger information
+battery-info() {
+  _execute_ruby_cli_script "battery-info.rb" "$@"
+}
+
 # Retry failed commands with backoff strategy
 auto-retry() {
   _execute_ruby_cli_script "auto-retry.rb" "$@"
@@ -243,6 +254,7 @@ list-ruby-cli-scripts() {
   echo "📁 File Utilities:"
   echo "   change-extension        - Bulk change file extensions"
   echo "   check-camera-mic        - Check camera/mic privacy settings"
+  echo "   largest-files           - Find largest files by lines (default) or size"
   echo "   merge-pdf               - Merge multiple PDF files"
   echo "   merge-markdown          - Merge multiple markdown files"
   echo ""
@@ -274,6 +286,7 @@ list-ruby-cli-scripts() {
   echo ""
 
   echo "⚙️ System:"
+  echo "   battery-info            - Show battery and power charger information"
   echo "   auto-retry               - Retry failed commands with backoff strategy"
   echo "   setup-dev-tools         - Setup development tools environment"
   echo "   uninstall-app           - Comprehensive application uninstaller"
@@ -286,5 +299,7 @@ list-ruby-cli-scripts() {
   echo "   openrouter-usage --period month                     # Show monthly usage"
   echo "   change-extension .txt .md ./documents              # Change extensions"
   echo "   merge-pdf chapter1.pdf chapter2.pdf -o book.pdf"
+  echo "   largest-files -n 10                                  # Show 10 files with most lines"
+  echo "   largest-files -s -n 10 -m 5M                       # Show 10 largest files over 5MB"
   echo "   git-compress --keep-last 12                         # Compress to last 12 commits"
 }

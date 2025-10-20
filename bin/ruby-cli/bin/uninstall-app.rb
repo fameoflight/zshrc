@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 require 'sqlite3'
 require 'find'
 require 'rexml/document'
@@ -577,7 +577,7 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
         app_path = "/Applications/#{app[:name]}.app"
         if File.exist?(app_path)
           log_progress("🔄 Attempting manual removal of app bundle...")
-          remove_file(app_path, skip_confirmation: true)
+          remove_file(app_path)
         end
       end
     end
@@ -599,7 +599,7 @@ Homebrew packages, Mac App Store apps, processes, and associated files.'
           execute_cmd("sudo rm -rf '#{app_bundle}'", description: "Removing system app: #{File.basename(app_bundle)}")
         else
           # Regular user-owned app, use standard removal
-          remove_file(app_bundle, skip_confirmation: true)
+          remove_file(app_bundle)
         end
       else
         log_info("App bundle not found: #{app_bundle}")

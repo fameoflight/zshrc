@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/git_commit_script_base'
+require_relative '../../.common/git_commit_script_base'
 
 # Commits only deletions (D status) after user confirmation
 class GitCommitDeletes < GitCommitScriptBase

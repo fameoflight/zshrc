@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/unified_llm_service'
 
 # Auto-retry utility that uses local LLM to analyze command failures and determine retry strategies

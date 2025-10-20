@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/archive/script_base'
+require_relative '../../.common/script_base'
 
 # Script to quickly setup stacked monitors for 4-monitor configuration
 # Configuration: Two 1920x1080 monitors stacked on left, main monitor in center, portrait monitor on right

@@ -234,3 +234,4 @@ Refer to `XCODE.md` for complete usage examples, troubleshooting, and best pract
 ---
 
 _Code should be readable - not too long, not unnecessarily short. Break rules when it improves clarity._
+- use yarn tsc to verify build don't use yarn build

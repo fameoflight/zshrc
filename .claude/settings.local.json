@@ -93,7 +93,10 @@
       "Bash(ls:*)",
       "Bash(yarn run tsc:*)",
       "Bash(kill-grep:*)",
-      "Bash(duti:*)"
+      "Bash(duti:*)",
+      "Bash(for:*)",
+      "Bash(do sed:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "additionalDirectories": [

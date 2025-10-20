@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../services/system_profiler_service'
+
 # Hardware and system detection utilities for optimal performance
 module DeviceUtils
   # Get system information for performance optimization
@@ -242,9 +244,19 @@ module DeviceUtils
 
   def metal_supported?
     # Check if Metal is supported (macOS 10.11+ on Metal-capable hardware)
+    service = SystemProfilerService.new
+    displays_data = service.get_single_data_type('SPDisplaysDataType', use_cache: true)
+
+    # Check if any display mentions Metal in the data
+    displays_json = displays_data.to_json.downcase
+    displays_json.include?('metal')
+  rescue
+    # Fallback to original method if service fails
     `system_profiler SPDisplaysDataType 2>/dev/null | grep -i metal`
     $?.success?
   end
+
+  module_function :metal_supported?
 
   # Linux specific methods
   def linux_processor_count
