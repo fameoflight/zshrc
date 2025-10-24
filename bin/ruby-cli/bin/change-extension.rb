@@ -90,14 +90,37 @@ class ChangeExtension
     log_info "Current file extension associations:"
     puts
 
-    # Get all UTIs and their handlers
-    result = `duti -x 2>&1`
-    if $?.success?
-      puts result
-    else
-      log_warning "Could not retrieve associations"
-      puts "This requires duti to be installed: brew install duti"
+    # Common file extensions to check
+    common_extensions = %w[
+      .txt .md .rtf .doc .docx .pdf
+      .jpg .jpeg .png .gif .bmp .tiff .webp
+      .mp4 .mov .avi .mkv .mp3 .wav .flac
+      .zip .rar .7z .tar .gz
+      .html .htm .css .js .json .xml .yaml .yml
+      .py .rb .js .ts .java .c .cpp .h .php
+      .xlsx .xls .csv .key .pages .numbers
+    ]
+
+    puts "Extension → Application"
+    puts "───────────────────────"
+
+    common_extensions.each do |ext|
+      result = `duti -x #{ext} 2>/dev/null`.strip
+      if $?.success? && !result.empty?
+        # Parse the output to get just the app name
+        if result =~ /\(([^)]+)\)/
+          app_name = $1
+          puts "#{ext.ljust(12)} → #{app_name}"
+        else
+          puts "#{ext.ljust(12)} → #{result}"
+        end
+      else
+        puts "#{ext.ljust(12)} → (not set)"
+      end
     end
+
+    puts
+    log_info "Showing common extensions only. Use --show <extension> for specific files."
   end
 
   def show_association
