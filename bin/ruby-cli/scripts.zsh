@@ -159,6 +159,11 @@ git-compress() {
   ORIGINAL_WORKING_DIR="$original_dir" _execute_ruby_cli_script "git-compress.rb" "$@"
 }
 
+# Find files by extension in git history with view commands
+git-history() {
+  _execute_ruby_cli_script "git-history.rb" "$@"
+}
+
 # =============================================================================
 # EMAIL UTILITIES
 # =============================================================================
@@ -270,6 +275,7 @@ list-ruby-cli-scripts() {
   echo "   git-commit-dir          - Git commit for directory changes"
   echo "   git-commit-renames      - Git commit for renamed files"
   echo "   git-compress            - Compress git repository history"
+  echo "   git-history             - Find files by extension in git history"
   echo ""
 
   echo "📧 Email:"
@@ -302,4 +308,5 @@ list-ruby-cli-scripts() {
   echo "   largest-files -n 10                                  # Show 10 files with most lines"
   echo "   largest-files -s -n 10 -m 5M                       # Show 10 largest files over 5MB"
   echo "   git-compress --keep-last 12                         # Compress to last 12 commits"
+  echo "   git-history rb                                       # Find Ruby files in git history"
 }

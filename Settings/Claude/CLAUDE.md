@@ -14,6 +14,30 @@
 - No clever tricks - choose the boring solution
 - If you need to explain it, it's too complex
 
+### Code Organization & Encapsulation
+
+**DRY & KISS Principles**: Encapsulate logic to maximize reusability and maintainability. When you find a component or class handling more than 2 distinct responsibilities, break it down immediately.
+
+**Benefits of Strong Encapsulation**:
+- **Reusability**: Small, focused pieces can be easily reused across the codebase
+- **Readability**: Each component has a clear, single purpose that's easy to understand
+- **Testability**: Isolated functionality is much easier to unit test
+- **Maintainability**: Changes to one concern don't risk breaking unrelated functionality
+
+**Refactoring Triggers**:
+- Components doing data fetching + complex UI rendering + business logic
+- Files exceeding 200 lines with mixed concerns
+- Functions with multiple "and" conditions in their names
+- Deep nesting levels (>3) indicating complex logic that should be extracted
+- Duplicate code patterns across multiple files
+
+**Extraction Patterns**:
+- **Custom Hooks**: Extract data fetching, state management, and side effects
+- **Utility Functions**: Pure functions for business logic and data transformation
+- **UI Components**: Focus solely on presentation, receive data via props
+- **Container Components**: Orchestrate data flow and manage state
+- **Service Classes**: Handle complex business operations and external integrations
+
 ## Workflow
 
 ### 1. Session Management with TODO.md
