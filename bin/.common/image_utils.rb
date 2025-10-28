@@ -4,6 +4,9 @@
 module ImageUtils
   # SVG to PNG conversion utilities
   module SVG
+    require 'securerandom'
+    require 'tmpdir'
+
     # Check if SVG conversion tools are available
     def self.conversion_tool_available?
       system('which rsvg-convert > /dev/null 2>&1') || system('which convert > /dev/null 2>&1')
@@ -14,18 +17,54 @@ module ImageUtils
     # @param output_path [String] Path for output PNG file
     # @param width [Integer] Target width in pixels
     # @param height [Integer] Target height in pixels (optional, defaults to width)
+    # @param mode [Symbol] Resize mode - :contain (fit within, default) or :cover (fill, crop if needed)
     # @return [Boolean] True if conversion succeeded
-    def self.convert_to_png(svg_path, output_path, width, height = width)
+    def self.convert_to_png(svg_path, output_path, width, height = width, mode: :cover)
       # Try rsvg-convert first (librsvg)
       if system('which rsvg-convert > /dev/null 2>&1')
-        command = ['rsvg-convert', '-w', width.to_s, '-h', height.to_s, '-o', output_path, svg_path]
-        result = system(*command)
-        return true if result
+        if mode == :cover
+          # Use rsvg to render at size, maintaining aspect ratio with cover mode
+          # First convert to a larger size, then crop/resize with ImageMagick
+          temp_png = File.join(Dir.tmpdir, "temp_rsvg_#{SecureRandom.hex(8)}.png")
+
+          # Render SVG maintaining aspect ratio (use -a flag for aspect ratio preservation)
+          # Render to larger size to ensure we can cover the target dimensions
+          larger_size = [width, height].max * 2
+          command = ['rsvg-convert', '-w', larger_size.to_s, '-a', '-o', temp_png, svg_path]
+          result = system(*command)
+
+          if result && File.exist?(temp_png)
+            # Now use ImageMagick to crop/resize to exact dimensions with cover mode
+            if system('which convert > /dev/null 2>&1')
+              # Using gravity center with extent to cover and center the image
+              command = ['convert', temp_png, '-resize', "#{width}x#{height}^",
+                        '-gravity', 'center', '-extent', "#{width}x#{height}", output_path]
+              result = system(*command)
+              File.delete(temp_png) if File.exist?(temp_png)
+              return true if result
+            end
+            File.delete(temp_png) if File.exist?(temp_png)
+          end
+        else
+          # Contain mode - keep aspect ratio, fit within dimensions
+          command = ['rsvg-convert', '-w', width.to_s, '-h', height.to_s, '-a', '-o', output_path, svg_path]
+          result = system(*command)
+          return true if result
+        end
       end
 
       # Fall back to ImageMagick convert
       if system('which convert > /dev/null 2>&1')
-        command = ['convert', svg_path, '-resize', "#{width}x#{height}", output_path]
+        if mode == :cover
+          # Cover mode: fill dimensions, crop if needed, maintain aspect ratio
+          command = ['convert', svg_path, '-resize', "#{width}x#{height}^",
+                    '-gravity', 'center', '-extent', "#{width}x#{height}", output_path]
+        else
+          # Contain mode: fit within dimensions, maintain aspect ratio
+          command = ['convert', svg_path, '-resize', "#{width}x#{height}",
+                    '-background', 'none', '-gravity', 'center',
+                    '-extent', "#{width}x#{height}", output_path]
+        end
         result = system(*command)
         return true if result
       end
@@ -300,10 +339,10 @@ module ImageUtils
       require 'fileutils'
       require 'tmpdir'
 
-      # First convert SVG to PNG
+      # First convert SVG to PNG using cover mode to maintain aspect ratio and fill the canvas
       temp_png = File.join(Dir.tmpdir, "temp_#{SecureRandom.hex(8)}.png")
 
-      unless SVG.convert_to_png(svg_path, temp_png, size, size)
+      unless SVG.convert_to_png(svg_path, temp_png, size, size, mode: :cover)
         return false
       end
 

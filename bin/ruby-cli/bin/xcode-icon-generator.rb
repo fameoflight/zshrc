@@ -350,7 +350,7 @@ class XcodeIconGenerator < ScriptBase
 
       log_progress("Converting SVG to PNG for #{scale}...")
 
-      if ImageUtils::SVG.convert_to_png(svg_path, output_path, size, size)
+      if ImageUtils::SVG.convert_to_png(svg_path, output_path, size, size, mode: :cover)
         log_file_created(output_path)
       else
         log_error("Failed to convert SVG to PNG for #{scale}")

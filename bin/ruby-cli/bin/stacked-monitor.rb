@@ -4,7 +4,7 @@
 require_relative '../../.common/script_base'
 
 # Script to quickly setup stacked monitors for 4-monitor configuration
-# Configuration: Two 1920x1080 monitors stacked on left, main monitor in center, portrait monitor on right
+# Configuration: Two 1920x1080 monitors stacked on left or right side, main monitor in center, portrait monitor on opposite side
 class StackedMonitor < ScriptBase
   SPACING = 20 # Pixels between monitors
 
@@ -18,17 +18,19 @@ class StackedMonitor < ScriptBase
   end
 
   def script_description
-    'Configures a 4-monitor setup: two 1920x1080 monitors stacked on left side,
-main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
+    'Configures two 1920x1080 16-inch external monitors to be stacked on left or right side.
+Works with any number of total monitors (3, 4, 5+).'
   end
 
   def script_arguments
-    ''
+    '[right|left]'
   end
 
   def show_examples
     puts 'Examples:'
-    puts "  #{script_name}                    # Configure stacked monitors"
+    puts "  #{script_name}                    # Configure stacked monitors on right side (default)"
+    puts "  #{script_name} right              # Configure stacked monitors on right side"
+    puts "  #{script_name} left               # Configure stacked monitors on left side"
     puts "  #{script_name} --debug           # Show current setup and debug info"
     puts "  #{script_name} --dry-run         # Preview what would be configured"
   end
@@ -40,6 +42,14 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
       exit(1)
     end
     log_debug('displayplacer found')
+
+    # Validate stack direction argument
+    direction = stack_direction_arg
+    if direction && !['left', 'right'].include?(direction)
+      log_error("Invalid direction '#{direction}'. Use 'left' or 'right'.")
+      exit(1)
+    end
+
     super
   end
 
@@ -48,8 +58,8 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
     displays_info = get_display_info
 
-    validate_display_count(displays_info)
-    main_monitor, left_bottom, left_top, portrait_monitor = identify_displays(displays_info)
+    external_monitors = find_external_monitors(displays_info)
+    validate_external_monitors(external_monitors)
 
     # Always show current configuration in box style first
     display_monitor_config_box("🖥️  Current Monitor Configuration:", displays_info, show_current_positions: true)
@@ -60,14 +70,15 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     # Show detailed debug info if requested
     show_current_setup(displays_info) if debug_mode?
 
-    configure_positions(main_monitor, left_bottom, left_top, portrait_monitor)
+    configure_external_monitors(external_monitors)
 
-    command = build_command([main_monitor, left_bottom, left_top, portrait_monitor])
+    # Build command for all displays, only positioning the external monitors
+    command = build_external_command(displays_info, external_monitors)
 
     if dry_run?
-      show_dry_run(command, main_monitor, left_bottom, left_top, portrait_monitor)
+      show_dry_run(command, external_monitors)
     else
-      execute_monitor_setup(command, main_monitor, left_bottom, left_top, portrait_monitor)
+      execute_monitor_setup(command, external_monitors)
     end
 
     show_completion(script_title)
@@ -77,6 +88,18 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
   def debug_mode?
     @options[:debug] || ENV['DEBUG'] == '1'
+  end
+
+  def stack_direction_arg
+    @stack_direction_arg ||= begin
+      # Get the first non-option argument (not starting with --)
+      args = ARGV.reject { |arg| arg.start_with?('--') }
+      args.first
+    end
+  end
+
+  def stack_direction
+    @stack_direction ||= (stack_direction_arg || 'right').to_sym
   end
 
   def validate_display_dependency
@@ -90,8 +113,13 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
   def get_display_info
     log_debug('Getting display information...')
 
-    display_list = execute_cmd('displayplacer list', description: 'Getting display information')
-    unless display_list
+    display_list = if dry_run?
+                     `displayplacer list 2>/dev/null`
+                   else
+                     execute_cmd('displayplacer list', description: 'Getting display information')
+                   end
+
+    unless display_list && !display_list.empty?
       log_error('Failed to get display list')
       exit(1)
     end
@@ -121,55 +149,69 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     }
   end
 
-  def validate_display_count(displays_info)
-    return if displays_info.length == 4
+  def find_external_monitors(displays_info)
+    # Find the two 1920x1080 16-inch external monitors
+    external_monitors = displays_info.select { |d| d[:resolution] == '1920x1080' && !d[:type].include?('MacBook') }
+    log_debug("Found #{external_monitors.length} external 1920x1080 monitors")
+    external_monitors
+  end
 
-    log_error("Found #{displays_info.length} displays, expected 4")
-    log_info('Available displays:')
-    displays_info.each_with_index do |display, i|
-      puts "  #{i + 1}. #{display[:type]} - #{display[:resolution]}"
+  def validate_external_monitors(external_monitors)
+    return if external_monitors.length == 2
+
+    log_error("Found #{external_monitors.length} external 1920x1080 monitors, expected 2")
+    log_info('This script only works with two 16-inch external monitors (1920x1080).')
+    exit(1)
+  end
+
+  def configure_external_monitors(external_monitors)
+    log_debug('Configuring external monitor positions...')
+
+    # Parse resolutions
+    width, height = parse_resolution(external_monitors.first[:resolution])  # 1920x1080
+
+    # Find main display (MacBook) as reference point
+    all_displays = get_display_info
+    main_display = all_displays.find { |d| d[:main] || d[:type].include?('MacBook') }
+
+    # Use main display position as reference, fallback to (0,0)
+    if main_display && main_display[:origin]
+      reference_x, reference_y = main_display[:origin].split(',').map(&:to_i)
+    else
+      reference_x, reference_y = 0, 0
     end
-    exit(1)
-  end
 
-  def identify_displays(displays_info)
-    # Find displays by resolution patterns
-    left_monitors = displays_info.select { |d| d[:resolution] == '1920x1080' }
-    main_monitor = displays_info.find { |d| d[:resolution] == '3200x1800' }
-    portrait_monitor = displays_info.find { |d| d[:resolution] == '1800x3200' }
+    # Position monitors based on direction
+    if stack_direction == :right
+      # Position to the right of main display
+      stack_x = reference_x + 2056 + SPACING  # MacBook width is 2056
+    else
+      # Position to the left of main display
+      stack_x = reference_x - width
+    end
 
-    validate_monitor_config(left_monitors, main_monitor, portrait_monitor, displays_info)
+    # Stack the monitors vertically with touching edges
+    # Bottom monitor aligned with 1/3 of main display height (current top goes to bottom)
+    main_height = 1329  # MacBook height
+    bottom_y = reference_y + (main_height / 3)
+    external_monitors[0][:origin] = "#{stack_x},#{bottom_y}"
 
-    # Return all four monitors
-    left_bottom = left_monitors[0]  # Bottom left monitor
-    left_top = left_monitors[1]     # Top left monitor
+    # Top monitor directly above bottom (touching) - current bottom goes to top
+    top_y = bottom_y - height
+    external_monitors[1][:origin] = "#{stack_x},#{top_y}"
 
-    log_debug("Main (center): #{main_monitor[:type]}")
-    log_debug("Portrait (right): #{portrait_monitor[:type]}")
-    log_debug("Left bottom: #{left_bottom[:type]}")
-    log_debug("Left top: #{left_top[:type]}")
+    if debug_mode?
+      log_debug("Main display reference: #{reference_x},#{reference_y}")
+      log_debug("Stack direction: #{stack_direction}")
+      log_debug("External monitors: 2x #{width}x#{height} monitors")
+      log_debug("Stack position: X: #{stack_x}")
+      log_debug("Top monitor: Y #{top_y} to #{top_y + height}")
+      log_debug("Bottom monitor: Y #{bottom_y} to #{bottom_y + height}")
+    end
 
-    [main_monitor, left_bottom, left_top, portrait_monitor]
-  end
-
-  def validate_monitor_config(left_monitors, main_monitor, portrait_monitor, displays_info)
-    errors = []
-
-    errors << "Expected 2 monitors with 1920x1080 resolution, found #{left_monitors.length}" if left_monitors.length != 2
-    errors << "Could not find main monitor (3200x1800)" if main_monitor.nil?
-    errors << "Could not find portrait monitor (1800x3200)" if portrait_monitor.nil?
-
-    return if errors.empty?
-
-    errors.each { |error| log_error(error) }
-    show_available_displays(displays_info)
-    exit(1)
-  end
-
-  def show_available_displays(displays_info)
-    log_info('Available displays:')
-    displays_info.each_with_index do |display, i|
-      puts "  #{i + 1}. #{display[:type]} - #{display[:resolution]} (#{display[:size_inches]}\")"
+    log_debug("External monitor positions set:")
+    external_monitors.each_with_index do |monitor, i|
+      log_debug("  #{i + 1}. #{monitor[:type]}: #{monitor[:origin]}")
     end
   end
 
@@ -208,26 +250,27 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
       puts "    #{display[:main] ? '👑 MAIN DISPLAY' : ''}"
     end
 
-    # Analyze potential issues
-    puts "\n⚠️  POTENTIAL ISSUES:"
-    main_display = displays_info.find { |d| d[:main] }
-    expected_main = displays_info.find { |d| d[:resolution] == '3200x1800' }
-    if main_display && main_display[:resolution] != '3200x1800'
-      puts "  🚨 Main display is #{main_display[:resolution]} (should be 3200x1800)"
+    # Analyze external monitors
+    puts "\n⚠️  EXTERNAL MONITOR ANALYSIS:"
+    external_monitors = displays_info.select { |d| d[:resolution] == '1920x1080' && !d[:type].include?('MacBook') }
+
+    if external_monitors.length == 2
+      puts "  ✅ Found 2 external 16-inch monitors (1920x1080)"
+      external_monitors.each_with_index do |monitor, i|
+        puts "    #{i + 1}. #{monitor[:type]} at (#{monitor[:origin]})"
+      end
+    else
+      puts "  ❌ Found #{external_monitors.length} external monitors, expected 2"
     end
 
     # Check if displays are overlapping or have gaps
     puts "\n🔧 RECOMMENDED CONFIGURATION:"
-    left_monitors = displays_info.select { |d| d[:resolution] == '1920x1080' }
-    main_monitor = displays_info.find { |d| d[:resolution] == '3200x1800' }
-    portrait_monitor = displays_info.find { |d| d[:resolution] == '1800x3200' }
-
-    if left_monitors.length == 2 && main_monitor && portrait_monitor
-      puts "  Main (#{main_monitor[:type]}): Should be at center (0,0)"
-      puts '  Left Stack: Two 1920x1080 monitors stacked on left side'
-      puts "  Portrait (#{portrait_monitor[:type]}): Should be on right side"
+    if external_monitors.length == 2
+      puts "  Stack: Two 16-inch external monitors will be positioned vertically"
+      puts "  Direction: #{stack_direction == :right ? 'Right side' : 'Left side'} of reference point"
+      puts "  Other monitors: Will remain in their current positions"
     else
-      puts '  ❌ Unexpected display configuration'
+      puts '  ❌ This script requires exactly 2 external 16-inch monitors'
     end
 
     puts "\n" + '=' * 50
@@ -244,20 +287,28 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
     # Position main monitor at origin (center)
     main_monitor[:origin] = '0,0'
 
-    # Position left stack to the left of main monitor (touching)
-    left_stack_x = -left_width
+    # Position stack based on direction
+    stack_x = if stack_direction == :right
+                main_width + SPACING
+              else
+                -left_width
+              end
 
-    # Calculate left stack positioning - stack monitors touching each other
-    # Position left top monitor at 1/3 of main display height
-    left_top_y = main_height / 3
-    left_top[:origin] = "#{left_stack_x},#{left_top_y}"
+    # Calculate stack positioning - stack monitors touching each other
+    # Position top monitor at 1/3 of main display height
+    top_y = main_height / 3
+    left_top[:origin] = "#{stack_x},#{top_y}"
 
-    # Position left bottom monitor directly below left top (touching)
-    left_bottom_y = left_top_y + left_height
-    left_bottom[:origin] = "#{left_stack_x},#{left_bottom_y}"
+    # Position bottom monitor directly below top (touching)
+    bottom_y = top_y + left_height
+    left_bottom[:origin] = "#{stack_x},#{bottom_y}"
 
-    # Portrait monitor to the right of main monitor
-    portrait_x = main_width + SPACING
+    # Position portrait monitor on opposite side from stack
+    portrait_x = if stack_direction == :right
+                   -left_width - SPACING - portrait_width
+                 else
+                   main_width + SPACING
+                 end
     # Center portrait monitor vertically with main monitor
     main_center_y = main_height / 2
     portrait_y = main_center_y - (portrait_height / 2)
@@ -265,21 +316,71 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
     if debug_mode?
       log_debug("Main monitor: #{main_width}x#{main_height} at (0,0)")
-      log_debug("Left stack: 2x #{left_width}x#{left_height} monitors at X: #{left_stack_x}")
-      log_debug("Left top: Y #{left_top_y} to #{left_top_y + left_height} (at 1/3 of main height: #{main_height / 3})")
-      log_debug("Left bottom: Y #{left_bottom_y} to #{left_bottom_y + left_height}")
+      log_debug("Stack direction: #{stack_direction}")
+      log_debug("Stack: 2x #{left_width}x#{left_height} monitors at X: #{stack_x}")
+      log_debug("Stack top: Y #{top_y} to #{top_y + left_height} (at 1/3 of main height: #{main_height / 3})")
+      log_debug("Stack bottom: Y #{bottom_y} to #{bottom_y + left_height}")
       log_debug("Portrait: #{portrait_width}x#{portrait_height} at (#{portrait_x}, #{portrait_y})")
     end
 
     log_debug("Main position: #{main_monitor[:origin]}")
-    log_debug("Left top position: #{left_top[:origin]}")
-    log_debug("Left bottom position: #{left_bottom[:origin]}")
+    log_debug("Stack top position: #{left_top[:origin]}")
+    log_debug("Stack bottom position: #{left_bottom[:origin]}")
     log_debug("Portrait position: #{portrait_monitor[:origin]}")
   end
 
   def parse_resolution(resolution)
     width, height = resolution.split('x').map(&:to_i)
     [width, height]
+  end
+
+  def build_external_command(all_displays, external_monitors)
+    # Build displayplacer command ONLY for the two 16-inch external monitors
+    # Completely ignore all other displays
+
+    # Get the original displayplacer list output to get exact settings for external monitors
+    # Always execute this command even in dry-run mode since we need current monitor info
+    display_list = if dry_run?
+                     `displayplacer list 2>/dev/null`
+                   else
+                     execute_cmd('displayplacer list', description: 'Getting external monitor configuration')
+                   end
+    return nil unless display_list && !display_list.empty?
+
+    # Parse display blocks to find our external monitors
+    display_blocks = display_list.split("\n\n").select { |block| block.include?('Persistent screen id:') }
+
+    command_parts = display_blocks.map do |block|
+      persistent_id = block.match(/Persistent screen id: (.+)/)&.[](1)
+
+      # Check if this is one of our external monitors - ONLY process these
+      external_monitor = external_monitors.find { |ext| ext[:persistent_id] == persistent_id }
+
+      if external_monitor
+        # For external monitors, use new position but preserve all other settings exactly
+        build_display_config_from_block(block, external_monitor[:origin])
+      else
+        # Skip all other monitors completely - don't include them in the command at all
+        nil
+      end
+    end.compact
+
+    'displayplacer ' + command_parts.map { |part| "\"#{part}\"" }.join(' ')
+  end
+
+  def build_display_config_from_block(display_block, new_origin)
+    # Extract configuration from the display block
+    persistent_id = display_block.match(/Persistent screen id: (.+)/)&.[](1)
+    resolution = display_block.match(/Resolution: (.+)/)&.[](1)
+    hertz = display_block.match(/Hertz: (.+)/)&.[](1)
+    color_depth = display_block.match(/Color Depth: (.+)/)&.[](1)
+    scaling = display_block.match(/Scaling: (.+)/)&.[](1)
+    origin = new_origin || display_block.match(/Origin: \(([^)]+)\)/)&.[](1)
+    rotation = display_block.match(/Rotation: (.+)/)&.[](1)
+
+    return nil unless persistent_id && resolution && hertz && color_depth && scaling && origin && rotation
+
+    "id:#{persistent_id} res:#{resolution} hz:#{hertz} color_depth:#{color_depth} scaling:#{scaling} origin:(#{origin}) degree:#{rotation}"
   end
 
   def build_command(displays)
@@ -302,7 +403,8 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
     monitors.each_with_index do |monitor, index|
       label = (index + 1).to_s
-      name = monitor[:type] || "Unknown Monitor"
+      # Use custom name if provided, otherwise use monitor type
+      name = monitor[:name] || monitor[:type] || "Unknown Monitor"
       resolution = monitor[:resolution] || "Unknown"
       rotation = monitor[:rotation] || "0"
 
@@ -486,28 +588,84 @@ main 3200x1800 monitor in center, and 1800x3200 portrait monitor on right.'
 
     puts "\n📍 Layout Description:"
     puts "  1. Main Display: Center position (#{main_monitor[:resolution]})"
-    puts "  2. Left Stack Bottom: Left side, lower monitor (#{left_bottom[:resolution]})"
-    puts "  3. Left Stack Top: Left side, upper monitor (#{left_top[:resolution]})"
-    puts "  4. Portrait Monitor: Right side, vertical orientation (#{portrait_monitor[:resolution]})"
+    stack_side = stack_direction == :right ? "Right" : "Left"
+    portrait_side = stack_direction == :right ? "Left" : "Right"
+    puts "  2. Stack Bottom: #{stack_side} side, lower monitor (#{left_bottom[:resolution]})"
+    puts "  3. Stack Top: #{stack_side} side, upper monitor (#{left_top[:resolution]})"
+    puts "  4. Portrait Monitor: #{portrait_side} side, vertical orientation (#{portrait_monitor[:resolution]})"
   end
 
-  def show_dry_run(command, main_monitor, left_bottom, left_top, portrait_monitor)
-    show_configuration(main_monitor, left_bottom, left_top, portrait_monitor)
+  def show_external_configuration(external_monitors)
+    # Store calculated positions for box display
+    monitors = external_monitors.map.with_index do |monitor, i|
+      label = i == 0 ? "Stack Bottom" : "Stack Top"  # Flipped labels
+      monitor.merge(calculated_origin: monitor[:origin], name: label)
+    end
+
+    display_monitor_config_box("📺 External Monitor Configuration:", monitors)
+
+    puts "\n📍 Configuration Description:"
+    stack_side = stack_direction == :right ? "Right" : "Left"
+    puts "  Stack Direction: #{stack_side} side"
+    puts "  Stack Top: Upper external monitor (#{external_monitors[1][:resolution]})"  # Index 1 now top
+    puts "  Stack Bottom: Lower external monitor (#{external_monitors[0][:resolution]})"  # Index 0 now bottom
+    puts "  Other monitors: Will remain in current positions"
+  end
+
+  def show_dry_run(command, external_monitors)
+    show_external_configuration(external_monitors)
+
+    if command.nil?
+      log_error('Failed to build displayplacer command')
+      exit(1)
+    end
+
+    # Show target layout with all monitors in their positions
+    puts "\n📍 Target Monitor Layout (After Configuration):"
+    target_displays = get_target_display_layout(external_monitors)
+    display_spatial_layout(target_displays, "📍 Complete Target Layout")
 
     puts "\n🚀 Command to execute:"
     puts command
     puts "\nRun without --dry-run to execute automatically"
   end
 
-  def execute_monitor_setup(command, main_monitor, left_bottom, left_top, portrait_monitor)
-    show_configuration(main_monitor, left_bottom, left_top, portrait_monitor)
+  def get_target_display_layout(external_monitors)
+    # Get current displays again to build target layout
+    displays_info = get_display_info
+
+    # Update the external monitors with their new positions
+    displays_info.map do |display|
+      external_monitor = external_monitors.find { |ext| ext[:persistent_id] == display[:persistent_id] }
+      if external_monitor
+        # Use new position for external monitors
+        display.merge(origin: external_monitor[:origin])
+      else
+        # Keep original position for other monitors
+        display
+      end
+    end
+  end
+
+  def execute_monitor_setup(command, external_monitors)
+    show_external_configuration(external_monitors)
 
     log_progress('🔄 Executing monitor setup...')
     log_debug("Command: #{command}")
 
+    if command.nil?
+      log_error('Failed to build displayplacer command')
+      exit(1)
+    end
+
     success = execute_cmd?(command, description: 'Applying monitor configuration')
     if success
       log_success('Monitor arrangement completed successfully!')
+
+      # Show final layout with all monitors after successful configuration
+      puts "\n🎯 Final Monitor Layout Applied:"
+      final_displays = get_target_display_layout(external_monitors)
+      display_spatial_layout(final_displays, "📍 Complete Final Layout")
     else
       log_error('Failed to execute displayplacer command')
       exit(1)

@@ -33,8 +33,9 @@ _execute_ruby_cli_script() {
     local original_dir="$(pwd)"
     (cd "$ruby_cli_dir" && ORIGINAL_WORKING_DIR="$original_dir" bundle exec ruby "bin/$script_name" "$@")
   else
-    # Fallback to system ruby
-    ruby "$script_path" "$@"
+    # Fallback to system ruby, also set ORIGINAL_WORKING_DIR
+    local original_dir="$(pwd)"
+    ORIGINAL_WORKING_DIR="$original_dir" ruby "$script_path" "$@"
   fi
 }
 
@@ -65,6 +66,11 @@ xcode-list-categories() {
 # Generate app icons for Xcode projects in multiple sizes
 xcode-icon-generator() {
   _execute_ruby_cli_script "xcode-icon-generator.rb" "$@"
+}
+
+# Generate app icons for Electron applications
+electron-icon-generator() {
+  _execute_ruby_cli_script "electron-icon-generator.rb" "$@"
 }
 
 # =============================================================================
@@ -230,6 +236,15 @@ llm-generate() {
 }
 
 # =============================================================================
+# NETWORK UTILITIES
+# =============================================================================
+
+# Test network speed and connectivity
+network-speed() {
+  _execute_ruby_cli_script "network-speed.rb" "$@"
+}
+
+# =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
 
@@ -246,6 +261,10 @@ list-ruby-cli-scripts() {
   echo "   xcode-icon-generator    - Generate app icons for Xcode projects"
   echo ""
 
+  echo "⚛️  Electron Development:"
+  echo "   electron-icon-generator - Generate app icons for Electron applications"
+  echo ""
+
   echo "🎮 Gaming:"
   echo "   game-mode               - Optimize system settings for gaming"
   echo ""
@@ -254,6 +273,10 @@ list-ruby-cli-scripts() {
   echo "   youtube-transcript-chat - Chat with YouTube video transcripts using AI"
   echo "   openrouter-usage        - Track OpenRouter API usage and costs"
   echo "   llm-generate            - Generate content using LLM"
+  echo ""
+
+  echo "🌐 Network:"
+  echo "   network-speed           - Test network speed and connectivity"
   echo ""
 
   echo "📁 File Utilities:"
@@ -300,6 +323,8 @@ list-ruby-cli-scripts() {
 
   echo "💡 Usage Examples:"
   echo "   xcode-add-file MyViewController.swift              # Add to Xcode project"
+  echo "   xcode-icon-generator --input icon.svg --include-logo  # Generate Xcode icons"
+  echo "   electron-icon-generator --input icon.svg --ico --icns  # Generate Electron icons"
   echo "   game-mode                                            # Enable gaming performance"
   echo "   youtube-transcript-chat https://youtu.be/dQw4w9WgXcQ"
   echo "   openrouter-usage --period month                     # Show monthly usage"
