@@ -100,6 +100,11 @@ openrouter-usage() {
 # FILE AND SYSTEM UTILITIES
 # =============================================================================
 
+# Remove single-line console.log statements from source files
+console-log-remover() {
+  _execute_ruby_cli_script "console-log-remover.rb" "$@"
+}
+
 # Bulk change file extensions across directories
 change-extension() {
   _execute_ruby_cli_script "change-extension.rb" "$@"
@@ -280,6 +285,7 @@ list-ruby-cli-scripts() {
   echo ""
 
   echo "📁 File Utilities:"
+  echo "   console-log-remover     - Remove single-line console.log statements from source files"
   echo "   change-extension        - Bulk change file extensions"
   echo "   check-camera-mic        - Check camera/mic privacy settings"
   echo "   largest-files           - Find largest files by lines (default) or size"
