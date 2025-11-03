@@ -157,6 +157,20 @@ agent-setup() {
   bash "$script_path" "$@"
 }
 
+# Git root commit - get the first/root commit of the current branch
+git-root() {
+  local commit_hash
+  commit_hash=$(git rev-list --max-parents=0 HEAD 2>/dev/null)
+
+  if [[ $? -eq 0 && -n "$commit_hash" ]]; then
+    echo "$commit_hash"
+    log_git "Root commit: $commit_hash"
+  else
+    log_error "Not a git repository or failed to find root commit"
+    return 1
+  fi
+}
+
 # =============================================================================
 # LIST ALL AVAILABLE SCRIPTS
 # =============================================================================

@@ -319,6 +319,108 @@ class InteractiveScriptBase < ScriptBase
       return []
     end
   end
+
+  # Enhanced selectable list with custom actions and keyboard shortcuts
+  # items: Array of items to display
+  # options:
+  #   display_proc: Proc that takes an item and returns display text
+  #   actions: Hash of key -> { description: String, callback: Proc }
+  #   per_page: Number of items to show per page (default: 10)
+  #   header: Optional header text
+  # Returns: { selected: Array, action_taken: Symbol }
+  def interactive_select_with_actions(items, options = {})
+    return { selected: [], action_taken: nil } if items.empty?
+
+    # Set defaults
+    display_proc = options[:display_proc] || proc { |item| item.to_s }
+    actions = options[:actions] || {}
+    per_page = options[:per_page] || 10
+    header = options[:header]
+
+    if header
+      puts header
+      puts
+    end
+
+    # Show available actions if any
+    if actions.any?
+      puts "🎮 Available actions:"
+      actions.each do |key, config|
+        puts "  • #{key}: #{config[:description]}"
+      end
+      puts
+    end
+
+    # Create choices with enhanced display
+    choices = items.map.with_index do |item, index|
+      display_text = display_proc.call(item)
+      { name: "#{index + 1}. #{display_text}", value: item }
+    end
+
+    begin
+      # Show the multi-select menu
+      selected = @prompt.multi_select(
+        "Select items:",
+        choices,
+        per_page: per_page,
+        cycle: true,
+        help: "↑/↓/Space to select, Enter to confirm, ESC to exit"
+      )
+
+      # After selection, offer to perform actions
+      if actions.any? && selected && selected.any?
+        action_choices = []
+        actions.each do |key, config|
+          action_choices << "#{key}: #{config[:description]}"
+        end
+
+        action_choices << "Continue with selection"
+
+        action = @prompt.select("What would you like to do?", action_choices, cycle: true)
+
+        if action != "Continue with selection"
+          # Find and execute the selected action
+          action_key = nil
+          actions.each do |key, config|
+            if action == "#{key}: #{config[:description]}"
+              action_key = key
+              break
+            end
+          end
+
+          if action_key && actions[action_key]
+            # Call the action callback with context
+            actions[action_key][:callback].call({
+              selected_items: selected,
+              all_items: items,
+              prompt: @prompt
+            })
+
+            # Show menu again after action
+            return interactive_select_with_actions(items, options)
+          end
+        end
+      end
+
+      return { selected: selected || [], action_taken: :select }
+    rescue TTY::Reader::InputInterrupt
+      log_info "Selection cancelled by user"
+      return { selected: [], action_taken: :cancelled }
+    end
+  end
+
+  private
+
+  def build_help_text(actions)
+    help_parts = ["↑/↓/Space to select", "Enter to confirm", "ESC to exit"]
+
+    if actions.any?
+      action_keys = actions.keys.map { |k| "'#{k}'" }.join(", ")
+      help_parts << "#{action_keys} for actions"
+    end
+
+    help_parts.join(", ")
+  end
 end
 
 # Menu option class for more complex menu definitions

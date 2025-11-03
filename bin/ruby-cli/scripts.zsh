@@ -175,6 +175,16 @@ git-history() {
   _execute_ruby_cli_script "git-history.rb" "$@"
 }
 
+# Split a git commit by selecting files for separate commits
+git-commit-splitter() {
+  _execute_ruby_cli_script "git-commit-splitter.rb" "$@"
+}
+
+# Show common files between two git commits
+git-common() {
+  _execute_ruby_cli_script "git-common.rb" "$@"
+}
+
 # =============================================================================
 # EMAIL UTILITIES
 # =============================================================================
@@ -305,6 +315,8 @@ list-ruby-cli-scripts() {
   echo "   git-commit-renames      - Git commit for renamed files"
   echo "   git-compress            - Compress git repository history"
   echo "   git-history             - Find files by extension in git history"
+  echo "   git-commit-splitter     - Split a git commit by selecting files for separate commits"
+  echo "   git-common              - Show common files between two git commits"
   echo ""
 
   echo "📧 Email:"
