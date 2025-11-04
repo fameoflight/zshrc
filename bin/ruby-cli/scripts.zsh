@@ -31,7 +31,7 @@ _execute_ruby_cli_script() {
   if [[ -f "$gemfile_path" ]]; then
     # Preserve current working directory by running from original dir
     local original_dir="$(pwd)"
-    (cd "$ruby_cli_dir" && ORIGINAL_WORKING_DIR="$original_dir" bundle exec ruby "bin/$script_name" "$@")
+    (cd "$ruby_cli_dir" && source $HOME/.rvm/scripts/rvm && rvm use 3.2.4 && ORIGINAL_WORKING_DIR="$original_dir" bundle exec ruby "bin/$script_name" "$@")
   else
     # Fallback to system ruby, also set ORIGINAL_WORKING_DIR
     local original_dir="$(pwd)"

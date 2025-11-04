@@ -183,15 +183,15 @@ brew-install:
 # Update Homebrew and all packages
 brew-update:
 	@echo -e "$(CYAN)🔄 Updating Homebrew and packages...$(NC)"
-	-@brew update    # Update Homebrew itself
-	-@brew upgrade   # Upgrade all installed packages
-	-@brew cleanup   # Clean up old versions
+	-@brew update    # Update Homebrew itself || echo -e "$(YELLOW)⚠️  Homebrew update failed, continuing...$(NC)"
+	-@brew upgrade   # Upgrade all installed packages || echo -e "$(YELLOW)⚠️  Package upgrade failed, continuing...$(NC)"
+	-@brew cleanup   # Clean up old versions || echo -e "$(YELLOW)⚠️  Brew cleanup failed, continuing...$(NC)"
 
 # Install essential Homebrew packages for this setup
 brew-essentials:
 	@echo "📦 Installing essential packages..."
-	-@brew install zsh-completions  # ZSH tab completions
-	-@brew install mas              # Mac App Store CLI
+	-@brew install zsh-completions  # ZSH tab completions || echo -e "$(YELLOW)⚠️  zsh-completions install failed, continuing...$(NC)"
+	-@brew install mas              # Mac App Store CLI || echo -e "$(YELLOW)⚠️  mas install failed, continuing...$(NC)"
 
 .PHONY: linux-packages
 linux-packages:
@@ -215,72 +215,72 @@ dev-tools: brew core-utils dev-utils modern-cli editors
 
 # Install essential command-line utilities
 core-utils:
-	@bash scripts/setup-dev-tools.sh core-utils
+	@bash scripts/setup-dev-tools.sh core-utils || echo -e "$(YELLOW)⚠️  core-utils installation failed, continuing...$(NC)"
 
 # Install development utilities
 dev-utils:
-	@bash scripts/setup-dev-tools.sh dev-utils
+	@bash scripts/setup-dev-tools.sh dev-utils || echo -e "$(YELLOW)⚠️  dev-utils installation failed, continuing...$(NC)"
 
 # Install modern CLI tools and enhancements
 modern-cli:
-	@bash scripts/setup-dev-tools.sh modern-cli
+	@bash scripts/setup-dev-tools.sh modern-cli || echo -e "$(YELLOW)⚠️  modern-cli installation failed, continuing...$(NC)"
 
 # Install text editors and IDEs
 editors:
-	@bash scripts/setup-dev-tools.sh editors
+	@bash scripts/setup-dev-tools.sh editors || echo -e "$(YELLOW)⚠️  editors installation failed, continuing...$(NC)"
 
 .PHONY: python
 python: brew
-	@bash scripts/setup-languages.sh python
+	@bash scripts/setup-languages.sh python || echo -e "$(YELLOW)⚠️  Python setup failed, continuing...$(NC)"
 
 .PHONY: ruby ruby-gems
 ruby: brew ruby-gems
-	@bash scripts/setup-languages.sh ruby
+	@bash scripts/setup-languages.sh ruby || echo -e "$(YELLOW)⚠️  Ruby setup failed, continuing...$(NC)"
 
 ruby-gems:
 	@echo -e "$(BLUE)💎 Installing Ruby gems for CLI tools...$(NC)"
-	@cd bin/ruby-cli && bundle install
+	@cd bin/ruby-cli && source $$HOME/.rvm/scripts/rvm && rvm use 3.2.4 && bundle install || echo -e "$(YELLOW)⚠️  Ruby gems installation failed, continuing...$(NC)"
 
 .PHONY: postgres
 postgres: brew
-	@bash scripts/setup-languages.sh postgres
+	@bash scripts/setup-languages.sh postgres || echo -e "$(YELLOW)⚠️  PostgreSQL setup failed, continuing...$(NC)"
 
 .PHONY: flutter
 flutter: brew xcode-update
-	@bash scripts/setup-languages.sh flutter
+	@bash scripts/setup-languages.sh flutter || echo -e "$(YELLOW)⚠️  Flutter setup failed, continuing...$(NC)"
 
 .PHONY: github-tools
 github-tools: brew
-	@bash scripts/setup-macos.sh github-tools
+	@bash scripts/setup-macos.sh github-tools || echo -e "$(YELLOW)⚠️  GitHub tools setup failed, continuing...$(NC)"
 
 .PHONY: xcode-setup
 xcode-setup:
-	@bash scripts/setup-macos.sh xcode-setup
+	@bash scripts/setup-macos.sh xcode-setup || echo -e "$(YELLOW)⚠️  Xcode setup failed, continuing...$(NC)"
 
 .PHONY: xcode-backup vscode-backup iterm-backup iterm-setup
 xcode-backup:
-	@bash "${ZSH}/bin/xcode-backup.sh"
+	@bash "${ZSH}/bin/xcode-backup.sh" || echo -e "$(YELLOW)⚠️  Xcode backup failed, continuing...$(NC)"
 
 vscode-backup:
-	@bash "${ZSH}/bin/vscode-backup.sh"
+	@bash "${ZSH}/bin/vscode-backup.sh" || echo -e "$(YELLOW)⚠️  VSCode backup failed, continuing...$(NC)"
 
 iterm-backup:
-	@bash "${ZSH}/bin/iterm-backup.sh"
+	@bash "${ZSH}/bin/iterm-backup.sh" || echo -e "$(YELLOW)⚠️  iTerm backup failed, continuing...$(NC)"
 
 iterm-setup:
-	@bash "${ZSH}/bin/iterm-setup.sh"
+	@bash "${ZSH}/bin/iterm-setup.sh" || echo -e "$(YELLOW)⚠️  iTerm setup failed, continuing...$(NC)"
 
 .PHONY: claude-setup claude-link
 claude-setup: claude-link
-	@bash scripts/restore-settings.sh claude
+	@bash scripts/restore-settings.sh claude || echo -e "$(YELLOW)⚠️  Claude setup failed, continuing...$(NC)"
 
 # Create symlink for Claude binary to expected native installation path
 claude-link:
-	@bash scripts/restore-settings.sh claude-link
+	@bash scripts/restore-settings.sh claude-link || echo -e "$(YELLOW)⚠️  Claude link creation failed, continuing...$(NC)"
 
 .PHONY: vscode-setup
 vscode-setup:
-	@bash scripts/restore-settings.sh vscode
+	@bash scripts/restore-settings.sh vscode || echo -e "$(YELLOW)⚠️  VSCode setup failed, continuing...$(NC)"
 
 # =============================================================================
 # macOS APPLICATIONS
@@ -288,17 +288,17 @@ vscode-setup:
 
 .PHONY: mac-apps mac-utils
 mac-apps: github-tools xcode-setup
-	@bash scripts/setup-macos.sh mac-apps
+	@bash scripts/setup-macos.sh mac-apps || echo -e "$(YELLOW)⚠️  Mac apps installation failed, continuing...$(NC)"
 
 mac-utils:
 	@echo "🔨 Building mac-utils..."
-	@cd mac-utils && make -j$$(nproc)
+	@cd mac-utils && make -j$$(nproc) || echo -e "$(YELLOW)⚠️  mac-utils build failed, continuing...$(NC)"
 	@echo "📦 Installing mac-utils to $$HOME/bin..."
 	@mkdir -p $$HOME/bin
-	@cp -f mac-utils/bin/* $$HOME/bin/
+	@cp -f mac-utils/bin/* $$HOME/bin/ || echo -e "$(YELLOW)⚠️  mac-utils copy failed, continuing...$(NC)"
 	@echo "🔗 Creating convenient symlinks..."
-	@cd $$HOME/bin && ln -sf ToggleHDR toggle-hdr
-	@echo -e "$(BOLD)$(GREEN)✅ mac-utils installed successfully$(NC)"
+	@cd $$HOME/bin && ln -sf ToggleHDR toggle-hdr || echo -e "$(YELLOW)⚠️  symlink creation failed, continuing...$(NC)"
+	@echo -e "$(BOLD)$(GREEN)✅ mac-utils installation complete$(NC)"
 
 # =============================================================================
 # SYSTEM SETTINGS
@@ -359,41 +359,41 @@ restore-all-settings: app-settings ai-tools
 
 .PHONY: restore-iterm
 restore-iterm:
-	@bash scripts/restore-settings.sh iterm
+	@bash scripts/restore-settings.sh iterm || echo -e "$(YELLOW)⚠️  iTerm settings restore failed, continuing...$(NC)"
 
 .PHONY: restore-vscode
 restore-vscode:
-	@bash scripts/restore-settings.sh vscode
+	@bash scripts/restore-settings.sh vscode || echo -e "$(YELLOW)⚠️  VSCode settings restore failed, continuing...$(NC)"
 
 .PHONY: restore-xcode
 restore-xcode:
-	@bash scripts/setup-macos.sh xcode-setup
+	@bash scripts/setup-macos.sh xcode-setup || echo -e "$(YELLOW)⚠️  Xcode setup failed, continuing...$(NC)"
 
 .PHONY: restore-sublime
 restore-sublime:
-	@bash scripts/restore-settings.sh sublime
+	@bash scripts/restore-settings.sh sublime || echo -e "$(YELLOW)⚠️  Sublime settings restore failed, continuing...$(NC)"
 
 .PHONY: restore-dock
 restore-dock:
-	@bash scripts/restore-settings.sh dock
+	@bash scripts/restore-settings.sh dock || echo -e "$(YELLOW)⚠️  Dock settings restore failed, continuing...$(NC)"
 
 .PHONY: restore-claude
 restore-claude:
-	@bash scripts/restore-settings.sh claude
+	@bash scripts/restore-settings.sh claude || echo -e "$(YELLOW)⚠️  Claude settings restore failed, continuing...$(NC)"
 
 .PHONY: restore-gemini gemini-setup
 restore-gemini: gemini-setup
 
 gemini-setup:
-	@bash scripts/restore-settings.sh gemini
+	@bash scripts/restore-settings.sh gemini || echo -e "$(YELLOW)⚠️  Gemini setup failed, continuing...$(NC)"
 
 .PHONY: restore-ruby-config
 restore-ruby-config:
-	@bash scripts/restore-settings.sh ruby-config
+	@bash scripts/restore-settings.sh ruby-config || echo -e "$(YELLOW)⚠️  Ruby config restore failed, continuing...$(NC)"
 
 .PHONY: restore-rust-config
 restore-rust-config:
-	@bash scripts/restore-settings.sh rust-config
+	@bash scripts/restore-settings.sh rust-config || echo -e "$(YELLOW)⚠️  Rust config restore failed, continuing...$(NC)"
 
 # =============================================================================
 # SHELL CONFIGURATION
@@ -437,7 +437,7 @@ install-bash:
 install-externals:
 	@echo "📦 Installing external dependencies..."
 	@echo "🔄 Updating git submodules..."
-	@git submodule update --init --recursive
+	@git submodule update --init --recursive || echo -e "$(YELLOW)⚠️  Submodule update failed, continuing...$(NC)"
 
 # =============================================================================
 # GIT CONFIGURATION
@@ -445,7 +445,7 @@ install-externals:
 
 .PHONY: github-setup
 github-setup:
-	@bash scripts/setup-git.sh
+	@bash scripts/setup-git.sh || echo -e "$(YELLOW)⚠️  Git setup failed, continuing...$(NC)"
 
 # =============================================================================
 # MAINTENANCE
@@ -453,10 +453,10 @@ github-setup:
 
 .PHONY: update clean
 update:
-	@bash scripts/troubleshooting.sh update
+	@bash scripts/troubleshooting.sh update || echo -e "$(YELLOW)⚠️  Update failed, continuing...$(NC)"
 
 clean:
-	@bash scripts/troubleshooting.sh clean
+	@bash scripts/troubleshooting.sh clean || echo -e "$(YELLOW)⚠️  Clean failed, continuing...$(NC)"
 
 # =============================================================================
 # REPOSITORY MAINTENANCE
@@ -465,7 +465,7 @@ clean:
 .PHONY: find-orphans
 find-orphans:
 	@echo "🔍 Finding orphaned targets in Makefile..."
-	@cd bin/ruby-cli && bundle exec ruby bin/internal-find-orphaned-targets.rb
+	@cd bin/ruby-cli && bundle exec ruby bin/internal-find-orphaned-targets.rb || echo -e "$(YELLOW)⚠️  Orphaned targets search failed, continuing...$(NC)"
 
 # =============================================================================
 # TROUBLESHOOTING
@@ -482,37 +482,37 @@ debug:
 	@echo -e "$(BOLD)$(CYAN)🔍 ZSH Startup Performance Debugging$(NC)"
 	@echo -e "$(DIM)Running comprehensive ZSH startup analysis...$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh
+	@bash scripts/debug.zsh || echo -e "$(YELLOW)⚠️  ZSH debug failed, continuing...$(NC)"
 
 debug-profile:
 	@echo -e "$(BOLD)$(CYAN)🔍 Detailed ZSH Startup Profiling$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh profile
+	@bash scripts/debug.zsh profile || echo -e "$(YELLOW)⚠️  ZSH profile debug failed, continuing...$(NC)"
 
 debug-baseline:
 	@echo -e "$(BOLD)$(CYAN)📊 ZSH Baseline Performance Testing$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh baseline
+	@bash scripts/debug.zsh baseline || echo -e "$(YELLOW)⚠️  ZSH baseline testing failed, continuing...$(NC)"
 
 debug-compare:
 	@echo -e "$(BOLD)$(CYAN)⚖️  ZSH Performance Comparison$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh compare
+	@bash scripts/debug.zsh compare || echo -e "$(YELLOW)⚠️  ZSH comparison failed, continuing...$(NC)"
 
 debug-components:
 	@echo -e "$(BOLD)$(CYAN)🔧 ZSH Component Analysis$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh components
+	@bash scripts/debug.zsh components || echo -e "$(YELLOW)⚠️  ZSH component analysis failed, continuing...$(NC)"
 
 debug-recommendations:
 	@echo -e "$(BOLD)$(CYAN)💡 ZSH Optimization Recommendations$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh recommend
+	@bash scripts/debug.zsh recommend || echo -e "$(YELLOW)⚠️  ZSH recommendations failed, continuing...$(NC)"
 
 debug-test-optimizations:
 	@echo -e "$(BOLD)$(CYAN)✅ Testing ZSH Optimizations$(NC)"
 	@echo ""
-	@bash scripts/debug.zsh test-optimizations
+	@bash scripts/debug.zsh test-optimizations || echo -e "$(YELLOW)⚠️  ZSH optimization testing failed, continuing...$(NC)"
 fix-brew: fix-permissions brew-doctor brew-update brew-relink xcode-update
 	@echo -e "$(BOLD)$(GREEN)✅ Homebrew troubleshooting complete$(NC)"
 
@@ -522,27 +522,27 @@ fix-brew-only: brew-doctor brew-update brew-relink xcode-update
 
 # Run Homebrew's built-in diagnostic tool
 brew-doctor:
-	@bash scripts/troubleshooting.sh brew-doctor
+	@bash scripts/troubleshooting.sh brew-doctor || echo -e "$(YELLOW)⚠️  Brew doctor failed, continuing...$(NC)"
 
 # Clean incomplete Homebrew processes and cache
 brew-clean:
-	@bash scripts/troubleshooting.sh brew-clean
+	@bash scripts/troubleshooting.sh brew-clean || echo -e "$(YELLOW)⚠️  Brew clean failed, continuing...$(NC)"
 
 # Fix broken package symlinks
 brew-relink:
-	@bash scripts/troubleshooting.sh brew-relink
+	@bash scripts/troubleshooting.sh brew-relink || echo -e "$(YELLOW)⚠️  Brew relink failed, continuing...$(NC)"
 
 # Install or update Xcode and Command Line Tools
 xcode-update:
-	@bash scripts/troubleshooting.sh xcode-update
+	@bash scripts/troubleshooting.sh xcode-update || echo -e "$(YELLOW)⚠️  Xcode update failed, continuing...$(NC)"
 
 # Fix system permissions
 fix-permissions:
-	@bash scripts/troubleshooting.sh fix-permissions
+	@bash scripts/troubleshooting.sh fix-permissions || echo -e "$(YELLOW)⚠️  Fix permissions failed, continuing...$(NC)"
 
 # Run comprehensive system diagnostics
 doctor:
-	@bash scripts/troubleshooting.sh system-doctor
+	@bash scripts/troubleshooting.sh system-doctor || echo -e "$(YELLOW)⚠️  System diagnostics failed, continuing...$(NC)"
 
 # =============================================================================
 # RUST PROGRAMS
