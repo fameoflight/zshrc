@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../lib/script_helpers'
+require_relative '../../.common/script_base'
 require 'json'
 
 # Easy-to-use wrapper for duti with fuzzy application matching
@@ -11,8 +11,7 @@ require 'json'
 #   change-extension .md text           # Set .md files to open with default text editor
 #   change-extension .pdf preview       # Set .pdf files to open with Preview
 #   change-extension .jpg "photo"       # Fuzzy match for Photo editor
-class ChangeExtension
-  include ScriptHelpers
+class ChangeExtension < ScriptBase
   def script_emoji; '📄'; end
   def script_title; 'Change Extension'; end
   def script_description; 'Easy-to-use wrapper for duti with fuzzy application matching'; end
@@ -293,8 +292,5 @@ class ChangeExtension
   end
 end
 
-# Simple execution for scripts that don't need the full framework
-if __FILE__ == $0
-  script = ChangeExtension.new
-  script.run
-end
+# Execute with proper error handling
+ChangeExtension.execute if __FILE__ == $0
