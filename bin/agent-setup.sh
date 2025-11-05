@@ -34,11 +34,13 @@ show_help() {
     echo " • Converts CLAUDE.md to AGENT.md (unified AI documentation)"
     echo " • Creates CLAUDE.md → AGENT.md symlink"
     echo " • Creates GEMINI.md → AGENT.md symlink"
+    echo " • Creates .github/copilot-instructions.md → AGENT.md symlink"
     echo " • Works in current git repository root"
     echo ""
     echo "Benefits:"
     echo " • Single source of truth for all AI agents"
     echo " • Automatic compatibility with Claude Code and Gemini CLI"
+    echo " • GitHub Copilot integration with unified instructions"
     echo " • Future-proof for other AI tools"
     echo ""
 }
@@ -114,10 +116,12 @@ setup_agent_docs() {
     local has_claude=false
     local has_agent=false
     local has_gemini=false
-    
+    local has_copilot=false
+
     [ -f CLAUDE.md ] && has_claude=true
     [ -f AGENT.md ] && has_agent=true
     [ -f GEMINI.md ] && has_gemini=true
+    [ -f .github/copilot-instructions.md ] && has_copilot=true
     
     # Handle CLAUDE.md → AGENT.md conversion
     if [ "$has_claude" = true ] && [ "$has_agent" = false ]; then
@@ -149,7 +153,7 @@ setup_agent_docs() {
         else
             log_warning "CLAUDE.md exists as regular file (not symlink)"
         fi
-        
+
         # Create GEMINI.md symlink
         if [ "$has_gemini" = false ] || [ -L GEMINI.md ]; then
             log_info "Creating GEMINI.md → AGENT.md symlink..."
@@ -160,6 +164,20 @@ setup_agent_docs() {
             log_success "GEMINI.md symlink created"
         else
             log_warning "GEMINI.md exists as regular file (not symlink)"
+        fi
+
+        # Create .github/copilot-instructions.md symlink
+        if [ "$has_copilot" = false ] || [ -L .github/copilot-instructions.md ]; then
+            log_info "Creating .github/copilot-instructions.md → AGENT.md symlink..."
+            if [ "$DRY_RUN" = false ]; then
+                # Ensure .github directory exists
+                mkdir -p .github
+                [ -L .github/copilot-instructions.md ] && rm .github/copilot-instructions.md  # Remove existing symlink
+                ln -sf ../AGENT.md .github/copilot-instructions.md
+            fi
+            log_success ".github/copilot-instructions.md symlink created"
+        else
+            log_warning ".github/copilot-instructions.md exists as regular file (not symlink)"
         fi
     else
         log_error "No AGENT.md file found or created"
@@ -185,10 +203,16 @@ setup_agent_docs() {
         elif [ -f GEMINI.md ]; then
             echo " GEMINI.md    (regular file)"
         fi
+        if [ -L .github/copilot-instructions.md ]; then
+            echo " .github/copilot-instructions.md → $(readlink .github/copilot-instructions.md)"
+        elif [ -f .github/copilot-instructions.md ]; then
+            echo " .github/copilot-instructions.md (regular file)"
+        fi
         echo ""
         log_success "Agent documentation setup completed!"
         log_info "When Claude edits CLAUDE.md, it will update AGENT.md automatically"
         log_info "When Gemini edits GEMINI.md, it will update AGENT.md automatically"
+        log_info "GitHub Copilot will use the unified instructions from AGENT.md"
     fi
 }
 
