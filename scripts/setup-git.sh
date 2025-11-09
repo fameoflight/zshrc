@@ -39,8 +39,8 @@ setup_editors() {
         echo "📝 Setting editors..."
     fi
 
-    git config --global --replace-all core.editor "code --wait"
-    git config --global --replace-all sequence.editor "code --wait"
+    git config --global --replace-all core.editor "vim"
+    git config --global --replace-all sequence.editor "vim"
     echo "✅ Editors configured"
 }
 
@@ -54,6 +54,8 @@ setup_push_behavior() {
 
     git config --global --replace-all push.default current
     git config --global --replace-all push.recurseSubmodules on-demand
+
+    git config --global core.filemode false
     echo "✅ Push behavior configured"
 }
 

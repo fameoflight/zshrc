@@ -1,42 +1,110 @@
 # Development Guidelines
 
-## Core Beliefs
+## Prime Directive: Stop Before You Start
 
-- Incremental progress over big bangs - Small changes that compile and pass tests
-- Learning from existing code - Study and plan before implementing
-- Pragmatic over dogmatic - Adapt to project reality
-- Clear intent over clever code - Be boring and obvious
+Before writing ANY code:
+1. **Does this already exist?** Search first, write second
+2. **Is this actually needed?** Solve the problem, not potential future problems
+3. **Can I delete instead of add?** Less code = fewer bugs
 
-## Simplicity Means
+## Core Rules
 
-- Single responsibility per function/class/file
-- Avoid premature abstractions
-- No clever tricks - choose the boring solution
-- If you need to explain it, it's too complex
+- **Incremental only** - Small changes that compile and pass tests
+- **Learn from existing code** - Study patterns before implementing
+- **Boring over clever** - If you need to explain it, it's too complex
+- **One responsibility** - Functions/classes/files do ONE thing
+- **Maximum 5 parameters** - Ever. Function args, React props, service constructors - if you need more, you're doing too much
+- **Small files hide complexity** - Encapsulate logic behind clear interfaces, don't expose internals
 
-### Code Organization & Encapsulation
+## Hard Constraints
 
-**DRY & KISS Principles**: Encapsulate logic to maximize reusability and maintainability. When you find a component or class handling more than 2 distinct responsibilities, break it down immediately.
+### Absolutely Forbidden
+- ❌ Refactoring working code unless that's the explicit task
+- ❌ "Improving" code that wasn't part of the request
+- ❌ Adding features not explicitly requested
+- ❌ Premature abstractions (copy-paste twice is fine)
+- ❌ "While I'm here" changes to unrelated code
 
-**Benefits of Strong Encapsulation**:
-- **Reusability**: Small, focused pieces can be easily reused across the codebase
-- **Readability**: Each component has a clear, single purpose that's easy to understand
-- **Testability**: Isolated functionality is much easier to unit test
-- **Maintainability**: Changes to one concern don't risk breaking unrelated functionality
+### Required Before Coding
+- ✅ Verify it doesn't already exist in the codebase
+- ✅ Find 2-3 similar implementations to match patterns
+- ✅ Ask if requirements are unclear
 
-**Refactoring Triggers**:
-- Components doing data fetching + complex UI rendering + business logic
+### When Refactoring IS Explicitly Requested
+
+**Only refactor when user explicitly asks** - then use these triggers:
+- More than 5 parameters anywhere
 - Files exceeding 200 lines with mixed concerns
-- Functions with multiple "and" conditions in their names
-- Deep nesting levels (>3) indicating complex logic that should be extracted
-- Duplicate code patterns across multiple files
+- Functions with multiple "and" in their name
+- Deep nesting (>3 levels)
+- Duplicate code patterns across 3+ files
 
-**Extraction Patterns**:
-- **Custom Hooks**: Extract data fetching, state management, and side effects
-- **Utility Functions**: Pure functions for business logic and data transformation
-- **UI Components**: Focus solely on presentation, receive data via props
-- **Container Components**: Orchestrate data flow and manage state
-- **Service Classes**: Handle complex business operations and external integrations
+## Encapsulation Rules
+
+**Small files with clear boundaries** - Hide complexity, don't expose it:
+
+### The 5-Parameter Law
+- **Maximum 5 parameters** for any function/component/constructor
+- If you need more, group related params into a config object
+- Config objects must have meaningful names, not generic "options" or "config"
+
+**Examples:**
+```typescript
+// ❌ BAD - Too many parameters
+function createUser(name: string, email: string, age: number,
+                   address: string, phone: string, role: string) {}
+
+// ✅ GOOD - Config object with clear purpose
+interface UserProfile {
+  name: string;
+  email: string;
+  age: number;
+}
+
+interface UserContact {
+  address: string;
+  phone: string;
+}
+
+function createUser(profile: UserProfile, contact: UserContact, role: string) {}
+```
+
+### File Size & Responsibility
+- **One logical boundary per file** - User management, not "utilities"
+- **Hide implementation details** - Export only what consumers need
+- **Internal complexity is fine** - 200-line file is OK if it has one clear purpose
+- **External simplicity required** - Consumers should use ≤5 things from your file
+
+**Examples:**
+```typescript
+// ❌ BAD - Exposing too much
+export const validateEmail = ...
+export const validatePhone = ...
+export const validateAddress = ...
+export const formatEmail = ...
+export const formatPhone = ...
+export const parseEmail = ...
+
+// ✅ GOOD - Single interface
+export class ContactValidator {
+  validate(contact: Contact): ValidationResult {}
+  format(contact: Contact): FormattedContact {}
+}
+```
+
+### When to Extract
+Extract when you hit these limits:
+- Function has >5 parameters
+- File exports >5 public things
+- Component/service has >5 props/dependencies
+- You're scrolling to understand one function
+
+### When NOT to Extract
+Don't extract just because:
+- File feels "long" but does one thing
+- You want to "organize better"
+- You think it "might be reused someday"
+- You're following a pattern book
 
 ## Workflow
 
@@ -73,32 +141,31 @@ Update TODO.md before ending each session - future you will thank you.
 
 ### 2. Planning & Implementation
 
-**Break complex work into 3-5 stages** documented in `IMPLEMENTATION_PLAN.md`:
+**Complex work only:** Document 3-5 stages in `IMPLEMENTATION_PLAN.md`:
 
 ```markdown
 ## Stage N: [Name]
-
-**Goal**: [Specific deliverable]  
-**Tests**: [Specific test cases]  
+**Goal**: [Specific deliverable]
+**Tests**: [Specific test cases]
 **Status**: [Not Started|In Progress|Complete]
 ```
 
-**Implementation Flow**:
+**Implementation Flow:**
 
-1. **Understand** - Study existing patterns in codebase
+1. **Understand** - Study existing patterns (mandatory)
 2. **Test** - Write failing test (red)
 3. **Implement** - Minimal code to pass (green)
-4. **Refactor** - Clean up while tests pass
+4. **Stop** - You're done. No refactoring unless tests require it
 5. **Commit** - Clear message linking to plan
 
-### 3. When Stuck (3-Attempt Rule)
+### 3. When Stuck (2-Attempt Rule)
 
-**STOP after 3 failed attempts** and reassess:
+**STOP after 2 failed attempts** and ask the user:
 
-1. **Document failures** - What tried, errors, hypotheses
-2. **Research alternatives** - Find 2-3 different approaches
-3. **Question fundamentals** - Wrong abstraction? Can split smaller?
-4. **Try different angle** - Different library/pattern/simpler approach
+1. State what you tried and what failed
+2. Present 2-3 alternative approaches
+3. Ask which direction to take
+4. **Do NOT** keep trying different things without user input
 
 ## Technical Standards
 
@@ -107,7 +174,8 @@ Update TODO.md before ending each session - future you will thank you.
 - **Composition over inheritance** - Dependency injection
 - **Interfaces over singletons** - Enable testing
 - **Explicit over implicit** - Clear data flow
-- **DRY principle** - Small, reusable functions
+- **Maximum 5 parameters** - Anywhere, ever, no exceptions
+- **Maximum 5 exports** - Per file, if you need more you have poor boundaries
 
 ### Code Quality Requirements
 
@@ -117,6 +185,8 @@ Update TODO.md before ending each session - future you will thank you.
 - Pass all existing tests
 - Include tests for new functionality
 - Follow project formatting/linting
+- Have ≤5 parameters per function/component/constructor
+- Have ≤5 public exports per file
 
 ### Error Handling
 
@@ -165,17 +235,17 @@ When multiple approaches exist, prioritize:
 
 ## Critical Rules
 
-**NEVER**:
-
+**NEVER:**
 - Disable tests instead of fixing them
 - Make assumptions - verify with existing code
+- Add "TODO" comments - either do it or don't
+- Write code then ask "is this okay?" - ask BEFORE writing
 
-**ALWAYS**:
-
-- Commit working code incrementally
-- Update documentation as you progress
-- Stop after 3 attempts and reassess
+**ALWAYS:**
+- Verify builds pass: `yarn tsc` (not `yarn build`)
+- Stop after 2 failed attempts and ask
 - Update TODO.md before ending session
+- State what you're about to do BEFORE doing it
 
 ## Large Codebase Analysis with Gemini CLI
 
@@ -257,5 +327,22 @@ Refer to `XCODE.md` for complete usage examples, troubleshooting, and best pract
 
 ---
 
-_Code should be readable - not too long, not unnecessarily short. Break rules when it improves clarity._
-- use yarn tsc to verify build don't use yarn build
+## Response Format
+
+### Before making changes
+State clearly:
+```
+I will change [file:line_number] to [specific action].
+This adds/removes X lines.
+```
+
+### After making changes
+```
+Changed [file:line_number]. Build passes.
+```
+
+No explanations unless asked. No "I also improved..." - that means you broke the rules.
+
+---
+
+_Do less. When in doubt, do the minimum that works._
