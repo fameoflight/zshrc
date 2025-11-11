@@ -31,11 +31,21 @@ _execute_ruby_cli_script() {
   if [[ -f "$gemfile_path" ]]; then
     # Preserve current working directory by running from original dir
     local original_dir="$(pwd)"
-    (cd "$ruby_cli_dir" && source $HOME/.rvm/scripts/rvm && rvm use 3.2.4 && ORIGINAL_WORKING_DIR="$original_dir" bundle exec ruby "bin/$script_name" "$@")
+    # Export SSH environment variables for the subshell
+    (cd "$ruby_cli_dir" && \
+      export SSH_AUTH_SOCK="$SSH_AUTH_SOCK" && \
+      export SSH_AGENT_PID="$SSH_AGENT_PID" && \
+      export ORIGINAL_WORKING_DIR="$original_dir" && \
+      source $HOME/.rvm/scripts/rvm && \
+      rvm use 3.2.4 && \
+      bundle exec ruby "bin/$script_name" "$@")
   else
-    # Fallback to system ruby, also set ORIGINAL_WORKING_DIR
+    # Fallback to system ruby, also set ORIGINAL_WORKING_DIR and SSH environment
     local original_dir="$(pwd)"
-    ORIGINAL_WORKING_DIR="$original_dir" ruby "$script_path" "$@"
+    export SSH_AUTH_SOCK="$SSH_AUTH_SOCK"
+    export SSH_AGENT_PID="$SSH_AGENT_PID"
+    export ORIGINAL_WORKING_DIR="$original_dir"
+    ruby "$script_path" "$@"
   fi
 }
 
@@ -185,6 +195,11 @@ git-common() {
   _execute_ruby_cli_script "git-common.rb" "$@"
 }
 
+# Interactive git template manager for creating private repos from templates
+git-template() {
+  _execute_ruby_cli_script "git-template.rb" "$@"
+}
+
 # =============================================================================
 # EMAIL UTILITIES
 # =============================================================================
@@ -317,6 +332,7 @@ list-ruby-cli-scripts() {
   echo "   git-history             - Find files by extension in git history"
   echo "   git-commit-splitter     - Split a git commit by selecting files for separate commits"
   echo "   git-common              - Show common files between two git commits"
+  echo "   git-template            - Interactive template manager for creating private repos"
   echo ""
 
   echo "📧 Email:"
@@ -352,4 +368,5 @@ list-ruby-cli-scripts() {
   echo "   largest-files -s -n 10 -m 5M                       # Show 10 largest files over 5MB"
   echo "   git-compress --keep-last 12                         # Compress to last 12 commits"
   echo "   git-history rb                                       # Find Ruby files in git history"
+  echo "   git-template                                         # Interactive template setup"
 }
