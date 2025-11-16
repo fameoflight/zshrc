@@ -1,19 +1,20 @@
 import { Script } from "./Script";
-import type { ScriptDependencies, OpenAIService, Context } from "../types";
+import type { ScriptDependencies, Context } from "../types";
+import { OpenAIService } from "../services/OpenAIService";
 
 /**
  * Base class for AI-related scripts
  *
- * Extends Script with:
- * - OpenAI service injection
- * - Connection validation
- * - Common AI helper methods
+ * Automatically initializes OpenAI service with defaults
+ * Override via environment variables:
+ * - AI_BASE_URL (default: http://localhost:1234/v1)
+ * - AI_API_KEY (default: not-required)
  *
  * @example
  * @Script({ args: { ... } })
  * export class MyAIScript extends AIScript {
  *   async run(ctx: Context) {
- *     const models = await ctx.openai.listModels();
+ *     const models = await this.openai.listModels();
  *     // ...
  *   }
  * }
@@ -24,11 +25,12 @@ export abstract class AIScript extends Script {
   constructor(deps: ScriptDependencies) {
     super(deps);
 
-    if (!deps.openai) {
-      throw new Error("OpenAIService is required for AIScript");
-    }
-
-    this.openai = deps.openai;
+    // Initialize OpenAI service directly - much simpler!
+    this.openai = new OpenAIService({
+      baseURL: process.env.AI_BASE_URL || "http://localhost:1234/v1",
+      apiKey: process.env.AI_API_KEY || "not-required",
+      logger: this.logger,
+    });
   }
 
   /**
