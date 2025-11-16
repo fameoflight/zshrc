@@ -18,6 +18,7 @@ export interface Context {
   // Service dependencies (injected based on base class)
   git?: GitService;
   xcode?: XcodeService;
+  openai?: OpenAIService;
 
   // Helper methods
   prompt(message: string, defaultValue?: string): Promise<string>;
@@ -126,6 +127,35 @@ export interface XcodeService {
 }
 
 /**
+ * OpenAI service interface
+ */
+export interface OpenAIService {
+  baseURL: string;
+  listModels(): Promise<any[]>;
+  getModel(modelId: string): Promise<any | null>;
+  chat(params: {
+    model: string;
+    messages: any[];
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<string>;
+  chatStream(params: {
+    model: string;
+    messages: any[];
+    temperature?: number;
+    maxTokens?: number;
+  }): AsyncGenerator<string, void, unknown>;
+  complete(params: {
+    model: string;
+    prompt: string;
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<string>;
+  createEmbedding(params: { model: string; input: string | string[] }): Promise<number[][]>;
+  testConnection(): Promise<boolean>;
+}
+
+/**
  * Script metadata extracted from decorator and JSDoc
  */
 export interface ScriptMetadata {
@@ -206,4 +236,5 @@ export interface ScriptDependencies {
   fs: FileSystem;
   git?: GitService;
   xcode?: XcodeService;
+  openai?: OpenAIService;
 }
