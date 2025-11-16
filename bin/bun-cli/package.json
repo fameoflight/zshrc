@@ -1,0 +1,23 @@
+{
+  "name": "zsh-utils",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Unified Bun + TypeScript CLI utilities for ZSH configuration",
+  "main": "src/cli.ts",
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "build": "bun build src/cli.ts --compile --outfile dist/zsh-utils",
+    "build:release": "bun build src/cli.ts --compile --minify --outfile dist/zsh-utils",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.7.0",
+    "class-validator": "^0.14.1",
+    "reflect-metadata": "^0.2.1"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.3.3"
+  }
+}
