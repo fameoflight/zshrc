@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Add files to Xcode project with automatic category detection
+# @tags: xcode, project-management
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/xcode_project'

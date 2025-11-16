@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Remove files from Xcode project and filesystem
+# @tags: xcode, project-management, cleanup
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/xcode_project'

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Display detailed battery and power charger information for macOS
+# @tags: macos, monitoring, hardware
 
 require_relative '../../.common/script_base'
 require_relative '../../.common/services/system_profiler_service'

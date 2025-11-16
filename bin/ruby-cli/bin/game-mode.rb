@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Toggle gaming mode by switching between single and multi-display setups
+# @tags: macos, gaming, display, optimization
 
 require 'json'
 require 'fileutils'

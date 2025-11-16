@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Manage macOS Spotlight indexing settings for privacy and performance
+# @tags: macos, privacy, spotlight, optimization
 
 require_relative '../../.common/script_base'
 

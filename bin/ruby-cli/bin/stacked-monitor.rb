@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Configure 4-monitor setup with stacked displays on left or right
+# @tags: macos, display, multi-monitor
 
 require_relative '../../.common/script_base'
 

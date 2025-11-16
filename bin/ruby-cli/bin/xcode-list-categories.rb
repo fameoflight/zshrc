@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: List all available file categories for Xcode project organization
+# @tags: xcode, project-management
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/xcode_project'

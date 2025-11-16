@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: View files in Xcode project, optionally filtered by category
+# @tags: xcode, project-management, inspection
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/xcode_project'

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Generate modern app icons for iOS/macOS Xcode projects
+# @tags: xcode, ios, macos, image-processing
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/xcode_project'
