@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Split large commits into smaller logical commits interactively
+# @tags: automation, interactive, refactor
 
 require_relative '../../.common/interactive_script_base'
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Find files by extension in git history with interactive viewing
+# @tags: search, interactive, history
 
 require_relative '../lib/script_helpers'
 require 'tempfile'

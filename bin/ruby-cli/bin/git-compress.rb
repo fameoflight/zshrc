@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Compress git history into a single fresh commit
+# @tags: cleanup, optimization
 
 require 'tmpdir'
 require_relative '../../.common/script_base'

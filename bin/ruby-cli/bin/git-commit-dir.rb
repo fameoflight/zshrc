@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Stage and commit all changes in a specific directory
+# @tags: automation, interactive
 
 require_relative '../../.common/script_base'
 

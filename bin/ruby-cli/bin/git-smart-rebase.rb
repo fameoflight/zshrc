@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Intelligently rebase with automatic conflict resolution for permissions and whitespace
+# @tags: automation, interactive, rebase
 
 require_relative '../../.common/interactive_script_base'
 

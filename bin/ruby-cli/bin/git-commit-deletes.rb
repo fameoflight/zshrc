@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Commit only deleted files with interactive confirmation
+# @tags: automation, interactive, cleanup
 
 require_relative '../../.common/git_commit_script_base'
 

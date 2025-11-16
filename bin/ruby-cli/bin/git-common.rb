@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Find common files between two git commits
+# @tags: analysis, comparison
 
 require_relative '../../.common/script_base'
 

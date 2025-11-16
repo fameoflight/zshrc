@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Commit only pure file renames (R100) with interactive confirmation
+# @tags: automation, interactive, refactor
 
 require_relative '../../.common/git_commit_script_base'
 

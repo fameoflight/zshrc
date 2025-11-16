@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: git
+# @description: Create private repositories from public templates interactively
+# @tags: automation, interactive, template
 
 require_relative '../../.common/interactive_script_base'
 
