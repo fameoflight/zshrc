@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Merge markdown files with their references into a single document
+# @tags: markdown, merge, documentation
 
 require_relative '../lib/archive/file_merger_base'
 require 'pathname'

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Find largest files by lines or size while respecting .gitignore
+# @tags: analysis, search, optimization
 
 require_relative '../../.common/script_base'
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Merge multiple PDF files into a single PDF document
+# @tags: pdf, merge, documentation
 
 require_relative '../lib/archive/file_merger_base'
 require_relative '../lib/archive/format'

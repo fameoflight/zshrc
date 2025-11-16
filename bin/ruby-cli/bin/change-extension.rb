@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Change default application for file extensions with fuzzy matching
+# @tags: macos, file-associations, automation
 
 require_relative '../../.common/script_base'
 require 'json'

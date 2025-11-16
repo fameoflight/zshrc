@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Identify files with only comment changes for safe low-risk commits
+# @tags: analysis, git, code-review
 
 require_relative '../../.common/script_base'
 

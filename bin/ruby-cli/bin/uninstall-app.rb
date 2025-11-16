@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Comprehensive application uninstaller with complete cleanup
+# @tags: macos, cleanup, uninstall
 
 require_relative '../../.common/script_base'
 require 'sqlite3'
