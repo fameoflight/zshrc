@@ -89,3 +89,45 @@ export class ShellExecutor implements ShellExecutorInterface {
     }
   }
 }
+
+/**
+ * Standalone exec function for simple command execution
+ * Returns stdout on success, throws on error
+ */
+export async function exec(
+  command: string,
+  options?: { description?: string; cwd?: string }
+): Promise<string> {
+  if (options?.description) {
+    console.log(`⏳ ${options.description}...`);
+  }
+
+  try {
+    const proc = await $`sh -c ${command}`
+      .cwd(options?.cwd || process.cwd())
+      .quiet();
+
+    if (proc.exitCode !== 0) {
+      throw new Error(proc.stderr.toString().trim() || 'Command failed');
+    }
+
+    return proc.stdout.toString().trim();
+  } catch (error: any) {
+    throw new Error(
+      error.stderr?.toString().trim() || error.message || 'Command failed'
+    );
+  }
+}
+
+/**
+ * Standalone execSilent function for silent command execution
+ * Returns stdout on success, returns empty string on error
+ */
+export async function execSilent(command: string): Promise<string> {
+  try {
+    const proc = await $`sh -c ${command}`.quiet();
+    return proc.stdout.toString().trim();
+  } catch (error: any) {
+    return '';
+  }
+}
