@@ -1,0 +1,483 @@
+---
+version: '1.0'
+generated_at: '2025-11-16T17:24:19Z'
+categories:
+  backup:
+  - name: dropbox-backup.sh
+    path: bin/dropbox-backup.sh
+    language: Shell
+    description: Move directories to Dropbox and create symlinks
+    tags:
+    - dropbox
+    - backup
+    - symlink
+  - name: iterm-backup.sh
+    path: bin/iterm-backup.sh
+    language: Shell
+    description: Backup essential iTerm2 configurations
+    tags:
+    - iterm2
+    - macos
+    - backup
+    - configuration
+  - name: vscode-backup.sh
+    path: bin/vscode-backup.sh
+    language: Shell
+    description: Backup essential VS Code settings and extensions
+    tags:
+    - vscode
+    - backup
+    - configuration
+  - name: xcode-backup.sh
+    path: bin/xcode-backup.sh
+    language: Shell
+    description: Backup essential Xcode settings and snippets
+    tags:
+    - xcode
+    - macos
+    - backup
+  communication:
+  - name: gmail-inbox.rb
+    path: bin/ruby-cli/bin/gmail-inbox.rb
+    language: Ruby
+    description: Gmail inbox management with interactive archiving and search
+    tags:
+    - gmail
+    - email
+    - interactive
+    - automation
+  data:
+  - name: openrouter-usage.rb
+    path: bin/ruby-cli/bin/openrouter-usage.rb
+    language: Ruby
+    description: Check OpenRouter API usage and credit balance
+    tags:
+    - api
+    - monitoring
+    - llm
+  dev:
+  - name: auto-retry.rb
+    path: bin/ruby-cli/bin/auto-retry.rb
+    language: Ruby
+    description: Automatically retry failed commands using LLM analysis
+    tags:
+    - automation
+    - llm
+    - debugging
+  - name: console-log-remover.rb
+    path: bin/ruby-cli/bin/console-log-remover.rb
+    language: Ruby
+    description: Remove single-line console.log statements from source files
+    tags:
+    - cleanup
+    - javascript
+    - automation
+  - name: electron-icon-generator.rb
+    path: bin/ruby-cli/bin/electron-icon-generator.rb
+    language: Ruby
+    description: Generate app icons for Electron applications from SVG or programmatically
+    tags:
+    - electron
+    - icon-generation
+    - image-processing
+  - name: generate-categories.rb
+    path: bin/ruby-cli/bin/generate-categories.rb
+    language: Ruby
+    description: Auto-generate categories.yml from script metadata headers
+    tags:
+    - automation
+    - metadata
+    - organization
+  - name: internal-find-orphaned-targets.rb
+    path: bin/ruby-cli/bin/internal-find-orphaned-targets.rb
+    language: Ruby
+    description: Find orphaned Makefile targets not referenced anywhere
+    tags:
+    - makefile
+    - analysis
+    - cleanup
+  - name: investigate-naval-js.rb
+    path: bin/ruby-cli/bin/investigate-naval-js.rb
+    language: Ruby
+    description: Investigate nav.al JavaScript and Read More functionality
+    tags:
+    - testing
+    - web-scraping
+    - debugging
+  - name: llm-generate.rb
+    path: bin/ruby-cli/bin/llm-generate.rb
+    language: Ruby
+    description: LLM-powered command and script generator from natural language
+    tags:
+    - llm
+    - automation
+    - code-generation
+  - name: test-click-naval.rb
+    path: bin/ruby-cli/bin/test-click-naval.rb
+    language: Ruby
+    description: Test nav.al Read More button clicking automation
+    tags:
+    - testing
+    - web-scraping
+    - automation
+  - name: xcode-add-file.rb
+    path: bin/ruby-cli/bin/xcode-add-file.rb
+    language: Ruby
+    description: Add files to Xcode project with automatic category detection
+    tags:
+    - xcode
+    - project-management
+  - name: xcode-delete-file.rb
+    path: bin/ruby-cli/bin/xcode-delete-file.rb
+    language: Ruby
+    description: Remove files from Xcode project and filesystem
+    tags:
+    - xcode
+    - project-management
+    - cleanup
+  - name: xcode-icon-generator.rb
+    path: bin/ruby-cli/bin/xcode-icon-generator.rb
+    language: Ruby
+    description: Generate modern app icons for iOS/macOS Xcode projects
+    tags:
+    - xcode
+    - ios
+    - macos
+    - image-processing
+  - name: xcode-list-categories.rb
+    path: bin/ruby-cli/bin/xcode-list-categories.rb
+    language: Ruby
+    description: List all available file categories for Xcode project organization
+    tags:
+    - xcode
+    - project-management
+  - name: xcode-view-files.rb
+    path: bin/ruby-cli/bin/xcode-view-files.rb
+    language: Ruby
+    description: View files in Xcode project, optionally filtered by category
+    tags:
+    - xcode
+    - project-management
+    - inspection
+  - name: convert_to_coreml.py
+    path: bin/python-cli/convert_to_coreml.py
+    language: Python
+    description: Convert PyTorch Real-ESRGAN models to CoreML format for iOS
+    tags:
+    - ml
+    - coreml
+    - conversion
+    - ios
+  - name: rife_arch.py
+    path: bin/python-cli/rife_arch.py
+    language: Python
+    description: RIFE neural network architecture implementation
+    tags:
+    - ml
+    - pytorch
+    - architecture
+    - video
+  files:
+  - name: change-extension.rb
+    path: bin/ruby-cli/bin/change-extension.rb
+    language: Ruby
+    description: Change default application for file extensions with fuzzy matching
+    tags:
+    - macos
+    - file-associations
+    - automation
+  - name: comment-only-changes.rb
+    path: bin/ruby-cli/bin/comment-only-changes.rb
+    language: Ruby
+    description: Identify files with only comment changes for safe low-risk commits
+    tags:
+    - analysis
+    - git
+    - code-review
+  - name: largest-files.rb
+    path: bin/ruby-cli/bin/largest-files.rb
+    language: Ruby
+    description: Find largest files by lines or size while respecting .gitignore
+    tags:
+    - analysis
+    - search
+    - optimization
+  - name: merge-markdown.rb
+    path: bin/ruby-cli/bin/merge-markdown.rb
+    language: Ruby
+    description: Merge markdown files with their references into a single document
+    tags:
+    - markdown
+    - merge
+    - documentation
+  - name: merge-pdf.rb
+    path: bin/ruby-cli/bin/merge-pdf.rb
+    language: Ruby
+    description: Merge multiple PDF files into a single PDF document
+    tags:
+    - pdf
+    - merge
+    - documentation
+  - name: safari-epub.rb
+    path: bin/ruby-cli/bin/safari-epub.rb
+    language: Ruby
+    description: Convert Safari Reading List to EPUB ebook format
+    tags:
+    - epub
+    - safari
+    - conversion
+    - documentation
+  - name: website-epub.rb
+    path: bin/ruby-cli/bin/website-epub.rb
+    language: Ruby
+    description: Scrape website and convert to EPUB ebook format
+    tags:
+    - epub
+    - web-scraping
+    - conversion
+    - documentation
+  git:
+  - name: git-commit-deletes.rb
+    path: bin/ruby-cli/bin/git-commit-deletes.rb
+    language: Ruby
+    description: Commit only deleted files with interactive confirmation
+    tags:
+    - automation
+    - interactive
+    - cleanup
+  - name: git-commit-dir.rb
+    path: bin/ruby-cli/bin/git-commit-dir.rb
+    language: Ruby
+    description: Stage and commit all changes in a specific directory
+    tags:
+    - automation
+    - interactive
+  - name: git-commit-renames.rb
+    path: bin/ruby-cli/bin/git-commit-renames.rb
+    language: Ruby
+    description: Commit only pure file renames (R100) with interactive confirmation
+    tags:
+    - automation
+    - interactive
+    - refactor
+  - name: git-commit-splitter.rb
+    path: bin/ruby-cli/bin/git-commit-splitter.rb
+    language: Ruby
+    description: Split large commits into smaller logical commits interactively
+    tags:
+    - automation
+    - interactive
+    - refactor
+  - name: git-common.rb
+    path: bin/ruby-cli/bin/git-common.rb
+    language: Ruby
+    description: Find common files between two git commits
+    tags:
+    - analysis
+    - comparison
+  - name: git-compress.rb
+    path: bin/ruby-cli/bin/git-compress.rb
+    language: Ruby
+    description: Compress git history into a single fresh commit
+    tags:
+    - cleanup
+    - optimization
+  - name: git-history.rb
+    path: bin/ruby-cli/bin/git-history.rb
+    language: Ruby
+    description: Find files by extension in git history with interactive viewing
+    tags:
+    - search
+    - interactive
+    - history
+  - name: git-smart-rebase.rb
+    path: bin/ruby-cli/bin/git-smart-rebase.rb
+    language: Ruby
+    description: Intelligently rebase with automatic conflict resolution for permissions
+      and whitespace
+    tags:
+    - automation
+    - interactive
+    - rebase
+  - name: git-template.rb
+    path: bin/ruby-cli/bin/git-template.rb
+    language: Ruby
+    description: Create private repositories from public templates interactively
+    tags:
+    - automation
+    - interactive
+    - template
+  media:
+  - name: clip-video.rb
+    path: bin/ruby-cli/bin/clip-video.rb
+    language: Ruby
+    description: Extract clips from videos using FFmpeg
+    tags:
+    - video
+    - ffmpeg
+    - editing
+  - name: youtube-transcript-chat.rb
+    path: bin/ruby-cli/bin/youtube-transcript-chat.rb
+    language: Ruby
+    description: Interactive chat with YouTube video transcripts using LLM
+    tags:
+    - youtube
+    - llm
+    - interactive
+    - transcription
+  - name: watermark_detector.py
+    path: bin/python-cli/watermark_detector.py
+    language: Python
+    description: Watermark detection using ConvNeXt-tiny ML model
+    tags:
+    - ml
+    - image-processing
+    - detection
+  setup:
+  - name: setup-dev-tools.rb
+    path: bin/ruby-cli/bin/setup-dev-tools.rb
+    language: Ruby
+    description: Install Homebrew packages for different development categories
+    tags:
+    - homebrew
+    - macos
+    - installation
+    - development
+  - name: agent-setup.sh
+    path: bin/agent-setup.sh
+    language: Shell
+    description: Create unified AI agent documentation (AGENT.md) with symlinks
+    tags:
+    - documentation
+    - ai
+    - agent
+    - symlink
+  - name: claude-setup.sh
+    path: bin/claude-setup.sh
+    language: Shell
+    description: Create symlinks for Claude Code CLI settings
+    tags:
+    - claude
+    - ai
+    - symlink
+    - configuration
+  - name: gemini-setup.sh
+    path: bin/gemini-setup.sh
+    language: Shell
+    description: Create symlinks for Gemini CLI settings
+    tags:
+    - gemini
+    - ai
+    - symlink
+    - configuration
+  - name: iterm-setup.sh
+    path: bin/iterm-setup.sh
+    language: Shell
+    description: Restore iTerm2 configurations from backed up settings
+    tags:
+    - iterm2
+    - macos
+    - configuration
+    - restore
+  - name: macos-optimize.sh
+    path: bin/macos-optimize.sh
+    language: Shell
+    description: Configure macOS settings optimized for developers and power users
+    tags:
+    - macos
+    - optimization
+    - configuration
+    - developer
+  - name: setup-hooks.sh
+    path: bin/setup-hooks.sh
+    language: Shell
+    description: Setup git hooks for the zshrc repository
+    tags:
+    - git
+    - hooks
+    - automation
+  system:
+  - name: battery-info.rb
+    path: bin/ruby-cli/bin/battery-info.rb
+    language: Ruby
+    description: Display detailed battery and power charger information for macOS
+    tags:
+    - macos
+    - monitoring
+    - hardware
+  - name: check-camera-mic.rb
+    path: bin/ruby-cli/bin/check-camera-mic.rb
+    language: Ruby
+    description: Check which applications are using camera or microphone on macOS
+    tags:
+    - macos
+    - privacy
+    - monitoring
+  - name: game-mode.rb
+    path: bin/ruby-cli/bin/game-mode.rb
+    language: Ruby
+    description: Toggle gaming mode by switching between single and multi-display
+      setups
+    tags:
+    - macos
+    - gaming
+    - display
+    - optimization
+  - name: network-speed.rb
+    path: bin/ruby-cli/bin/network-speed.rb
+    language: Ruby
+    description: Test network speed and connectivity using command-line tools
+    tags:
+    - network
+    - monitoring
+    - performance
+  - name: spotlight-manage.rb
+    path: bin/ruby-cli/bin/spotlight-manage.rb
+    language: Ruby
+    description: Manage macOS Spotlight indexing settings for privacy and performance
+    tags:
+    - macos
+    - privacy
+    - spotlight
+    - optimization
+  - name: stacked-monitor.rb
+    path: bin/ruby-cli/bin/stacked-monitor.rb
+    language: Ruby
+    description: Configure 4-monitor setup with stacked displays on left or right
+    tags:
+    - macos
+    - display
+    - multi-monitor
+  - name: uninstall-app.rb
+    path: bin/ruby-cli/bin/uninstall-app.rb
+    language: Ruby
+    description: Comprehensive application uninstaller with complete cleanup
+    tags:
+    - macos
+    - cleanup
+    - uninstall
+  - name: calibre-update.sh
+    path: bin/calibre-update.sh
+    language: Shell
+    description: Update Calibre e-book manager to latest version on macOS
+    tags:
+    - calibre
+    - macos
+    - update
+    - ebooks
+  - name: macos-oled-optimize.sh
+    path: bin/macos-oled-optimize.sh
+    language: Shell
+    description: Configure macOS settings for OLED displays (burn-in prevention)
+    tags:
+    - macos
+    - oled
+    - display
+    - optimization
+statistics:
+  total_scripts: 56
+  total_categories: 9
+  by_language:
+    Shell: 12
+    Ruby: 41
+    Python: 3
