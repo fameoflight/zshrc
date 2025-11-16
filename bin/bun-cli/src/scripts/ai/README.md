@@ -42,12 +42,14 @@ A running LLM server with OpenAI-compatible API:
 
 ## 🔧 Creating AI Scripts
 
-Extend the `AIScript` base class to create new AI-powered utilities:
+Extend the `AIScript` base class to create new AI-powered utilities.
+
+**Important**: AI scripts require strongly-typed options for configuration. You must provide `endpoint` and `apiKey` in the constructor.
 
 ```typescript
 import { Script } from "../../core/decorators/Script";
 import { AIScript } from "../../core/base/AIScript";
-import type { Context } from "../../core/types";
+import type { Context, ScriptDependencies } from "../../core/types";
 
 @Script({
   emoji: "✨",
@@ -56,6 +58,13 @@ import type { Context } from "../../core/types";
   }
 })
 export class MyAIScript extends AIScript {
+  constructor(deps: ScriptDependencies) {
+    super(deps, {
+      endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
+      apiKey: process.env.AI_API_KEY || "not-required"
+    });
+  }
+
   async run(ctx: Context): Promise<void> {
     // Access OpenAI service via this.openai
     const models = await this.openai.listModels();
@@ -131,8 +140,20 @@ const connected = await openai.testConnection();
 
 ## 🔑 Configuration
 
-The OpenAI service is configured in the CLI runner with defaults:
-- **Base URL**: `http://localhost:1234/v1`
-- **API Key**: `not-required`
+AI scripts use strongly-typed options for configuration. Each script must provide:
+- **endpoint**: OpenAI-compatible API endpoint
+- **apiKey**: API key for authentication
 
-Override in your scripts via arguments or environment variables.
+**Environment Variables:**
+- `AI_BASE_URL` - Override default endpoint (default: `http://localhost:1234/v1`)
+- `AI_API_KEY` - Override default API key (default: `not-required`)
+
+**Example:**
+```typescript
+constructor(deps: ScriptDependencies) {
+  super(deps, {
+    endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
+    apiKey: process.env.AI_API_KEY || "not-required"
+  });
+}
+```
