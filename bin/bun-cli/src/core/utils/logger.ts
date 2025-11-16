@@ -7,11 +7,11 @@ import type { Logger as LoggerInterface } from "../types";
  */
 export class Logger implements LoggerInterface {
   private verbose: boolean;
-  private debug: boolean;
+  private debugEnabled: boolean;
 
   constructor(params: { verbose?: boolean; debug?: boolean } = {}) {
     this.verbose = params.verbose ?? false;
-    this.debug = params.debug ?? (process.env.DEBUG === "1");
+    this.debugEnabled = params.debug ?? (process.env.DEBUG === "1");
   }
 
   info(message: string): void {
@@ -44,7 +44,7 @@ export class Logger implements LoggerInterface {
   }
 
   debug(message: string): void {
-    if (this.debug) {
+    if (this.debugEnabled) {
       console.log(`🐛 ${this.dim(message)}`);
     }
   }
