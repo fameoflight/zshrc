@@ -5,6 +5,7 @@ import type {
   ShellExecutor,
   FileSystem,
   GitService,
+  OpenAIService,
 } from "../types";
 import type { DiscoveredScript } from "./discovery";
 import { parseArguments } from "./parser";
@@ -13,7 +14,9 @@ import { Logger as LoggerImpl } from "../utils/logger";
 import { ShellExecutor as ShellExecutorImpl } from "../utils/shell";
 import { FileSystem as FileSystemImpl } from "../utils/filesystem";
 import { GitService as GitServiceImpl } from "../services/GitService";
+import { OpenAIService as OpenAIServiceImpl } from "../services/OpenAIService";
 import { GitScript } from "../base/GitScript";
+import { AIScript } from "../base/AIScript";
 
 /**
  * Script runner
@@ -29,12 +32,15 @@ export class ScriptRunner {
   private shell: ShellExecutor;
   private fs: FileSystem;
   private git: GitService;
+  private openai: OpenAIService;
 
   constructor(
     private options: {
       verbose?: boolean;
       debug?: boolean;
       dryRun?: boolean;
+      aiBaseUrl?: string;
+      aiApiKey?: string;
     } = {}
   ) {
     // Initialize core utilities
@@ -52,6 +58,12 @@ export class ScriptRunner {
 
     this.git = new GitServiceImpl({
       shell: this.shell,
+      logger: this.logger,
+    });
+
+    this.openai = new OpenAIServiceImpl({
+      baseURL: options.aiBaseUrl || "http://localhost:1234/v1",
+      apiKey: options.aiApiKey || "not-required",
       logger: this.logger,
     });
   }
@@ -100,6 +112,7 @@ export class ScriptRunner {
       shell: this.shell,
       fs: this.fs,
       git: this.git,
+      openai: this.openai,
 
       // Helper methods
       prompt: async (message: string, defaultValue?: string) => {
@@ -129,6 +142,11 @@ export class ScriptRunner {
     // Inject GitService if script extends GitScript
     if (script.scriptClass.prototype instanceof GitScript) {
       deps.git = this.git;
+    }
+
+    // Inject OpenAIService if script extends AIScript
+    if (script.scriptClass.prototype instanceof AIScript) {
+      deps.openai = this.openai;
     }
 
     return deps;
