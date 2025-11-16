@@ -3,16 +3,31 @@ import type { ScriptDependencies, Context } from "../types";
 import { OpenAIService } from "../services/OpenAIService";
 
 /**
+ * Configuration options for AI scripts
+ */
+export interface AIScriptOptions {
+  /** OpenAI-compatible API endpoint */
+  endpoint: string;
+  /** API key for authentication */
+  apiKey: string;
+}
+
+/**
  * Base class for AI-related scripts
  *
- * Automatically initializes OpenAI service with defaults
- * Override via environment variables:
- * - AI_BASE_URL (default: http://localhost:1234/v1)
- * - AI_API_KEY (default: not-required)
+ * Requires strongly-typed options for OpenAI configuration.
+ * Child classes must provide endpoint and apiKey.
  *
  * @example
  * @Script({ args: { ... } })
  * export class MyAIScript extends AIScript {
+ *   constructor(deps: ScriptDependencies) {
+ *     super(deps, {
+ *       endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
+ *       apiKey: process.env.AI_API_KEY || "not-required"
+ *     });
+ *   }
+ *
  *   async run(ctx: Context) {
  *     const models = await this.openai.listModels();
  *     // ...
@@ -22,13 +37,12 @@ import { OpenAIService } from "../services/OpenAIService";
 export abstract class AIScript extends Script {
   protected readonly openai: OpenAIService;
 
-  constructor(deps: ScriptDependencies) {
+  constructor(deps: ScriptDependencies, opts: AIScriptOptions) {
     super(deps);
 
-    // Initialize OpenAI service directly - much simpler!
     this.openai = new OpenAIService({
-      baseURL: process.env.AI_BASE_URL || "http://localhost:1234/v1",
-      apiKey: process.env.AI_API_KEY || "not-required",
+      baseURL: opts.endpoint,
+      apiKey: opts.apiKey,
       logger: this.logger,
     });
   }
