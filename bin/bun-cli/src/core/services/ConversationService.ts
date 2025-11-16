@@ -1,4 +1,5 @@
 import { OpenAIService, type ChatMessage } from './OpenAIService';
+import type { LLMService } from './LLMService';
 import type { Logger } from '../types';
 
 /**
@@ -20,6 +21,19 @@ export interface ConversationSummary {
 }
 
 /**
+ * LLM service interface for conversation
+ */
+interface ConversationLLMService {
+  chat(params: {
+    model: string;
+    messages: ChatMessage[];
+    temperature?: number;
+    maxTokens?: number;
+  }): Promise<string>;
+  getCurrentModel(): string;
+}
+
+/**
  * Service for managing conversational interactions with LLM
  *
  * Maintains conversation history and provides methods for continuing conversations
@@ -27,10 +41,10 @@ export interface ConversationSummary {
 export class ConversationService {
   private messages: ConversationMessage[] = [];
   private systemPrompt?: string;
-  private llm: OpenAIService;
+  private llm: ConversationLLMService;
 
-  constructor(llmService: OpenAIService, systemPrompt?: string) {
-    this.llm = llmService;
+  constructor(llmService: OpenAIService | LLMService, systemPrompt?: string) {
+    this.llm = llmService as unknown as ConversationLLMService;
     this.systemPrompt = systemPrompt;
 
     if (systemPrompt) {
@@ -82,8 +96,8 @@ export class ConversationService {
    */
   async sendMessage(
     userMessage: string,
-    options: {
-      model: string;
+    options?: {
+      model?: string;
       temperature?: number;
       maxTokens?: number;
     }
@@ -93,10 +107,10 @@ export class ConversationService {
 
     // Send conversation to LLM
     const response = await this.llm.chat({
-      model: options.model,
+      model: options?.model || this.llm.getCurrentModel(),
       messages: this.messages as ChatMessage[],
-      temperature: options.temperature,
-      maxTokens: options.maxTokens,
+      temperature: options?.temperature,
+      maxTokens: options?.maxTokens,
     });
 
     // Add LLM response to conversation history
@@ -112,8 +126,8 @@ export class ConversationService {
    */
   async continue(
     userMessage: string,
-    options: {
-      model: string;
+    options?: {
+      model?: string;
       temperature?: number;
       maxTokens?: number;
     }
