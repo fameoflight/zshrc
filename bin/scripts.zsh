@@ -177,74 +177,87 @@ git-root() {
 
 # List all available custom scripts and functions
 list-scripts() {
-  local scripts_dir="$ZSH_CONFIG/bin"
+  local category_filter="$1"
+  local categories_file="$ZSH_CONFIG/bin/categories.yml"
 
-  echo "📜 Custom Scripts Organization:"
-  echo ""
-
-  # Show utility scripts available in ZSH
-  echo "🐚 ZSH Utility Functions (interactive use):"
-  echo " 📚 calibre-update        - Update Calibre to the latest version"
-  echo " ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
-  echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
-  echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
-  echo ""
-
-  # Show Ruby CLI scripts are loaded from ruby-cli
-  echo "💎 Ruby CLI Functions (loaded from ruby-cli/scripts.zsh):"
-  echo "   Xcode tools, Game mode, AI/Chat utilities, File utilities"
-  echo "   Git utilities, Email utilities, Video processing"
-  echo ""
-
-  # Show Python CLI scripts are loaded from python-cli
-  echo "🐍 Python CLI Functions (loaded from python-cli/scripts.zsh):"
-  echo "   AI/ML Model Inference, Computer Vision, YouTube Processing"
-  echo "   Model Management, System utilities"
-  echo ""
-
-  # Show setup/backup scripts available via Makefile only
-  echo "🔧 Setup/Backup Scripts (Makefile targets only):"
-  echo " 🛠️  make macos-optimize - Optimize macOS system settings"
-  echo " 🤖 make claude-setup   - Setup Claude Code settings via symlinks"
-  echo " 🤖 make gemini-setup   - Setup Gemini settings via symlinks"
-  echo " 💾 make vscode-backup  - Backup VS Code essential settings"
-  echo " 💾 make xcode-backup   - Backup Xcode essential settings"
-  echo " 💾 make iterm-backup   - Backup iTerm2 essential settings"
-  echo " ⚙️  make iterm-setup    - Restore iTerm2 settings from backup"
-  echo ""
-
-  # Show repository maintenance scripts available via Makefile only
-  echo "🧹 Repository Maintenance (Makefile targets only):"
-  echo " 🔍 make find-orphans   - Find and report orphaned Makefile targets"
-  echo ""
-
-  # Show all script files for reference
-  echo "📂 All Script Files in $scripts_dir:"
-  if [[ -d "$scripts_dir" ]]; then
-    for script in "$scripts_dir"/*; do
-      if [[ -f "$script" && $(basename "$script") != "scripts.zsh" ]]; then
-        local basename_script=$(basename "$script")
-        local extension="${basename_script##*.}"
-
-        case "$extension" in
-          sh)
-            echo " 🔧 $basename_script"
-            ;;
-          rb)
-            echo " 💎 $basename_script (now in ruby-cli/bin/)"
-            ;;
-          py)
-            echo " 🐍 $basename_script"
-            ;;
-          *)
-            echo " 📄 $basename_script"
-            ;;
-        esac
-      fi
-    done
-  else
-    echo " ❌ Scripts directory not found"
+  # Check if categories.yml exists
+  if [[ ! -f "$categories_file" ]]; then
+    log_error "categories.yml not found. Run 'generate-categories' first."
+    return 1
   fi
+
+  # Use Ruby to parse YAML and display scripts
+  ruby -r yaml - "$category_filter" << 'RUBY_SCRIPT'
+    require 'yaml'
+
+    categories_file = ENV['ZSH_CONFIG'] + '/bin/categories.yml'
+    category_filter = ARGV[1]  # ARGV[0] is the script name '-'
+
+    data = YAML.load_file(categories_file)
+    categories = data['categories']
+    stats = data['statistics']
+
+    # Category emoji mapping
+    category_emojis = {
+      'git' => '🐙',
+      'media' => '🎬',
+      'system' => '⚙️',
+      'setup' => '🛠️',
+      'backup' => '💾',
+      'dev' => '🔧',
+      'files' => '📁',
+      'data' => '📊',
+      'communication' => '📧'
+    }
+
+    # Language emoji mapping
+    language_emojis = {
+      'Ruby' => '💎',
+      'Python' => '🐍',
+      'Shell' => '🐚'
+    }
+
+    if category_filter && !category_filter.empty?
+      # Filter by category
+      if categories.key?(category_filter)
+        puts "\n#{category_emojis[category_filter] || '📋'} #{category_filter.capitalize} Scripts (#{categories[category_filter].size} scripts)\n"
+        puts "=" * 60
+
+        categories[category_filter].sort_by { |s| s['name'] }.each do |script|
+          lang_emoji = language_emojis[script['language']] || '📄'
+          name = script['name'].ljust(30)
+          desc = script['description'] || 'No description'
+          puts " #{lang_emoji} #{name} #{desc}"
+        end
+      else
+        puts "\n❌ Category '#{category_filter}' not found"
+        puts "\nAvailable categories: #{categories.keys.sort.join(', ')}"
+      end
+    else
+      # Show all categories
+      puts "\n📜 Custom Scripts by Category"
+      puts "Generated: #{data['generated_at']}"
+      puts "Total: #{stats['total_scripts']} scripts in #{stats['total_categories']} categories"
+      puts "=" * 60
+
+      categories.sort.each do |category, scripts|
+        emoji = category_emojis[category] || '📋'
+        puts "\n#{emoji} #{category.capitalize} (#{scripts.size} scripts):"
+
+        scripts.sort_by { |s| s['name'] }.each do |script|
+          lang_emoji = language_emojis[script['language']] || '📄'
+          name = script['name'].ljust(30)
+          desc = script['description'] || 'No description'
+          puts "   #{lang_emoji} #{name} #{desc}"
+        end
+      end
+
+      puts "\n" + "=" * 60
+      puts "💡 Usage: list-scripts [CATEGORY]"
+      puts "   Example: list-scripts git"
+      puts "   Categories: #{categories.keys.sort.join(', ')}"
+    end
+RUBY_SCRIPT
 }
 
 # =============================================================================
