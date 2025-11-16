@@ -1,348 +1,302 @@
-# Development Guidelines
+# SOFTWARE ENGINEERING RULES
 
-## Prime Directive: Stop Before You Start
+Language-agnostic principles for maintainable, readable code
 
-Before writing ANY code:
-1. **Does this already exist?** Search first, write second
-2. **Is this actually needed?** Solve the problem, not potential future problems
-3. **Can I delete instead of add?** Less code = fewer bugs
+## THE 10 COMMANDMENTS
 
-## Core Rules
+1. Maximum 5 parameters - EVER (functions, constructors, methods)
+2. Options object for 3+ parameters (explicit, extensible, self-documenting)
+3. One responsibility per unit (function/class/file does ONE thing)
+4. DRY - Don't Repeat Yourself (single source of truth)
+5. Simple over clever (boring code is good code)
+6. Encapsulation (hide complexity, expose clean interfaces)
+7. Helper methods remove friction (small, focused, reusable)
+8. Base classes for shared behavior (when inheritance makes sense)
+9. Delete code > Add code (less code = fewer bugs)
+10. Stop after 2 failed attempts (ask for direction)
 
-- **Incremental only** - Small changes that compile and pass tests
-- **Learn from existing code** - Study patterns before implementing
-- **Boring over clever** - If you need to explain it, it's too complex
-- **One responsibility** - Functions/classes/files do ONE thing
-- **Maximum 5 parameters** - Ever. Function args, React props, service constructors - if you need more, you're doing too much
-- **Small files hide complexity** - Encapsulate logic behind clear interfaces, don't expose internals
+## CORE RULES
 
-## Hard Constraints
+THE 5-PARAMETER LAW
 
-### Absolutely Forbidden
-- ❌ Refactoring working code unless that's the explicit task
-- ❌ "Improving" code that wasn't part of the request
-- ❌ Adding features not explicitly requested
-- ❌ Premature abstractions (copy-paste twice is fine)
-- ❌ "While I'm here" changes to unrelated code
+NEVER exceed 5 parameters anywhere. If you need more, you're doing too much.
 
-### Required Before Coding
-- ✅ Verify it doesn't already exist in the codebase
-- ✅ Find 2-3 similar implementations to match patterns
-- ✅ Ask if requirements are unclear
+0-2 parameters = Excellent
+3-4 parameters = Consider options object
+5 parameters = Maximum allowed
+6+ parameters = FORBIDDEN - Refactor immediately
 
-### When Refactoring IS Explicitly Requested
+Solutions when you hit the limit:
 
-**Only refactor when user explicitly asks** - then use these triggers:
-- More than 5 parameters anywhere
-- Files exceeding 200 lines with mixed concerns
-- Functions with multiple "and" in their name
-- Deep nesting (>3 levels)
-- Duplicate code patterns across 3+ files
+- Use options object/hash/dict
+- Group related parameters
+- Extract to class
+- Split the function
 
-## Encapsulation Rules
+OPTIONS OBJECT PATTERN
 
-**Small files with clear boundaries** - Hide complexity, don't expose it:
+For 3+ parameters or extensibility, use an options object:
 
-### The 5-Parameter Law
-- **Maximum 5 parameters** for any function/component/constructor
-- If you need more, group related params into a config object
-- Config objects must have meaningful names, not generic "options" or "config"
+// Instead of: function(a, b, c, d, e)
+// Use: function(required, options)
 
-**Examples:**
-```typescript
-// ❌ BAD - Too many parameters
-function createUser(name: string, email: string, age: number,
-                   address: string, phone: string, role: string) {}
+Examples:
 
-// ✅ GOOD - Config object with clear purpose
-interface UserProfile {
-  name: string;
-  email: string;
-  age: number;
-}
+- TypeScript: interface Options { ... }
+- Python: opts: Dict[str, Any] = {}
+- Ruby: opts = {} with fetch/[]
+- Shell: Parse --flags
 
-interface UserContact {
-  address: string;
-  phone: string;
-}
+SMALL, FOCUSED FUNCTIONS
 
-function createUser(profile: UserProfile, contact: UserContact, role: string) {}
-```
+- < 50 lines per function
+- One responsibility (no "and" in the name)
+- Extract helpers for repeated logic (2+ times)
+- Clear names that explain intent
 
-### File Size & Responsibility
-- **One logical boundary per file** - User management, not "utilities"
-- **Hide implementation details** - Export only what consumers need
-- **Internal complexity is fine** - 200-line file is OK if it has one clear purpose
-- **External simplicity required** - Consumers should use ≤5 things from your file
+DRY (DON'T REPEAT YOURSELF)
 
-**Examples:**
-```typescript
-// ❌ BAD - Exposing too much
-export const validateEmail = ...
-export const validatePhone = ...
-export const validateAddress = ...
-export const formatEmail = ...
-export const formatPhone = ...
-export const parseEmail = ...
+- Extract common logic to helpers
+- Single source of truth for all knowledge
+- Convenience getters for repeated access patterns
+- Base classes for shared functionality
 
-// ✅ GOOD - Single interface
-export class ContactValidator {
-  validate(contact: Contact): ValidationResult {}
-  format(contact: Contact): FormattedContact {}
-}
-```
+SIMPLE OVER CLEVER
 
-### When to Extract
-Extract when you hit these limits:
-- Function has >5 parameters
-- File exports >5 public things
-- Component/service has >5 props/dependencies
-- You're scrolling to understand one function
+- Boring code wins (optimize for reading, not writing)
+- Explicit over implicit (clear data flow)
+- No magic (if you need to explain it, it's too complex)
+- Standard patterns over personal preference
 
-### When NOT to Extract
-Don't extract just because:
-- File feels "long" but does one thing
-- You want to "organize better"
-- You think it "might be reused someday"
-- You're following a pattern book
+ENCAPSULATION
 
-## Workflow
+- Hide implementation (private/protected internals)
+- Clean public API (minimal surface area)
+- No leaky abstractions (don't expose internals)
+- Maximum 5 exports per file/module
 
-### 1. Session Management with TODO.md
+## WORKFLOW RULES
 
-**ALWAYS start by checking/creating `TODO.md`** - enables faster session resumption.
+BEFORE WRITING CODE
 
-```markdown
-# TODO
+1. Check if it exists (search first, write second)
+2. Find 2-3 similar examples (match patterns)
+3. Ask if unclear (don't assume)
+4. Can you delete instead? (less is more)
 
-## Current Focus
+WHEN STUCK (2-ATTEMPT RULE)
 
-- [ ] [Stage/task currently working on]
+After 2 failed attempts:
 
-## Immediate Next Steps
-
-- [ ] [Next 1-3 specific actions]
-- [ ] [Include test cases to write]
-
-## Blocked/Investigating
-
-- [ ] [Issues that need research/decision]
-
-## Completed This Session
-
-- [x] [What was accomplished]
-
-## Notes
-
-- [Key insights, patterns discovered, or decisions made]
-```
-
-Update TODO.md before ending each session - future you will thank you.
-
-### 2. Planning & Implementation
-
-**Complex work only:** Document 3-5 stages in `IMPLEMENTATION_PLAN.md`:
-
-```markdown
-## Stage N: [Name]
-**Goal**: [Specific deliverable]
-**Tests**: [Specific test cases]
-**Status**: [Not Started|In Progress|Complete]
-```
-
-**Implementation Flow:**
-
-1. **Understand** - Study existing patterns (mandatory)
-2. **Test** - Write failing test (red)
-3. **Implement** - Minimal code to pass (green)
-4. **Stop** - You're done. No refactoring unless tests require it
-5. **Commit** - Clear message linking to plan
-
-### 3. When Stuck (2-Attempt Rule)
-
-**STOP after 2 failed attempts** and ask the user:
-
-1. State what you tried and what failed
-2. Present 2-3 alternative approaches
+1. State what you tried
+2. Present 2-3 alternatives
 3. Ask which direction to take
-4. **Do NOT** keep trying different things without user input
+4. DO NOT keep trying without input
 
-## Technical Standards
+WHEN REFACTORING
 
-### Architecture
+Only refactor when explicitly requested, then check for:
 
-- **Composition over inheritance** - Dependency injection
-- **Interfaces over singletons** - Enable testing
-- **Explicit over implicit** - Clear data flow
-- **Maximum 5 parameters** - Anywhere, ever, no exceptions
-- **Maximum 5 exports** - Per file, if you need more you have poor boundaries
+- Functions with 6+ parameters
+- Files > 200 lines with mixed concerns
+- Duplicate code across 3+ places
+- Deep nesting (> 3 levels)
+- Functions doing multiple things
 
-### Code Quality Requirements
+## TECHNICAL REQUIREMENTS
 
-**Every commit must**:
+EVERY CODE UNIT MUST
 
-- Compile successfully
-- Pass all existing tests
-- Include tests for new functionality
-- Follow project formatting/linting
-- Have ≤5 parameters per function/component/constructor
-- Have ≤5 public exports per file
+- Compile/parse successfully (no broken commits)
+- Pass all tests (write tests for new code)
+- Follow project patterns (consistency > personal preference)
+- Have clear intent (self-documenting)
+- Handle errors explicitly (no silent failures)
 
-### Error Handling
+INTERFACE DESIGN
 
-- Fail fast with descriptive messages
-- Include debugging context
-- Handle at appropriate level
-- Never silently swallow exceptions
+- Required parameters first (1-2 max)
+- Options object second (for optional/config)
+- Callbacks last (if needed)
+- Return single type (avoid union types when possible)
 
-## Decision Framework
+COMPONENT/CLASS DESIGN
 
-When multiple approaches exist, prioritize:
+Constructor/Init:
+├─ Maximum 1-2 parameters
+├─ Options object if needed
+└─ Set defaults explicitly
 
-1. **Testability** - Easy to test?
-2. **Readability** - Clear in 6 months?
-3. **Consistency** - Matches project patterns?
-4. **Simplicity** - Simplest working solution?
-5. **Reversibility** - Easy to change later?
+Public API:
+├─ Maximum 5 public methods/functions
+├─ Clear, verb-based names
+└─ Consistent return types
 
-## Project Integration
+Private/Internal:
+├─ Hide all implementation
+├─ Prefix with \_ or use language features
+└─ Can be complex if encapsulated
 
-### Learn Before Building
+## LANGUAGE-SPECIFIC APPLICATIONS
 
-- Find 3 similar features/components
-- Identify common patterns and conventions
-- Use existing libraries/utilities
-- Follow existing test patterns
+OBJECT-ORIENTED LANGUAGES (Java, C#, TypeScript)
 
-### Quality Gates
+- Interfaces for contracts
+- Constructor: (options: OptionsType)
+- Base classes for shared behavior
+- Private/protected for encapsulation
 
-**Definition of Done**:
+FUNCTIONAL LANGUAGES (Haskell, F#, Scala)
 
-- [ ] Tests written and passing
-- [ ] Follows project conventions
-- [ ] No linter/formatter warnings
-- [ ] Clear commit messages
-- [ ] Implementation matches plan
-- [ ] TODO.md updated for next session
+- Small, pure functions
+- Options as records/tuples
+- Composition over inheritance
+- Module boundaries for encapsulation
 
-**Test Guidelines**:
+DYNAMIC LANGUAGES (Python, Ruby, JavaScript)
+
+- Type hints/documentation
+- Options dict/hash pattern
+- Duck typing with clear contracts
+- Convention-based privacy
+
+SYSTEMS LANGUAGES (Rust, Go, C)
+
+- Struct for options
+- Error handling explicit
+- Resource cleanup guaranteed
+- Clear memory ownership
+
+## DECISION FRAMEWORK
+
+SHOULD I EXTRACT A FUNCTION?
+
+Is logic repeated (2+ times)?
+├─ YES → Extract helper
+└─ NO → Is it complex (>5 lines)?
+├─ YES → Extract for clarity
+└─ NO → Keep inline
+
+HOW TO STRUCTURE PARAMETERS?
+
+How many parameters needed?
+├─ 0-2 → Direct parameters
+├─ 3-4 → Consider options object
+├─ 5 → Restructure if possible
+└─ 6+ → STOP - Refactor required
+
+SHOULD I ADD THIS FEATURE?
+
+Is it explicitly requested?
+├─ NO → Don't add it
+└─ YES → Does it already exist?
+├─ YES → Reuse it
+└─ NO → Is it the minimum solution?
+├─ NO → Simplify
+└─ YES → Implement
+
+## QUALITY CHECKLIST
+
+Before committing, verify:
+
+[ ] Parameters: No function has > 5 parameters
+[ ] Size: Functions < 50 lines, files < 200 lines
+[ ] Responsibility: Each unit does ONE thing
+[ ] DRY: No copy-paste duplication
+[ ] Encapsulation: Implementation hidden
+[ ] Tests: New code has tests
+[ ] Errors: All errors handled explicitly
+[ ] Patterns: Follows project conventions
+[ ] Documentation: Intent is clear
+[ ] Simplicity: No clever tricks
+
+## ANTI-PATTERNS TO AVOID
+
+❌ FORBIDDEN
+
+- God objects (doing everything)
+- Deep nesting (> 3 levels)
+- Magic numbers (unexplained values)
+- Copy-paste code (violates DRY)
+- Leaky abstractions (exposing internals)
+- Clever one-liners (unreadable)
+- "While I'm here" changes (scope creep)
+- Assumptions (verify everything)
+- Silent failures (always handle errors)
+- 6+ parameters (no exceptions)
+
+✅ REQUIRED
+
+- Options objects (for extensibility)
+- Helper methods (for clarity)
+- Error messages (descriptive)
+- Tests (for new functionality)
+- Consistent patterns (match codebase)
+- Clear boundaries (encapsulation)
+- Simple solutions (boring is good)
+- Incremental changes (small commits)
+- Explicit intent (self-documenting)
+- 5-parameter limit (everywhere)
+
+## SPECIAL CONSIDERATIONS
+
+DESTRUCTIVE OPERATIONS
+
+- Must support dry-run (show what would happen)
+- Require confirmation (for critical operations)
+- Log all actions (audit trail)
+- Provide rollback (when possible)
+
+CONFIGURATION
+
+- Environment variables over hardcoding
+- Defaults clearly defined
+- Validation at boundaries
+- Type-safe when possible
+
+TESTING
 
 - Test behavior, not implementation
-- One assertion per test when possible
-- Clear test names describing scenarios
-- Use existing test utilities
-- Deterministic tests only
+- One assertion per test (when practical)
+- Deterministic (no flaky tests)
+- Fast (< 100ms per unit test)
 
-## Critical Rules
+## THE PRIME DIRECTIVE
 
-**NEVER:**
-- Disable tests instead of fixing them
-- Make assumptions - verify with existing code
-- Add "TODO" comments - either do it or don't
-- Write code then ask "is this okay?" - ask BEFORE writing
+"Can I delete code instead of adding it?"
 
-**ALWAYS:**
-- Verify builds pass: `yarn tsc` (not `yarn build`)
-- Stop after 2 failed attempts and ask
-- Update TODO.md before ending session
-- State what you're about to do BEFORE doing it
+Before writing any code:
 
-## Large Codebase Analysis with Gemini CLI
+1. Does this already exist?
+2. Is this actually needed?
+3. What's the simplest solution?
+4. Will this make sense in 6 months?
 
-For analyzing large codebases that exceed context limits, use Gemini CLI's massive context window.
+## THE FINAL WORD
 
-### File Inclusion Syntax
+Write code for humans, not computers. The computer doesn't care if your
+code is clever - but the person maintaining it at 3 AM definitely will.
 
-Use `@` syntax with paths relative to current directory:
+Remember:
 
-```bash
-# Single file analysis
-gg -p "@src/main.py Explain this file's purpose and structure"
+- Boring code is debuggable code
+- Simple code is maintainable code
+- Less code is better code
+- Consistent code is predictable code
 
-# Multiple files
-gg -p "@package.json @src/index.js Analyze the dependencies used"
+When in doubt: Do less. Do the minimum that works. Keep it simple.
 
-# Entire directories
-gg -p "@src/ Summarize the architecture of this codebase"
+**The Golden Rules:**
 
-# Current directory and subdirectories
-gg -p "@./ Give me an overview of this entire project"
-# OR: gg --all_files -p "Analyze the project structure"
-```
-
-### Implementation Verification Examples
-
-```bash
-# Check if features exist
-gg -p "@src/ @lib/ Has dark mode been implemented? Show relevant files"
-
-# Verify authentication
-gg -p "@src/ @middleware/ Is JWT authentication implemented?"
-
-# Check patterns across codebase
-gg -p "@src/ Are there React hooks handling WebSocket connections?"
-
-# Verify security measures
-gg -p "@src/ @api/ Are SQL injection protections implemented?"
-```
-
-### When to Use Gemini CLI
-
-- Analyzing entire codebases or large directories
-- Comparing multiple large files
-- Understanding project-wide patterns or architecture
-- Working with files totaling more than 100KB
-- Verifying if specific features/patterns are implemented across the codebase
-
-## Xcode Project Management
-
-**When working in Xcode projects, also read:** `Settings/Claude/XCODE.md`
-
-The XCODE.md file provides comprehensive documentation for:
-
-- **File Management**: Adding, viewing, and deleting files with proper resource handling
-- **Category System**: Automatic detection and organization of project files
-- **Resource Handling**: Special treatment for assets, plists, storyboards, and Core ML models
-- **Safety Features**: Dry-run mode, confirmations, and file type-specific protections
-- **Modern Xcode Integration**: Works with file system synchronization and automatic project updates
-
-### Available Xcode Commands
-
-```bash
-xcode-add-file <file> [category]     # Add file with auto-detection and resource handling
-xcode-view-files [category]          # View project structure by category
-xcode-delete-file <file>             # Safe deletion with type-specific handling
-xcode-list-categories [--detailed]   # Show available organization categories
-```
-
-### Key Features for Xcode Development
-
-- **Smart Detection**: Automatically identifies project structure and file categories
-- **Resource Expertise**: Handles .xcassets, .plist, .storyboard, .mlmodel files appropriately
-- **Safety First**: Protects critical files like Info.plist with extra confirmations
-- **Modern Workflow**: Integrates with Xcode's automatic file system synchronization
-- **Batch Operations**: Supports processing multiple files with consistent categorization
-
-Refer to `XCODE.md` for complete usage examples, troubleshooting, and best practices.
+- "Can I delete code instead of adding it?"
+- "If I need more than 5 parameters, I'm doing too much"
+- "Helper methods should remove friction, not add complexity"
+- "One responsibility per unit - no exceptions"
+- "Every script needs metadata headers - no exceptions"
 
 ---
 
-## Response Format
+"Any fool can write code that a computer can understand. Good programmers
+write code that humans can understand." - Martin Fowler
 
-### Before making changes
-State clearly:
-```
-I will change [file:line_number] to [specific action].
-This adds/removes X lines.
-```
-
-### After making changes
-```
-Changed [file:line_number]. Build passes.
-```
-
-No explanations unless asked. No "I also improved..." - that means you broke the rules.
-
----
-
-_Do less. When in doubt, do the minimum that works._
+"The best code is no code at all." - Jeff Atwood
