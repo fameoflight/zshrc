@@ -44,15 +44,15 @@ export class ShellExecutor implements ShellExecutorInterface {
     }
 
     try {
-      // Use Bun's $ shell
-      const proc = $`${command}`.cwd(cwd || process.cwd()).quiet();
-      const result = await proc;
+      // Use Bun's $ shell with proper template literal
+      // We need to use eval-style to execute the command string
+      const proc = await $`sh -c ${command}`.cwd(cwd || process.cwd()).quiet();
 
       return {
-        success: result.exitCode === 0,
-        stdout: result.stdout.toString().trim(),
-        stderr: result.stderr.toString().trim(),
-        exitCode: result.exitCode,
+        success: proc.exitCode === 0,
+        stdout: proc.stdout.toString().trim(),
+        stderr: proc.stderr.toString().trim(),
+        exitCode: proc.exitCode,
       };
     } catch (error: any) {
       return {
