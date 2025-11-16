@@ -200,6 +200,11 @@ git-template() {
   _execute_ruby_cli_script "git-template.rb" "$@"
 }
 
+# Smart git rebase with auto-resolution of permission/whitespace conflicts
+git-smart-rebase() {
+  _execute_ruby_cli_script "git-smart-rebase.rb" "$@"
+}
+
 # =============================================================================
 # EMAIL UTILITIES
 # =============================================================================
@@ -333,6 +338,7 @@ list-ruby-cli-scripts() {
   echo "   git-commit-splitter     - Split a git commit by selecting files for separate commits"
   echo "   git-common              - Show common files between two git commits"
   echo "   git-template            - Interactive template manager for creating private repos"
+  echo "   git-smart-rebase        - Smart rebase with auto-resolution of permission/whitespace conflicts"
   echo ""
 
   echo "📧 Email:"
