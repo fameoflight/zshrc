@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Generate app icons for Electron applications from SVG or programmatically
+# @tags: electron, icon-generation, image-processing
 
 require_relative '../../.common/script_base'
 require_relative '../../.common/image_utils'

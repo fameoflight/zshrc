@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Remove single-line console.log statements from source files
+# @tags: cleanup, javascript, automation
 
 require_relative '.common/script_base'
 

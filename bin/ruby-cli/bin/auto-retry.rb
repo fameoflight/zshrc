@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Automatically retry failed commands using LLM analysis
+# @tags: automation, llm, debugging
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/unified_llm_service'

@@ -1,4 +1,9 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
+# @category: media
+# @description: Extract clips from videos using FFmpeg
+# @tags: video, ffmpeg, editing
+
 require_relative '../../.common/script_base'
 require 'optparse'
 

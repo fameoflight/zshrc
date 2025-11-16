@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Check which applications are using camera or microphone on macOS
+# @tags: macos, privacy, monitoring
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/concerns/macos_utils'
