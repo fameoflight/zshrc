@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>{{title}}</title>
+    <link rel="stylesheet" type="text/css" href="../Styles/style.css"/>
+  </head>
+  <body>
+    <h1>{{title}}</h1>
+    {{#if author}}
+    <p class="author">By {{author}}</p>
+    {{/if}}
+    {{#if date}}
+    <p class="date">{{date}}</p>
+    {{/if}}
+    {{#if url}}
+    <p class="source"><a href="{{url}}">Source</a></p>
+    {{/if}}
+    <div class="content">
+{{{content}}}
+    </div>
+  </body>
+</html>
