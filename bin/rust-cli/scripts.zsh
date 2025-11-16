@@ -119,6 +119,12 @@ llm-chat() {
   _execute_rust_cli "rust-cli" llm-chat "$@"
 }
 
+# Export Claude Code sessions to Markdown files
+claude-export() {
+  log_info "Exporting Claude Code sessions..."
+  _execute_rust_cli "rust-cli" claude-export "$@"
+}
+
 # =============================================================================
 # RUST DEVELOPMENT FUNCTIONS
 # =============================================================================
@@ -263,6 +269,7 @@ list-rust-scripts() {
   echo "⚙️  Rust Utility Commands:"
   echo "   disk-usage              - Fast disk usage analyzer with parallel processing"
   echo "   llm-chat                - LLM chat interface with TUI support"
+  echo "   claude-export           - Export Claude Code sessions to Markdown"
   echo ""
 
   echo "🔧 Development Commands:"
@@ -276,6 +283,7 @@ list-rust-scripts() {
   echo "💡 Usage Examples:"
   echo "   disk-usage ./path --depth 3 --files 10"
   echo "   llm-chat --model gpt-4 --api-key your-key"
+  echo "   claude-export --project zshrc --output ~/Documents/Claude"
   echo "   build-rust-cli            # Build for production"
   echo "   build-rust-cli-debug      # Build for development"
   echo "   test-rust-cli             # Run test suite"

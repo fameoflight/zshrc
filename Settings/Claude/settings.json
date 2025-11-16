@@ -18,7 +18,10 @@
       "Read(//Users/hemantv/**)"
     ]
   },
-  "alwaysThinkingEnabled": false,
+  "enabledPlugins": {
+    "frontend-design@claude-code-plugins": true
+  },
+  "alwaysThinkingEnabled": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754136251859
   }

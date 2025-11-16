@@ -1,5 +1,6 @@
 use clap::Command;
 
+mod claude;
 mod commands;
 mod utils;
 

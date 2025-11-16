@@ -1,7 +1,9 @@
 pub mod command_trait;
+pub mod claude_export;
 pub mod disk_usage;
 pub mod llm_chat;
 
+pub use claude_export::ClaudeExportCommand;
 pub use command_trait::CommandTrait;
 pub use disk_usage::DiskUsageCommand;
 pub use llm_chat::LLMChatCommand;
@@ -35,6 +37,15 @@ static COMMANDS: Lazy<HashMap<&'static str, CommandFunctions>> = Lazy::new(|| {
         CommandFunctions {
             build: LLMChatCommand::build_command,
             execute: LLMChatCommand::execute,
+        },
+    );
+
+    // Register claude-export command
+    commands.insert(
+        "claude-export",
+        CommandFunctions {
+            build: ClaudeExportCommand::build_command,
+            execute: ClaudeExportCommand::execute,
         },
     );
 
