@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: Video upscaling demo using optimized CoreML batch processing
+# @tags: ml, coreml, video, demo
+
 """
 Video upscaling demo using optimized CoreML batch processing
 """

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: Find visually similar images using OpenCV feature extraction
+# @tags: image-processing, opencv, search, analysis
+
 """
 Similar Image Search using Computer Vision
 Finds visually similar images in a database using OpenCV feature extraction

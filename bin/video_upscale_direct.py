@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: Optimized video upscaling using CoreML for Apple Silicon
+# @tags: ml, coreml, video, apple-silicon
+
 """
 Optimized video upscaling using direct CoreML implementation
 No python-cli dependency - uses CoreML directly for optimal Apple Silicon performance

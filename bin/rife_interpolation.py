@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: RIFE video frame interpolation for Apple Silicon
+# @tags: ml, pytorch, video, interpolation, apple-silicon
+
 """
 RIFE (Real-time Intermediate Flow Estimation) Video Frame Interpolation
 Optimized for Apple Silicon with PyTorch MPS backend

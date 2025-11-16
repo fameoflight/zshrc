@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: Optimized image upscaling using CoreML for Apple Silicon
+# @tags: ml, coreml, image-processing, apple-silicon
+
 """
 Optimized image upscaling using direct CoreML implementation
 No python-cli dependency - uses CoreML directly for optimal Apple Silicon performance

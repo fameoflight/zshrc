@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: Watermark detection using ConvNeXt-tiny ML model
+# @tags: ml, image-processing, detection
+
 """
 Watermark detection script using ConvNeXt-tiny model
 Thin Python wrapper with all logic moved from shell

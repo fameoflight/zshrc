@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: dev
+# @description: Convert PyTorch Real-ESRGAN models to CoreML format for iOS
+# @tags: ml, coreml, conversion, ios
+
 """
 Real-ESRGAN to CoreML converter for iOS
 Converts Real-ESRGAN PyTorch models to iOS-compatible CoreML format

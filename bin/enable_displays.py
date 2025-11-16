@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# @category: system
+# @description: Enable/disable displays using CoreGraphics API on macOS
+# @tags: macos, display, configuration
 
 from ctypes import (CDLL, util, c_void_p, c_uint32,
                     c_int, c_bool, POINTER, byref)

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: media
+# @description: PyTorch inference CLI for image processing (ESRGAN, YOLO, etc.)
+# @tags: ml, pytorch, image-processing, inference
+
 """
 Modular PyTorch inference script for image processing
 Uses the python-cli package for reusable inference components

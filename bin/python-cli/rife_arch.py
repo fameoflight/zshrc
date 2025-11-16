@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# @category: dev
+# @description: RIFE neural network architecture implementation
+# @tags: ml, pytorch, architecture, video
+
 """
 RIFE (Real-Time Intermediate Flow Estimation) Architecture
 Based on IFNet_HDv3_v4_7 from vs-rife
