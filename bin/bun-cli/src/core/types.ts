@@ -4,23 +4,13 @@
 
 /**
  * Script execution context
- * Contains all dependencies and parsed arguments
+ * Contains parsed arguments and helper methods
  */
 export interface Context {
   // Parsed arguments (typed based on @Script config)
   args: Record<string, any>;
 
-  // Core utilities (always available)
-  logger: Logger;
-  shell: ShellExecutor;
-  fs: FileSystem;
-
-  // Service dependencies (injected based on base class)
-  git?: GitService;
-  xcode?: XcodeService;
-  openai?: OpenAIService;
-
-  // Helper methods
+  // Helper methods for interactive prompts
   prompt(message: string, defaultValue?: string): Promise<string>;
   confirm(message: string): Promise<boolean>;
   select<T>(items: T[], display?: (item: T) => string): Promise<T | null>;
@@ -216,7 +206,7 @@ export interface ScriptConfig {
  * Script class interface
  */
 export interface ScriptClass {
-  new (deps: ScriptDependencies): ScriptInstance;
+  new (): ScriptInstance;
 }
 
 /**
@@ -225,16 +215,4 @@ export interface ScriptClass {
 export interface ScriptInstance {
   run(ctx: Context): Promise<void>;
   validate?(ctx: Context): Promise<void>;
-}
-
-/**
- * Script dependencies (injected via constructor)
- */
-export interface ScriptDependencies {
-  logger: Logger;
-  shell: ShellExecutor;
-  fs: FileSystem;
-  git?: GitService;
-  xcode?: XcodeService;
-  openai?: OpenAIService;
 }

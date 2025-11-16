@@ -1,11 +1,12 @@
 import { Script } from "./Script";
-import type { ScriptDependencies, GitService, Context } from "../types";
+import type { GitService, Context } from "../types";
+import { GitService as GitServiceImpl } from "../services/GitService";
 
 /**
  * Base class for Git-related scripts
  *
  * Extends Script with:
- * - Git service injection
+ * - Direct Git service access
  * - Git repository validation
  * - Common Git helper methods
  *
@@ -13,7 +14,7 @@ import type { ScriptDependencies, GitService, Context } from "../types";
  * @Script({ args: { ... } })
  * export class MyGitScript extends GitScript {
  *   async run(ctx: Context) {
- *     const files = await ctx.git.getChangedFiles({});
+ *     const files = await this.git.getChangedFiles({});
  *     // ...
  *   }
  * }
@@ -21,14 +22,13 @@ import type { ScriptDependencies, GitService, Context } from "../types";
 export abstract class GitScript extends Script {
   protected readonly git: GitService;
 
-  constructor(deps: ScriptDependencies) {
-    super(deps);
+  constructor() {
+    super();
 
-    if (!deps.git) {
-      throw new Error("GitService is required for GitScript");
-    }
-
-    this.git = deps.git;
+    this.git = new GitServiceImpl({
+      shell: this.shell,
+      logger: this.logger,
+    });
   }
 
   /**

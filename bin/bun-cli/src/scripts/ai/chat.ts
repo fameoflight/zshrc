@@ -1,6 +1,6 @@
 import { Script } from "../../core/decorators/Script";
 import { AIScript } from "../../core/base/AIScript";
-import type { Context, ScriptDependencies } from "../../core/types";
+import type { Context } from "../../core/types";
 import type { ChatMessage } from "../../core/services/OpenAIService";
 import * as clack from "@clack/prompts";
 
@@ -39,8 +39,8 @@ export class AIChatScript extends AIScript {
   private conversationHistory: ChatMessage[] = [];
   private selectedModel: string = "";
 
-  constructor(deps: ScriptDependencies) {
-    super(deps, {
+  constructor() {
+    super({
       endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
       apiKey: process.env.AI_API_KEY || "not-required",
     });

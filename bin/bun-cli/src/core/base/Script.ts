@@ -1,17 +1,13 @@
-import type {
-  Context,
-  ScriptDependencies,
-  Logger,
-  ShellExecutor,
-  FileSystem,
-} from "../types";
+import type { Context, Logger, ShellExecutor, FileSystem } from "../types";
+import { Logger as LoggerImpl } from "../utils/logger";
+import { ShellExecutor as ShellExecutorImpl } from "../utils/shell";
+import { FileSystem as FileSystemImpl } from "../utils/filesystem";
 
 /**
  * Base script class
  *
  * Provides:
- * - Dependency injection via constructor
- * - Access to logger, shell, fs
+ * - Direct access to logger, shell, fs utilities
  * - Helper methods for common tasks
  *
  * @example
@@ -27,10 +23,10 @@ export abstract class Script {
   protected readonly shell: ShellExecutor;
   protected readonly fs: FileSystem;
 
-  constructor(deps: ScriptDependencies) {
-    this.logger = deps.logger;
-    this.shell = deps.shell;
-    this.fs = deps.fs;
+  constructor() {
+    this.logger = new LoggerImpl({ verbose: false, debug: false });
+    this.shell = new ShellExecutorImpl({ logger: this.logger, dryRun: false });
+    this.fs = new FileSystemImpl();
   }
 
   /**
