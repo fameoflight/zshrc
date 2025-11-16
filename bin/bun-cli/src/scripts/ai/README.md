@@ -49,7 +49,7 @@ Extend the `AIScript` base class to create new AI-powered utilities.
 ```typescript
 import { Script } from "../../core/decorators/Script";
 import { AIScript } from "../../core/base/AIScript";
-import type { Context, ScriptDependencies } from "../../core/types";
+import type { Context } from "../../core/types";
 
 @Script({
   emoji: "✨",
@@ -58,8 +58,8 @@ import type { Context, ScriptDependencies } from "../../core/types";
   }
 })
 export class MyAIScript extends AIScript {
-  constructor(deps: ScriptDependencies) {
-    super(deps, {
+  constructor() {
+    super({
       endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
       apiKey: process.env.AI_API_KEY || "not-required"
     });
@@ -150,8 +150,8 @@ AI scripts use strongly-typed options for configuration. Each script must provid
 
 **Example:**
 ```typescript
-constructor(deps: ScriptDependencies) {
-  super(deps, {
+constructor() {
+  super({
     endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
     apiKey: process.env.AI_API_KEY || "not-required"
   });

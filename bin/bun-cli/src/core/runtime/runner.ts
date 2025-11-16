@@ -1,60 +1,24 @@
-import type {
-  Context,
-  ScriptDependencies,
-  Logger,
-  ShellExecutor,
-  FileSystem,
-  GitService,
-} from "../types";
+import type { Context } from "../types";
 import type { DiscoveredScript } from "./discovery";
 import { parseArguments } from "./parser";
 import { validateArguments } from "../decorators/Script";
-import { Logger as LoggerImpl } from "../utils/logger";
-import { ShellExecutor as ShellExecutorImpl } from "../utils/shell";
-import { FileSystem as FileSystemImpl } from "../utils/filesystem";
-import { GitService as GitServiceImpl } from "../services/GitService";
-import { GitScript } from "../base/GitScript";
 
 /**
  * Script runner
  *
  * Orchestrates:
  * - Argument parsing
- * - Dependency injection
  * - Validation
  * - Script execution
  */
 export class ScriptRunner {
-  private logger: Logger;
-  private shell: ShellExecutor;
-  private fs: FileSystem;
-  private git: GitService;
-
   constructor(
     private options: {
       verbose?: boolean;
       debug?: boolean;
       dryRun?: boolean;
     } = {}
-  ) {
-    // Initialize core utilities
-    this.logger = new LoggerImpl({
-      verbose: options.verbose,
-      debug: options.debug,
-    });
-
-    this.shell = new ShellExecutorImpl({
-      logger: this.logger,
-      dryRun: options.dryRun,
-    });
-
-    this.fs = new FileSystemImpl();
-
-    this.git = new GitServiceImpl({
-      shell: this.shell,
-      logger: this.logger,
-    });
-  }
+  ) {}
 
   /**
    * Run a script
@@ -70,9 +34,8 @@ export class ScriptRunner {
       // 3. Validate arguments
       await validateArguments(script.scriptClass, args, ctx);
 
-      // 4. Instantiate script with dependencies
-      const deps = this.createDependencies(script);
-      const instance = new script.scriptClass(deps);
+      // 4. Instantiate script (no dependency injection)
+      const instance = new script.scriptClass();
 
       // 5. Run script validation hook (if exists)
       if (instance.validate) {
@@ -82,7 +45,7 @@ export class ScriptRunner {
       // 6. Run script
       await instance.run(ctx);
     } catch (error: any) {
-      this.logger.error(error.message);
+      console.error(`Error: ${error.message}`);
       if (this.options.debug) {
         console.error(error.stack);
       }
@@ -96,10 +59,6 @@ export class ScriptRunner {
   private createContext(args: Record<string, any>): Context {
     return {
       args,
-      logger: this.logger,
-      shell: this.shell,
-      fs: this.fs,
-      git: this.git,
 
       // Helper methods
       prompt: async (message: string, defaultValue?: string) => {
@@ -114,24 +73,6 @@ export class ScriptRunner {
         return this.select(items, display);
       },
     };
-  }
-
-  /**
-   * Create script dependencies
-   */
-  private createDependencies(script: DiscoveredScript): ScriptDependencies {
-    const deps: ScriptDependencies = {
-      logger: this.logger,
-      shell: this.shell,
-      fs: this.fs,
-    };
-
-    // Inject GitService if script extends GitScript
-    if (script.scriptClass.prototype instanceof GitScript) {
-      deps.git = this.git;
-    }
-
-    return deps;
   }
 
   /**
@@ -178,7 +119,7 @@ export class ScriptRunner {
     const index = parseInt(answer, 10) - 1;
 
     if (index < 0 || index >= items.length) {
-      this.logger.error("Invalid selection");
+      console.error("Error: Invalid selection");
       return null;
     }
 

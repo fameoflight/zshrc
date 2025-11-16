@@ -1,5 +1,5 @@
 import { Script } from "./Script";
-import type { ScriptDependencies, Context } from "../types";
+import type { Context } from "../types";
 import { OpenAIService } from "../services/OpenAIService";
 
 /**
@@ -21,8 +21,8 @@ export interface AIScriptOptions {
  * @example
  * @Script({ args: { ... } })
  * export class MyAIScript extends AIScript {
- *   constructor(deps: ScriptDependencies) {
- *     super(deps, {
+ *   constructor() {
+ *     super({
  *       endpoint: process.env.AI_BASE_URL || "http://localhost:1234/v1",
  *       apiKey: process.env.AI_API_KEY || "not-required"
  *     });
@@ -37,8 +37,8 @@ export interface AIScriptOptions {
 export abstract class AIScript extends Script {
   protected readonly openai: OpenAIService;
 
-  constructor(deps: ScriptDependencies, opts: AIScriptOptions) {
-    super(deps);
+  constructor(opts: AIScriptOptions) {
+    super();
 
     this.openai = new OpenAIService({
       baseURL: opts.endpoint,
