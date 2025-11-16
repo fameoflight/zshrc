@@ -1,0 +1,62 @@
+body {
+  font-family: Georgia, serif;
+  line-height: 1.6;
+  margin: 1em;
+  color: #333;
+}
+
+h1 {
+  font-size: 2em;
+  margin-bottom: 0.5em;
+  color: #222;
+}
+
+h2 {
+  font-size: 1.5em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+p {
+  margin: 1em 0;
+  text-align: justify;
+}
+
+.author, .date, .source {
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+  margin: 0.3em 0;
+  text-align: left;
+}
+
+.source a {
+  color: #0066cc;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  background-color: #f5f5f5;
+  padding: 0.2em 0.4em;
+}
+
+pre {
+  background-color: #f5f5f5;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+blockquote {
+  margin: 1em 2em;
+  padding-left: 1em;
+  border-left: 3px solid #ccc;
+  font-style: italic;
+}
