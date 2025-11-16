@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "class-validator": "^0.14.1",
     "reflect-metadata": "^0.2.1"
   },
