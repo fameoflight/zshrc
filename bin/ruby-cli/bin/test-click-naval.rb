@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Test nav.al Read More button clicking automation
+# @tags: testing, web-scraping, automation
 
 require 'ferrum'
 

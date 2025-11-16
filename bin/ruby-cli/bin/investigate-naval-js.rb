@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Investigate nav.al JavaScript and Read More functionality
+# @tags: testing, web-scraping, debugging
 
 require 'ferrum'
 

@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: data
+# @description: Check OpenRouter API usage and credit balance
+# @tags: api, monitoring, llm
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/config_manager'

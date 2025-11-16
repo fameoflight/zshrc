@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: Find orphaned Makefile targets not referenced anywhere
+# @tags: makefile, analysis, cleanup
 
 require 'set'
 require_relative '../../.common/script_base'

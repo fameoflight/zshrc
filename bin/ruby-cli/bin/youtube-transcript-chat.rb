@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: media
+# @description: Interactive chat with YouTube video transcripts using LLM
+# @tags: youtube, llm, interactive, transcription
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/llm_service'

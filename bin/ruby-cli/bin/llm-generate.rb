@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: dev
+# @description: LLM-powered command and script generator from natural language
+# @tags: llm, automation, code-generation
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/llm_service'

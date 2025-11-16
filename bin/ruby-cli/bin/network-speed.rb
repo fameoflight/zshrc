@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: system
+# @description: Test network speed and connectivity using command-line tools
+# @tags: network, monitoring, performance
 
 require_relative '../../.common/script_base'
 

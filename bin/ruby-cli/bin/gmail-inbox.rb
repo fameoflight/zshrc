@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: communication
+# @description: Gmail inbox management with interactive archiving and search
+# @tags: gmail, email, interactive, automation
 
 require_relative '../../.common/interactive_script_base'
 require_relative '../lib/archive/logger'

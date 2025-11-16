@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: setup
+# @description: Install Homebrew packages for different development categories
+# @tags: homebrew, macos, installation, development
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/core_utilities/system'

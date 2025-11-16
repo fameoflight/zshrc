@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Convert Safari Reading List to EPUB ebook format
+# @tags: epub, safari, conversion, documentation
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/epub_generator'

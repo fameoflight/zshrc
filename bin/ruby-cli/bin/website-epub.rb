@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
+# @category: files
+# @description: Scrape website and convert to EPUB ebook format
+# @tags: epub, web-scraping, conversion, documentation
 
 require_relative '../../.common/script_base'
 require_relative '../lib/archive/services/browser_service'
