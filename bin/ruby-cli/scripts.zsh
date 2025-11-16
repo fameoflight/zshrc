@@ -83,6 +83,11 @@ electron-icon-generator() {
   _execute_ruby_cli_script "electron-icon-generator.rb" "$@"
 }
 
+# Auto-generate categories.yml from script metadata headers
+generate-categories() {
+  _execute_ruby_cli_script "generate-categories.rb" "$@"
+}
+
 # =============================================================================
 # GAME MODE FUNCTION
 # =============================================================================
@@ -298,6 +303,10 @@ list-ruby-cli-scripts() {
 
   echo "⚛️  Electron Development:"
   echo "   electron-icon-generator - Generate app icons for Electron applications"
+  echo ""
+
+  echo "📋 Repository Organization:"
+  echo "   generate-categories     - Generate categories.yml from script metadata headers"
   echo ""
 
   echo "🎮 Gaming:"
