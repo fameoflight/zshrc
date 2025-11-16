@@ -97,6 +97,40 @@ Multi-language CLI system with Ruby, Python, and Rust components, sharing common
 - Services you can reuse (LLMService, FileCache, etc.)
 - Common patterns and best practices
 
+### Script Organization & Discovery
+
+Scripts are organized using metadata headers and auto-generated categories:
+
+**Metadata Headers** (required for all new scripts):
+```ruby
+#!/usr/bin/env ruby
+# @category: git
+# @description: Split large commits into smaller logical commits
+# @tags: automation, interactive
+```
+
+**Available Categories:**
+- `git` - Git utilities and automation
+- `media` - Video/audio/image processing
+- `system` - System configuration and management
+- `setup` - Installation and setup scripts
+- `backup` - Backup and restore tools
+- `dev` - Development tools (Xcode, Electron, etc.)
+- `files` - File operations and utilities
+- `data` - Data processing and analysis
+- `communication` - Email and messaging tools
+
+**Discovery Commands:**
+```bash
+list-scripts              # Show all scripts organized by category
+list-scripts git          # Show only git category scripts
+generate-categories       # Regenerate categories.yml from headers
+generate-categories --missing    # Find scripts without headers
+```
+
+**Tab Completion:**
+The `list-scripts` command supports tab completion for category names with descriptions showing script counts.
+
 ### Script Categories
 
 #### 🐚 Utility Scripts (ZSH Functions)
