@@ -1,0 +1,64 @@
+#compdef list-scripts
+
+# Tab completion for list-scripts command
+# Provides category names from categories.yml
+
+_list-scripts() {
+  local context state state_descr line
+  typeset -A opt_args
+
+  # Define the completion specification
+  _arguments -C \
+    '1: :->category' \
+    && return 0
+
+  case $state in
+    category)
+      local -a categories
+      local zsh_config_dir="${ZSH_CONFIG:-$HOME/.config/zsh}"
+      local categories_file="$zsh_config_dir/bin/categories.yml"
+
+      if [[ -f "$categories_file" ]]; then
+        # Extract categories from YAML file using Ruby
+        local -a category_list
+        category_list=($(ruby -r yaml -e "
+          data = YAML.load_file('$categories_file')
+          data['categories'].keys.sort.each { |cat| puts cat }
+        " 2>/dev/null))
+
+        # Add descriptions for each category
+        local -a categories_with_desc
+        for cat in "${category_list[@]}"; do
+          local count=$(ruby -r yaml -e "
+            data = YAML.load_file('$categories_file')
+            puts data['categories']['$cat'].size
+          " 2>/dev/null)
+
+          # Add emoji based on category
+          local emoji=""
+          case "$cat" in
+            git) emoji="🐙" ;;
+            media) emoji="🎬" ;;
+            system) emoji="⚙️" ;;
+            setup) emoji="🛠️" ;;
+            backup) emoji="💾" ;;
+            dev) emoji="🔧" ;;
+            files) emoji="📁" ;;
+            data) emoji="📊" ;;
+            communication) emoji="📧" ;;
+            *) emoji="📋" ;;
+          esac
+
+          categories_with_desc+=("${cat}:${emoji} ${count} scripts")
+        done
+
+        _describe 'categories' categories_with_desc
+      else
+        _message "categories.yml not found. Run 'generate-categories' first."
+      fi
+      ;;
+  esac
+}
+
+# Register the completion function
+_list-scripts "$@"
