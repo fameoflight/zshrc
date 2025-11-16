@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# @category: system
+# @description: Configure macOS settings for OLED displays (burn-in prevention)
+# @tags: macos, oled, display, optimization
+
 #
 # macOS OLED Monitor Optimization Script
 # Configures macOS settings specifically for OLED displays

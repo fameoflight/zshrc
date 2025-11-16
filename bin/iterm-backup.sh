@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: backup
+# @description: Backup essential iTerm2 configurations
+# @tags: iterm2, macos, backup, configuration
+
 # iTerm2 Essential Settings Backup Script
 # Backs up only the important iTerm2 configuration files, excluding clutter
 

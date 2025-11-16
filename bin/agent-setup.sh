@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: setup
+# @description: Create unified AI agent documentation (AGENT.md) with symlinks
+# @tags: documentation, ai, agent, symlink
+
 # Agent Documentation Setup Script
 # Converts existing CLAUDE.md to AGENT.md and creates symlinks for unified AI agent documentation
 

@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: setup
+# @description: Setup git hooks for the zshrc repository
+# @tags: git, hooks, automation
+
 set -euo pipefail
 
 # Source logging functions

@@ -1,5 +1,9 @@
 #!/bin/bash
-# Gemini Settings Symlink Setup Script  
+# @category: setup
+# @description: Create symlinks for Gemini CLI settings
+# @tags: gemini, ai, symlink, configuration
+
+# Gemini Settings Symlink Setup Script
 # Creates symlinks from ~/.gemini to the repository Settings/Gemini directory
 
 set -euo pipefail

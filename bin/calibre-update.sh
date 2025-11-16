@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# @category: system
+# @description: Update Calibre e-book manager to latest version on macOS
+# @tags: calibre, macos, update, ebooks
+
 #
 # Update Calibre to the latest version on macOS
 # Replaces any existing version in /Applications or ~/Applications

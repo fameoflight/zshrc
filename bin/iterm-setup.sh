@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: setup
+# @description: Restore iTerm2 configurations from backed up settings
+# @tags: iterm2, macos, configuration, restore
+
 # iTerm2 Essential Settings Setup Script
 # Restores iTerm2 configurations from backed up settings files
 

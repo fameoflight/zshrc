@@ -1,4 +1,7 @@
 #!/bin/bash
+# @category: backup
+# @description: Move directories to Dropbox and create symlinks
+# @tags: dropbox, backup, symlink
 
 # Dropbox Backup Script
 # Moves a directory to Dropbox backup folder and creates a symlink

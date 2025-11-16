@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: backup
+# @description: Backup essential Xcode settings and snippets
+# @tags: xcode, macos, backup
+
 # Xcode Essential Settings Backup Script
 # Backs up only the important Xcode configuration files, excluding clutter
 

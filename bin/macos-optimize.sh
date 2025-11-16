@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
+# @category: setup
+# @description: Configure macOS settings optimized for developers and power users
+# @tags: macos, optimization, configuration, developer
+
 #
 # macOS System Optimization Script
 # Configures macOS settings for developers and power users
 #
 # Original sources:
-# - https://github.com/mathiasbynens/dotfiles/blob/master/.macos  
+# - https://github.com/mathiasbynens/dotfiles/blob/master/.macos
 # - https://gist.github.com/brandonb927/3195465
 #
 # Updated and modernized by Hemant Verma

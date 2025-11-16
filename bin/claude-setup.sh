@@ -1,5 +1,9 @@
 #!/bin/bash
-# Claude Settings Symlink Setup Script  
+# @category: setup
+# @description: Create symlinks for Claude Code CLI settings
+# @tags: claude, ai, symlink, configuration
+
+# Claude Settings Symlink Setup Script
 # Creates symlinks from ~/.claude to the repository Settings/Claude directory
 
 set -euo pipefail

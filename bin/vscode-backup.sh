@@ -1,4 +1,8 @@
 #!/bin/bash
+# @category: backup
+# @description: Backup essential VS Code settings and extensions
+# @tags: vscode, backup, configuration
+
 # VS Code Essential Settings Backup Script
 # Backs up only the important VS Code configuration files, excluding clutter
 
