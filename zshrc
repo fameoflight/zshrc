@@ -213,3 +213,6 @@ switchNode() {
 if autoload -Uz add-zsh-hook; then
     add-zsh-hook chpwd switchNode
 fi
+
+# Added by Antigravity
+export PATH="/Users/hemantv/.antigravity/antigravity/bin:$PATH"

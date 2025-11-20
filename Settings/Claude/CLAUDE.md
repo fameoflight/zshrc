@@ -256,10 +256,54 @@ CONFIGURATION
 
 TESTING
 
+Core Philosophy:
 - Test behavior, not implementation
-- One assertion per test (when practical)
+- Bug-first testing: reproduce bug in test, then fix (coverage grows organically)
+- Real over mocked: prefer real dependencies, only mock system boundaries
+- DRY matters MORE in tests: extract helpers after 2 uses (tests have more repetition)
+- Progressive enhancement: each test should make next one easier to write
+
+Test Organization:
+- Separate test directories (test/, spec/) mirroring source structure
+- Arrange-Act-Assert pattern (explicit sections)
+- Self-documenting names: test_user_cannot_delete_others_posts (what/why not how)
+- One logical assertion per test (when practical)
+
+Test Data:
+- Factories over fixtures (dynamic, flexible)
+- High variability with sane defaults: build_user(name: "Alice") with other fields defaulted
+- Factory helpers: 0-2 required params, options object for overrides
+- Read-only fixtures okay for reference data (never mutate)
+- Build minimum data needed for each test
+
+HTTP & External Dependencies:
+- HTTP capture/replay (VCR, Polly, nock) instead of mocking
+- Record real responses once, replay in tests
+- Mock sparingly and only at system boundaries (APIs, filesystem, clock)
+
+Database Strategy:
+- Truncation between tests
+- Automatic cleanup (no manual teardown)
+- Tests must not pollute state
+
+Performance:
+- Unit tests: < 100ms target
+- Integration tests: depends on scope
+- Fast enough to run frequently
+- Parallelize when possible
+
+Assertion Style:
+- Use expect syntax: expect(result).to eq(expected)
+- Clear failure messages when needed
 - Deterministic (no flaky tests)
-- Fast (< 100ms per unit test)
+
+Anti-Patterns:
+- Testing private methods/implementation details
+- Mocking everything (defeats integration testing)
+- Copy-paste test data (use factories)
+- Shared mutable state
+- Clever test helpers (simple and obvious only)
+- Brittle tests that break on unrelated changes
 
 ## THE PRIME DIRECTIVE
 
