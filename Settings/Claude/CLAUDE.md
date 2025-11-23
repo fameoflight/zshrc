@@ -69,6 +69,26 @@ SIMPLE OVER CLEVER
 - Standard patterns over personal preference
 - Convention over configuration: Establish sensible defaults to reduce parameters, props, and simplify APIs by making reasonable choices automatic rather than requiring explicit configuration
 
+FUNCTIONALITY WITHOUT COMPLEXITY
+
+We want maximum functionality with minimum complexity:
+
+- **Functionality over complexity**: Choose the simplest solution that delivers required functionality
+- **Smart conventions**: Apply conventions intelligently, not rigidly - allow flexibility when it serves the user
+- **Enforced smartly**: Rules guide us, don't imprison us - break conventions when justified
+- **Complex result, simple parts**: Build complex systems from simple, well-abstracted components
+- **Progressive disclosure**: Simple use cases should be simple; complexity should be opt-in
+
+ABSTRACTION THAT HIDES COMPLEXITY
+
+Build abstractions that make complex things easy:
+
+- **Powerful simplicity**: Abstractions should make complex operations feel simple
+- **Leaky-free interfaces**: Don't expose implementation complexity to users
+- **Opinionated defaults**: Make smart choices automatically, allow overrides when needed
+- **Composable building blocks**: Small, focused abstractions that combine elegantly
+- **Complexity containment**: Hide complexity behind clean, intuitive interfaces
+
 ENCAPSULATION
 
 - Hide implementation (private/protected internals)
@@ -210,6 +230,9 @@ Before committing, verify:
 [ ] Patterns: Follows project conventions
 [ ] Documentation: Intent is clear
 [ ] Simplicity: No clever tricks
+[ ] Functionality: Maximum results with minimum complexity
+[ ] Abstraction: Complex operations feel simple to use
+[ ] Convention: Applied intelligently, not rigidly
 
 ## ANTI-PATTERNS TO AVOID
 
@@ -225,6 +248,9 @@ Before committing, verify:
 - Assumptions (verify everything)
 - Silent failures (always handle errors)
 - 6+ parameters (no exceptions)
+- Complexity for functionality's sake (choose simpler path)
+- Rigid conventions applied without judgment
+- Abstractions that expose more complexity than they hide
 
 ✅ REQUIRED
 
@@ -238,6 +264,9 @@ Before committing, verify:
 - Incremental changes (small commits)
 - Explicit intent (self-documenting)
 - 5-parameter limit (everywhere)
+- Smart abstractions that hide complexity effectively
+- Progressive complexity (simple use cases stay simple)
+- Opinionated defaults with escape hatches
 
 ## SPECIAL CONSIDERATIONS
 
@@ -338,6 +367,8 @@ When in doubt: Do less. Do the minimum that works. Keep it simple.
 - "Helper methods should remove friction, not add complexity"
 - "One responsibility per unit - no exceptions"
 - "Every script needs metadata headers - no exceptions"
+- "Functionality without complexity - choose the simplest solution that works"
+- "Abstractions should hide complexity, not expose it"
 
 ---
 
