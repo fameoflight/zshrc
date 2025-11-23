@@ -67,6 +67,7 @@ SIMPLE OVER CLEVER
 - Explicit over implicit (clear data flow)
 - No magic (if you need to explain it, it's too complex)
 - Standard patterns over personal preference
+- Convention over configuration: Establish sensible defaults to reduce parameters, props, and simplify APIs by making reasonable choices automatic rather than requiring explicit configuration
 
 ENCAPSULATION
 
