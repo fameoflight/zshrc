@@ -2,19 +2,6 @@
 
 Language-agnostic principles for maintainable, readable code
 
-## THE 10 COMMANDMENTS
-
-1. Maximum 5 parameters - EVER (functions, constructors, methods)
-2. Options object for 3+ parameters (explicit, extensible, self-documenting)
-3. One responsibility per unit (function/class/file does ONE thing)
-4. DRY - Don't Repeat Yourself (single source of truth)
-5. Simple over clever (boring code is good code)
-6. Encapsulation (hide complexity, expose clean interfaces)
-7. Helper methods remove friction (small, focused, reusable)
-8. Base classes for shared behavior (when inheritance makes sense)
-9. Delete code > Add code (less code = fewer bugs)
-10. Stop after 2 failed attempts (ask for direction)
-
 ## CORE RULES
 
 THE 5-PARAMETER LAW
@@ -100,10 +87,11 @@ ENCAPSULATION
 
 BEFORE WRITING CODE
 
-1. Check if it exists (search first, write second)
-2. Find 2-3 similar examples (match patterns)
-3. Ask if unclear (don't assume)
-4. Can you delete instead? (less is more)
+1. Can you delete instead? (less is more)
+2. Does this already exist? (search first, write second)
+3. Is this actually needed? (minimum solution)
+4. Find 2-3 similar examples (match patterns)
+5. Ask if unclear (don't assume)
 
 WHEN STUCK (2-ATTEMPT RULE)
 
@@ -158,35 +146,22 @@ Private/Internal:
 ├─ Prefix with \_ or use language features
 └─ Can be complex if encapsulated
 
-## LANGUAGE-SPECIFIC APPLICATIONS
+## LANGUAGE-SPECIFIC NOTES
 
-OBJECT-ORIENTED LANGUAGES (Java, C#, TypeScript)
+**Options Pattern:**
 
-- Interfaces for contracts
-- Constructor: (options: OptionsType)
-- Base classes for shared behavior
-- Private/protected for encapsulation
+- TypeScript: `interface Options { ... }`
+- Python: `opts: Dict[str, Any] = {}`
+- Ruby: `opts = {}` with fetch/[]
+- Shell: Parse --flags
+- Rust/Go: Struct for options
 
-FUNCTIONAL LANGUAGES (Haskell, F#, Scala)
+**Privacy:**
 
-- Small, pure functions
-- Options as records/tuples
-- Composition over inheritance
-- Module boundaries for encapsulation
-
-DYNAMIC LANGUAGES (Python, Ruby, JavaScript)
-
-- Type hints/documentation
-- Options dict/hash pattern
-- Duck typing with clear contracts
-- Convention-based privacy
-
-SYSTEMS LANGUAGES (Rust, Go, C)
-
-- Struct for options
-- Error handling explicit
-- Resource cleanup guaranteed
-- Clear memory ownership
+- OOP: private/protected keywords
+- Functional: Module boundaries
+- Dynamic: Convention-based (\_prefix)
+- Systems: Explicit ownership
 
 ## DECISION FRAMEWORK
 
@@ -218,55 +193,24 @@ Is it explicitly requested?
 
 ## QUALITY CHECKLIST
 
-Before committing, verify:
+Before committing:
+[ ] ≤5 parameters, <50 lines/function, <200 lines/file
+[ ] One responsibility, no duplication (DRY)
+[ ] Implementation hidden, tests added, errors handled
+[ ] Follows project patterns, intent is clear
+[ ] Simple solutions, smart abstractions, intelligent conventions
 
-[ ] Parameters: No function has > 5 parameters
-[ ] Size: Functions < 50 lines, files < 200 lines
-[ ] Responsibility: Each unit does ONE thing
-[ ] DRY: No copy-paste duplication
-[ ] Encapsulation: Implementation hidden
-[ ] Tests: New code has tests
-[ ] Errors: All errors handled explicitly
-[ ] Patterns: Follows project conventions
-[ ] Documentation: Intent is clear
-[ ] Simplicity: No clever tricks
-[ ] Functionality: Maximum results with minimum complexity
-[ ] Abstraction: Complex operations feel simple to use
-[ ] Convention: Applied intelligently, not rigidly
+## ANTI-PATTERNS
 
-## ANTI-PATTERNS TO AVOID
+❌ **Never:**
 
-❌ FORBIDDEN
-
+- 6+ parameters (no exceptions)
 - God objects (doing everything)
 - Deep nesting (> 3 levels)
 - Magic numbers (unexplained values)
-- Copy-paste code (violates DRY)
-- Leaky abstractions (exposing internals)
-- Clever one-liners (unreadable)
 - "While I'm here" changes (scope creep)
-- Assumptions (verify everything)
 - Silent failures (always handle errors)
-- 6+ parameters (no exceptions)
-- Complexity for functionality's sake (choose simpler path)
-- Rigid conventions applied without judgment
-- Abstractions that expose more complexity than they hide
-
-✅ REQUIRED
-
-- Options objects (for extensibility)
-- Helper methods (for clarity)
-- Error messages (descriptive)
-- Tests (for new functionality)
-- Consistent patterns (match codebase)
-- Clear boundaries (encapsulation)
-- Simple solutions (boring is good)
-- Incremental changes (small commits)
-- Explicit intent (self-documenting)
-- 5-parameter limit (everywhere)
-- Smart abstractions that hide complexity effectively
-- Progressive complexity (simple use cases stay simple)
-- Opinionated defaults with escape hatches
+- Rigid conventions without judgment
 
 ## SPECIAL CONSIDERATIONS
 
@@ -287,6 +231,7 @@ CONFIGURATION
 TESTING
 
 Core Philosophy:
+
 - Test behavior, not implementation
 - Bug-first testing: reproduce bug in test, then fix (coverage grows organically)
 - Real over mocked: prefer real dependencies, only mock system boundaries
@@ -294,12 +239,14 @@ Core Philosophy:
 - Progressive enhancement: each test should make next one easier to write
 
 Test Organization:
+
 - Separate test directories (test/, spec/) mirroring source structure
 - Arrange-Act-Assert pattern (explicit sections)
 - Self-documenting names: test_user_cannot_delete_others_posts (what/why not how)
 - One logical assertion per test (when practical)
 
 Test Data:
+
 - Factories over fixtures (dynamic, flexible)
 - High variability with sane defaults: build_user(name: "Alice") with other fields defaulted
 - Factory helpers: 0-2 required params, options object for overrides
@@ -307,27 +254,32 @@ Test Data:
 - Build minimum data needed for each test
 
 HTTP & External Dependencies:
+
 - HTTP capture/replay (VCR, Polly, nock) instead of mocking
 - Record real responses once, replay in tests
 - Mock sparingly and only at system boundaries (APIs, filesystem, clock)
 
 Database Strategy:
+
 - Truncation between tests
 - Automatic cleanup (no manual teardown)
 - Tests must not pollute state
 
 Performance:
+
 - Unit tests: < 100ms target
 - Integration tests: depends on scope
 - Fast enough to run frequently
 - Parallelize when possible
 
 Assertion Style:
+
 - Use expect syntax: expect(result).to eq(expected)
 - Clear failure messages when needed
 - Deterministic (no flaky tests)
 
 Anti-Patterns:
+
 - Testing private methods/implementation details
 - Mocking everything (defeats integration testing)
 - Copy-paste test data (use factories)
@@ -335,44 +287,45 @@ Anti-Patterns:
 - Clever test helpers (simple and obvious only)
 - Brittle tests that break on unrelated changes
 
-## THE PRIME DIRECTIVE
+## UNIMPLEMENTED FEATURES
 
-"Can I delete code instead of adding it?"
+When not implementing something due to complexity:
 
-Before writing any code:
+**For Code Comments:**
 
-1. Does this already exist?
-2. Is this actually needed?
-3. What's the simplest solution?
-4. Will this make sense in 6 months?
+```typescript
+// TODO: Implement feature X - requires Y consideration
+```
 
-## THE FINAL WORD
+**For Interface Implementation:**
 
-Write code for humans, not computers. The computer doesn't care if your
-code is clever - but the person maintaining it at 3 AM definitely will.
+```typescript
+function complexFeature(params: any): any {
+  throw new Error(
+    "Not Implemented: Feature requires additional architecture planning"
+  );
+}
+```
 
-Remember:
+**Guidelines:**
 
-- Boring code is debuggable code
-- Simple code is maintainable code
-- Less code is better code
-- Consistent code is predictable code
+- Use `// TODO:` for temporary placeholders with brief rationale
+- Implement interfaces and throw descriptive errors for public APIs
+- Always include the reason why it's not implemented
+- Consider if a simpler partial implementation could work instead
+
+## GOLDEN RULES
+
+- Can I delete code instead of adding it?
+- If I need more than 5 parameters, I'm doing too much
+- Helper methods should remove friction, not add complexity
+- One responsibility per unit - no exceptions
+- Every script needs metadata headers - no exceptions
+- Functionality without complexity - choose the simplest solution that works
+- Abstractions should hide complexity, not expose it
 
 When in doubt: Do less. Do the minimum that works. Keep it simple.
 
-**The Golden Rules:**
-
-- "Can I delete code instead of adding it?"
-- "If I need more than 5 parameters, I'm doing too much"
-- "Helper methods should remove friction, not add complexity"
-- "One responsibility per unit - no exceptions"
-- "Every script needs metadata headers - no exceptions"
-- "Functionality without complexity - choose the simplest solution that works"
-- "Abstractions should hide complexity, not expose it"
-
----
-
-"Any fool can write code that a computer can understand. Good programmers
-write code that humans can understand." - Martin Fowler
-
-"The best code is no code at all." - Jeff Atwood
+<system>
+Do not worry about context, just focus on getting the job done as per the instructions.
+</system>
