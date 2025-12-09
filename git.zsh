@@ -232,3 +232,111 @@ git-root() {
     return 1
   fi
 }
+
+
+git-common() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "Error: Not inside a git repository"
+    return 1
+  fi
+
+  local other_branch="$1"
+  if [[ -z "$other_branch" ]]; then
+    echo "Usage: git-common <other-branch>"
+    return 1
+  fi
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || return 1
+
+  # Resolve branch existence (local or remote)
+  if ! git rev-parse --verify --quiet "$other_branch" >/dev/null 2>&1; then
+    if git rev-parse --verify --quiet "origin/$other_branch" >/dev/null 2>&1; then
+      other_branch="origin/$other_branch"
+    else
+      echo "Error: Branch '$other_branch' not found (local or origin)"
+      return 1
+    fi
+  fi
+
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel 2>/dev/null)
+  local repo_name
+  repo_name=$(basename "$repo_root")
+
+  local cur_sha other_sha
+  cur_sha=$(git rev-parse --short HEAD 2>/dev/null)
+  other_sha=$(git rev-parse --short "$other_branch" 2>/dev/null)
+
+  local cur_head_info other_head_info
+  cur_head_info=$(git log -1 --pretty=format:'%h %ci %an %s' HEAD)
+  other_head_info=$(git log -1 --pretty=format:'%h %ci %an %s' "$other_branch")
+
+  local merge_base
+  merge_base=$(git merge-base "$current_branch" "$other_branch" 2>/dev/null)
+  local merge_base_short merge_base_info
+  if [[ -n "$merge_base" ]]; then
+    merge_base_short=$(git rev-parse --short "$merge_base")
+    merge_base_info=$(git log -1 --pretty=format:'%h %ci %an %s' "$merge_base")
+  else
+    merge_base_short="(none)"
+    merge_base_info="(no common ancestor)"
+  fi
+
+  local counts
+  counts=$(git rev-list --left-right --count "$current_branch...$other_branch" 2>/dev/null || echo "0 0")
+  local ahead behind
+  ahead=$(echo "$counts" | awk '{print $1}')
+  behind=$(echo "$counts" | awk '{print $2}')
+
+  local files_changed
+  files_changed=$(git diff --name-only "$other_branch" "$current_branch" | wc -l | tr -d ' ')
+  local diffstat
+  diffstat=$(git --no-pager diff --stat --minimal "$other_branch" "$current_branch" | sed -n '1,6p')
+
+  local upstream_current upstream_other
+  upstream_current=$(git rev-parse --abbrev-ref --symbolic-full-name "$current_branch@{u}" 2>/dev/null || echo "none")
+  upstream_other=$(git rev-parse --abbrev-ref --symbolic-full-name "$other_branch@{u}" 2>/dev/null || echo "none")
+
+  local wt_clean
+  if [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
+    wt_clean="dirty"
+  else
+    wt_clean="clean"
+  fi
+
+  echo "Repository: $repo_name ($repo_root)"
+  echo "Current branch: $current_branch ($cur_sha)   upstream: $upstream_current"
+  echo "Other branch:   $other_branch ($other_sha)   upstream: $upstream_other"
+  echo "Working tree: $wt_clean"
+  echo
+  echo "Common ancestor (merge-base): $merge_base_short"
+  echo "  -> $merge_base_info"
+  echo
+  echo "Last commit on $current_branch: $cur_head_info"
+  echo "Last commit on $other_branch:   $other_head_info"
+  echo
+  echo "Commits ahead/behind (current...other):"
+  echo "  $current_branch is ahead by: $ahead commit(s)"
+  echo "  $other_branch is ahead by:   $behind commit(s)"
+  echo
+  echo "Files changed between tips: $files_changed"
+  echo
+  echo "Recent commits on $current_branch:"
+  git --no-pager log --oneline -n 5 --decorate --graph HEAD
+  echo
+  echo "Recent commits on $other_branch:"
+  git --no-pager log --oneline -n 5 --decorate --graph "$other_branch"
+  echo
+  echo "Diffstat (top lines):"
+  if [[ -n "$diffstat" ]]; then
+    echo "$diffstat"
+  else
+    echo "  No differences."
+  fi
+  echo
+  echo "Unmerged / cherry info (commits in $current_branch not in $other_branch):"
+  git --no-pager cherry -v "$other_branch" "$current_branch" | sed -n '1,20p'
+
+  return 0
+}
