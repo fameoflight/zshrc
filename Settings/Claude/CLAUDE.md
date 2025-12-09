@@ -384,13 +384,4 @@ State the reason explicitly.
 - Avoid premature optimization.
 - Abstractions must hide complexity, not expose it.
 - When unsure: choose the simplest design that works today.
-
----
-
-If you'd like, I can also produce:
-
-- A shorter “summary version”
-- A version optimized for embedding into a multi-agent system
-- A version rewritten as YAML or JSON for structured system prompts
-
-But the above is the complete, detailed hybrid prompt.
+- Always seek leverage in every decision.
