@@ -11,6 +11,13 @@ set -euo pipefail
 # Configuration
 readonly SCRIPT_NAME="macOS OLED Monitor Optimizer"
 readonly WALLPAPER_CHANGE_INTERVAL=300  # seconds (5 minutes)
+readonly SCREENSAVER_IDLE_SECONDS=300
+readonly PASSWORD_DELAY_SECONDS=1800
+readonly DESKTOP_DISPLAY_SLEEP_MINUTES=10
+readonly LAPTOP_BATTERY_DISPLAY_SLEEP_MINUTES=5
+readonly LAPTOP_BATTERY_SLEEP_MINUTES=15
+readonly LAPTOP_POWER_DISPLAY_SLEEP_MINUTES=10
+readonly LAPTOP_POWER_SLEEP_MINUTES=30
 
 # Source common macOS utilities
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,8 +36,8 @@ configure_dark_mode() {
     log_info "Disabling menu bar transparency to reduce static elements"
     defaults write NSGlobalDomain AppleEnableMenuBarTransparency -bool false
     
-    log_info "Disabling menu bar auto-hide (user preference)"
-    defaults write NSGlobalDomain _HIHideMenuBar -bool false
+    log_info "Enabling menu bar auto-hide to reduce static OLED elements"
+    defaults write NSGlobalDomain _HIHideMenuBar -bool true
     
     log_info "Setting wallpaper with continuous shuffle across all spaces:"
     echo " • Wallpaper rotation: enabled (shuffle continuously)"
@@ -84,39 +91,40 @@ configure_oled_display() {
     # Use common power management with OLED-specific tweaks
     mac_configure_desktop_power "OLED protection"
 
-    # OLED-specific display sleep settings (more aggressive)
+    # Balanced OLED defaults: moving screen saver first, then display sleep.
     if [[ "$DEVICE_TYPE" == "desktop" ]]; then
         # Desktop: Disable system sleep to keep background services running
         log_info "Desktop: Disabling system sleep to keep background services running"
         sudo pmset -a sleep 0
+        sudo pmset -a ttyskeepawake 1
 
         case "$DEVICE_MODEL" in
             *"Mac Pro"*|*"Mac Studio"*)
-                log_info "High-performance desktop: Aggressive OLED protection (3 min display sleep)"
-                sudo pmset -a displaysleep 3
+                log_info "High-performance desktop: Balanced OLED protection (${DESKTOP_DISPLAY_SLEEP_MINUTES} min display sleep)"
+                sudo pmset -a displaysleep "$DESKTOP_DISPLAY_SLEEP_MINUTES"
                 sudo pmset -a disksleep 0
                 ;;
             *)
-                log_info "Desktop: OLED-protective display sleep (5 minutes)"
-                sudo pmset -a displaysleep 5
+                log_info "Desktop: Balanced OLED display sleep (${DESKTOP_DISPLAY_SLEEP_MINUTES} minutes)"
+                sudo pmset -a displaysleep "$DESKTOP_DISPLAY_SLEEP_MINUTES"
                 sudo pmset -a disksleep 0
                 ;;
         esac
     else
-        # Laptop: Normal battery-optimized sleep (system CAN sleep)
-        log_info "Laptop: OLED-protective display sleep (3 min battery, 5 min power)"
-        sudo pmset -b displaysleep 3
-        sudo pmset -b sleep 15
-        sudo pmset -c displaysleep 5
-        sudo pmset -c sleep 30
+        # Laptop: Keep battery safeguards, but avoid an overly aggressive blank screen.
+        log_info "Laptop: Balanced OLED timing (${LAPTOP_BATTERY_DISPLAY_SLEEP_MINUTES} min battery, ${LAPTOP_POWER_DISPLAY_SLEEP_MINUTES} min power)"
+        sudo pmset -b displaysleep "$LAPTOP_BATTERY_DISPLAY_SLEEP_MINUTES"
+        sudo pmset -b sleep "$LAPTOP_BATTERY_SLEEP_MINUTES"
+        sudo pmset -c displaysleep "$LAPTOP_POWER_DISPLAY_SLEEP_MINUTES"
+        sudo pmset -c sleep "$LAPTOP_POWER_SLEEP_MINUTES"
     fi
     
-    log_info "Setting aggressive screen saver activation (3 minutes)"
-    defaults write com.apple.screensaver idleTime -int 180
+    log_info "Setting moving screen saver activation (${SCREENSAVER_IDLE_SECONDS} seconds)"
+    defaults write com.apple.screensaver idleTime -int "$SCREENSAVER_IDLE_SECONDS"
     
-    log_info "Enabling screen saver password requirement immediately"
+    log_info "Requiring password only after ${PASSWORD_DELAY_SECONDS} seconds away"
     defaults write com.apple.screensaver askForPassword -int 1
-    defaults write com.apple.screensaver askForPasswordDelay -int 0
+    defaults write com.apple.screensaver askForPasswordDelay -int "$PASSWORD_DELAY_SECONDS"
     
     log_info "Disabling automatic brightness to maintain consistent OLED levels"
     sudo defaults write /Library/Preferences/com.apple.iokit.AmbientLightSensor "Automatic Display Enabled" -bool false 2>/dev/null || true
@@ -134,8 +142,8 @@ configure_screensaver() {
     log_info "Setting screen saver to 'Flurry' (dark, moving content)"
     defaults write com.apple.screensaver moduleDict -dict moduleName -string "Flurry" path -string "/System/Library/Screen Savers/Flurry.saver" type -int 0
     
-    log_info "Configuring aggressive idle time for screen protection"
-    defaults write com.apple.screensaver idleTime -int 180  # 3 minutes
+    log_info "Configuring balanced idle time for screen protection"
+    defaults write com.apple.screensaver idleTime -int "$SCREENSAVER_IDLE_SECONDS"
     
     log_success "Screen saver optimizations complete"
 }
@@ -276,7 +284,7 @@ $SCRIPT_NAME
 
 DESCRIPTION:
     Optimizes macOS settings specifically for OLED displays.
-    Focuses on burn-in prevention and optimal OLED performance.
+    Focuses on burn-in prevention without interrupting long-running work.
 
 USAGE:
     $0 [OPTIONS]
@@ -294,7 +302,7 @@ EXAMPLES:
 
 OLED OPTIMIZATIONS:
     • Enable system-wide dark mode and themes
-    • Aggressive screen saver and display sleep settings
+    • Balanced screen saver and display sleep settings
     • Auto-hide menu bar and dock to prevent burn-in
     • Configure hot corners for quick screen protection
     • Set dark desktop backgrounds and wallpaper rotation
@@ -304,7 +312,9 @@ OLED OPTIMIZATIONS:
     • Device-specific optimizations (desktop vs laptop)
 
 BURN-IN PREVENTION:
-    • Quick screen saver activation (3 minutes)
+    • Moving screen saver activation after 5 minutes
+    • Display sleep after 10 minutes on desktops
+    • Password required only after 30 minutes
     • Auto-hide static UI elements
     • Dark themes throughout system
     • Reduced brightness levels (75%)
@@ -323,7 +333,8 @@ dry_run() {
     log_info "The following OLED optimizations would be applied:"
     echo ""
     echo "• Enable system-wide dark mode and themes"
-    echo "• Set screen saver to activate after 3 minutes"
+    echo "• Set screen saver to activate after 5 minutes"
+    echo "• Require password only after 30 minutes away"
     echo "• Auto-hide menu bar and dock to prevent burn-in"
     echo "• Set up OLED-protective hot corners"
     echo "• Configure dark desktop backgrounds with rotation"
@@ -338,10 +349,10 @@ dry_run() {
         echo "🖥️  Desktop power management:"
         case "$DEVICE_MODEL" in
             *"Mac Pro"*|*"Mac Studio"*)
-                echo " • Display sleep: 3 minutes (aggressive OLED protection)"
+                echo " • Display sleep: ${DESKTOP_DISPLAY_SLEEP_MINUTES} minutes (balanced OLED protection)"
                 ;;
             *)
-                echo " • Display sleep: 5 minutes (OLED protection)"
+                echo " • Display sleep: ${DESKTOP_DISPLAY_SLEEP_MINUTES} minutes (balanced OLED protection)"
                 ;;
         esac
         echo " • Standby delay: 5 minutes"
@@ -349,14 +360,14 @@ dry_run() {
         echo " • Powernap: Disabled to reduce display activity"
     else
         echo "🔋 Laptop power management:"
-        echo " • Display sleep: 3 min (battery) / 5 min (power)"
+        echo " • Display sleep: ${LAPTOP_BATTERY_DISPLAY_SLEEP_MINUTES} min (battery) / ${LAPTOP_POWER_DISPLAY_SLEEP_MINUTES} min (power)"
         echo " • Standby delay: 2 hours"
         echo " • Hibernate mode: Safe sleep"
         echo " • Powernap: Enabled for background updates"
     fi
     
     echo ""
-    log_warning "⚠️  These settings prioritize OLED protection over convenience"
+    log_warning "⚠️  These settings balance OLED protection with uninterrupted work"
     echo ""
     log_info "Run without --dry-run to apply these changes"
 }

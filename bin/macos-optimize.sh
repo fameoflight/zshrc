@@ -96,9 +96,9 @@ configure_input() {
 configure_display() {
     log_section "Display & Screen"
     
-    log_info "Requiring password immediately after sleep or screen saver"
+    log_info "Requiring password after 30 minutes away from the screen saver or sleep"
     defaults write com.apple.screensaver askForPassword -int 1
-    defaults write com.apple.screensaver askForPasswordDelay -int 0
+    defaults write com.apple.screensaver askForPasswordDelay -int 1800
     
     log_info "Enabling subpixel font rendering on non-Apple LCDs"
     defaults write NSGlobalDomain AppleFontSmoothing -int 1
