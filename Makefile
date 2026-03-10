@@ -76,6 +76,11 @@ help:
 	@echo -e "  $(GREEN)editors$(NC)   - Text editors and IDEs"
 	@echo ""
 	@echo -e "$(BOLD)$(GREEN)🐍 Languages:$(NC)"
+	@echo -e "  $(GREEN)bun-install$(NC) - Install Bun runtime"
+	@echo -e "  $(GREEN)bun-cli-smoke$(NC) - List Bun CLI commands"
+	@echo -e "  $(GREEN)bun-cli-build$(NC) - Build compiled zsh-utils binary"
+	@echo -e "  $(GREEN)bun-cli-typecheck$(NC) - Type-check Bun CLI"
+	@echo -e "  $(GREEN)bun-cli-test$(NC) - Run Bun CLI tests"
 	@echo -e "  $(GREEN)python$(NC)    - Python and Poetry"
 	@echo -e "  $(GREEN)ruby$(NC)      - Ruby via RVM"
 	@echo -e "  $(GREEN)flutter$(NC)   - Flutter SDK with mobile support"
@@ -97,7 +102,7 @@ help:
 	@echo -e "  $(GREEN)clean$(NC)    - Clean temporary files"
 	@echo ""
 	@echo -e "$(BOLD)$(CYAN)💡 Tip: Use scripts directly for granular control:$(NC)"
-	@echo -e "  $(YELLOW)bash scripts/setup-dev-tools.sh modern-cli$(NC)"
+	@echo -e "  $(YELLOW)cd bin/bun-cli && bun run src/cli.ts utils setup-dev-tools modern-cli$(NC)"
 	@echo -e "  $(YELLOW)bash scripts/restore-settings.sh vscode$(NC)"
 
 
@@ -139,7 +144,7 @@ python-models: pytorch-setup
 # =============================================================================
 
 .PHONY: mac linux common mac-settings macos-optimize macos-oled-optimize post-mac-setup
-mac: check-requirements common brew dev-tools python ruby postgres github-tools mac-apps mac-utils mac-settings app-settings ai-tools setup-hooks post-mac-setup
+mac: check-requirements common brew dev-tools python postgres github-tools mac-apps mac-utils mac-settings app-settings ai-tools setup-hooks post-mac-setup
 
 linux: common linux-packages linux-settings
 
@@ -210,28 +215,57 @@ linux-packages:
 # =============================================================================
 
 .PHONY: dev-tools core-utils dev-utils modern-cli editors
-dev-tools: brew core-utils dev-utils modern-cli editors
+dev-tools: brew bun-install core-utils dev-utils modern-cli editors
 	@echo -e "$(BOLD)$(GREEN)✅ Development tools installation complete$(NC)"
 
 # Install essential command-line utilities
 core-utils:
-	@bash scripts/setup-dev-tools.sh core-utils || echo -e "$(YELLOW)⚠️  core-utils installation failed, continuing...$(NC)"
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts utils setup-dev-tools core-utils || echo -e "$(YELLOW)⚠️  core-utils installation failed, continuing...$(NC)"
 
 # Install development utilities
 dev-utils:
-	@bash scripts/setup-dev-tools.sh dev-utils || echo -e "$(YELLOW)⚠️  dev-utils installation failed, continuing...$(NC)"
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts utils setup-dev-tools dev-utils || echo -e "$(YELLOW)⚠️  dev-utils installation failed, continuing...$(NC)"
 
 # Install modern CLI tools and enhancements
 modern-cli:
-	@bash scripts/setup-dev-tools.sh modern-cli || echo -e "$(YELLOW)⚠️  modern-cli installation failed, continuing...$(NC)"
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts utils setup-dev-tools modern-cli || echo -e "$(YELLOW)⚠️  modern-cli installation failed, continuing...$(NC)"
 
 # Install text editors and IDEs
 editors:
-	@bash scripts/setup-dev-tools.sh editors || echo -e "$(YELLOW)⚠️  editors installation failed, continuing...$(NC)"
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts utils setup-dev-tools editors || echo -e "$(YELLOW)⚠️  editors installation failed, continuing...$(NC)"
 
 .PHONY: python
 python: brew
 	@bash scripts/setup-languages.sh python || echo -e "$(YELLOW)⚠️  Python setup failed, continuing...$(NC)"
+
+.PHONY: bun-install bun-cli-smoke bun-cli-build bun-cli-typecheck bun-cli-test
+bun-install: brew
+	@echo -e "$(BLUE)🟨 Checking Bun installation...$(NC)"
+	@if command -v bun >/dev/null 2>&1; then \
+		echo -e "$(GREEN)✅ Bun already installed$(NC)"; \
+	else \
+		brew install bun || { echo -e "$(RED)❌ Bun install failed$(NC)"; exit 1; }; \
+	fi
+
+bun-cli-smoke:
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts list
+
+bun-cli-build:
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run build
+
+bun-cli-typecheck:
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run typecheck
+
+bun-cli-test:
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun test
 
 .PHONY: ruby ruby-gems
 ruby: brew ruby-gems
@@ -466,7 +500,8 @@ clean:
 .PHONY: find-orphans
 find-orphans:
 	@echo "🔍 Finding orphaned targets in Makefile..."
-	@cd bin/ruby-cli && bundle exec ruby bin/internal-find-orphaned-targets.rb || echo -e "$(YELLOW)⚠️  Orphaned targets search failed, continuing...$(NC)"
+	@command -v bun >/dev/null 2>&1 || { echo -e "$(RED)❌ Bun is required. Run 'make bun-install' first$(NC)"; exit 1; }
+	@cd bin/bun-cli && bun run src/cli.ts utils find-orphaned-targets ../../Makefile || echo -e "$(YELLOW)⚠️  Orphaned targets search failed, continuing...$(NC)"
 
 # =============================================================================
 # TROUBLESHOOTING

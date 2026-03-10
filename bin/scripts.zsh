@@ -9,14 +9,23 @@ if [[ -f "$ZSH_CONFIG/bin/python-cli/scripts.zsh" ]]; then
   source "$ZSH_CONFIG/bin/python-cli/scripts.zsh"
 fi
 
-# Load Ruby CLI scripts and functions
-if [[ -f "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh" ]]; then
-  source "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh"
-fi
-
 # Load Rust CLI scripts and functions
 if [[ -f "$ZSH_CONFIG/bin/rust-cli/scripts.zsh" ]]; then
   source "$ZSH_CONFIG/bin/rust-cli/scripts.zsh"
+fi
+
+# Load Bun CLI scripts when Bun is runnable. Otherwise fall back to Ruby wrappers.
+if [[ -f "$ZSH_CONFIG/bin/bun-cli/scripts.zsh" ]]; then
+  if [[ -x "$ZSH_CONFIG/bin/bun-cli/dist/zsh-utils" ]] || command -v bun >/dev/null 2>&1; then
+    source "$ZSH_CONFIG/bin/bun-cli/scripts.zsh"
+    export ZSH_BUN_CLI_ENABLED=1
+  else
+    export ZSH_BUN_CLI_ENABLED=0
+  fi
+fi
+
+if [[ "${ZSH_BUN_CLI_ENABLED:-0}" != "1" ]] && [[ -f "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh" ]]; then
+  source "$ZSH_CONFIG/bin/ruby-cli/scripts.zsh"
 fi
 
 # ⚠️  IMPORTANT FOR DEVELOPERS:
@@ -182,6 +191,19 @@ list-scripts() {
   echo "📜 Custom Scripts Organization:"
   echo ""
 
+  if [[ "${ZSH_BUN_CLI_ENABLED:-0}" == "1" ]]; then
+    echo "🟨 Bun CLI (primary interface):"
+    echo " zsh-utils <category> <command> [args...]"
+    echo " Migrated command wrappers now route to Bun when available"
+    echo " Run 'zsh-utils list' to see discovered Bun commands"
+    echo ""
+  else
+    echo "🟨 Bun CLI (migration target):"
+    echo " bin/bun-cli/scripts.zsh exists but Bun is not runnable yet"
+    echo " Install Bun or build bin/bun-cli/dist/zsh-utils to enable Bun wrappers"
+    echo ""
+  fi
+
   # Show utility scripts available in ZSH
   echo "🐚 ZSH Utility Functions (interactive use):"
   echo " 📚 calibre-update        - Update Calibre to the latest version"
@@ -190,16 +212,13 @@ list-scripts() {
   echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
   echo ""
 
-  # Show Ruby CLI scripts are loaded from ruby-cli
-  echo "💎 Ruby CLI Functions (loaded from ruby-cli/scripts.zsh):"
-  echo "   Xcode tools, Game mode, AI/Chat utilities, File utilities"
-  echo "   Git utilities, Email utilities, Video processing"
+  echo "💎 Ruby CLI Functions (fallback path only):"
+  echo "   Loaded only when Bun is not yet available in this environment"
   echo ""
 
-  # Show Python CLI scripts are loaded from python-cli
-  echo "🐍 Python CLI Functions (loaded from python-cli/scripts.zsh):"
-  echo "   AI/ML Model Inference, Computer Vision, YouTube Processing"
-  echo "   Model Management, System utilities"
+  echo "🐍 Python CLI Functions (still direct entrypoints during migration):"
+  echo "   AI/ML model inference, computer vision, YouTube processing"
+  echo "   These are planned to move behind Bun as adapter-backed commands"
   echo ""
 
   # Show setup/backup scripts available via Makefile only
@@ -299,8 +318,22 @@ _fuzzy_select_script() {
     done
   fi
 
-  # Add Ruby CLI functions from ruby-cli
-  if [[ -f "$zsh_config_dir/bin/ruby-cli/scripts.zsh" ]]; then
+  # Add Bun CLI compatibility functions
+  if [[ -f "$zsh_config_dir/bin/bun-cli/scripts.zsh" ]]; then
+    local -a bun_functions
+    bun_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/bun-cli/scripts.zsh" \
+      | grep -v '^_' \
+      | grep -v '^zsh-utils\(\)' \
+      | grep -v '^list-bun-cli-scripts\(\)' \
+      | cut -d'(' -f1))
+
+    for func in $bun_functions; do
+      all_scripts+=("🟨 $func - Bun CLI compatibility wrapper")
+    done
+  fi
+
+  # Add Ruby CLI functions from ruby-cli when Bun is not the active runtime
+  if [[ "${ZSH_BUN_CLI_ENABLED:-0}" != "1" ]] && [[ -f "$zsh_config_dir/bin/ruby-cli/scripts.zsh" ]]; then
     local -a ruby_functions
     ruby_functions=($(grep -E '^[a-zA-Z][a-zA-Z0-9_-]*\(\)' "$zsh_config_dir/bin/ruby-cli/scripts.zsh" | grep -v '^_' | grep -v '^scripts\(\)' | grep -v '^list-ruby-cli-scripts\(\)' | cut -d'(' -f1))
 
@@ -353,7 +386,7 @@ _fuzzy_select_script() {
 
   if [[ -n "$selected" ]]; then
     # Extract script name from selection
-    local script_name=$(echo "$selected" | sed -E 's/^[🐚💎🐍🔧⭐] ([^ ]+) -.*/\1/')
+    local script_name=$(echo "$selected" | sed -E 's/^[🐚💎🐍🔧⭐🟨] ([^ ]+) -.*/\1/')
     echo "$script_name"
   fi
 }
@@ -382,17 +415,20 @@ scripts() {
     echo " scripts make                Show Makefile help (make targets)"
     echo " scripts <script> [args...]  Run a script with arguments"
     echo ""
+    echo -e "\033[1m🟨 Bun CLI:\033[0m"
+    echo " zsh-utils <category> <command> [args...]"
+    echo " Migrated command wrappers prefer Bun when Bun is available"
+    echo ""
     echo -e "\033[1m🐚 Available ZSH Utility Functions:\033[0m"
     echo " 📚 calibre-update        - Update Calibre to the latest version"
     echo " ☁️  dropbox-backup        - Move directory to Dropbox with symlink backup"
     echo " 🖋️  ink-cli              - Interactive Command Line Interface with automatic help"
     echo " 🤖 agent-setup          - Convert CLAUDE.md to AGENT.md with symlinks"
     echo ""
-    echo -e "\033[1m💎 Ruby CLI Functions (from ruby-cli):\033[0m"
-    echo " Xcode tools, Game mode, AI/Chat, File utilities, Git tools"
-    echo " Email, Video processing, System utilities"
+    echo -e "\033[1m💎 Ruby CLI Functions (fallback only when Bun is unavailable):\033[0m"
+    echo " Legacy wrappers remain on disk, but Bun is the preferred active runtime"
     echo ""
-    echo -e "\033[1m🐍 Python CLI Functions (from python-cli):\033[0m"
+    echo -e "\033[1m🐍 Python CLI Functions (still direct during migration):\033[0m"
     echo " AI/ML Model Inference, Computer Vision, YouTube processing"
     echo " Model Management, System utilities"
     echo ""
@@ -410,11 +446,12 @@ scripts() {
     echo " scripts                               # Interactive fuzzy finder"
     echo " scripts --recent                      # Show recently used scripts"
     echo " scripts make                          # Show all Makefile targets"
+    echo " zsh-utils git commit-dir src          # Bun: Direct category/command call"
     echo " scripts calibre-update               # Update Calibre"
     echo " scripts dropbox-backup ~/Documents    # Backup to Dropbox"
     echo " scripts ink-cli                        # Interactive CLI tool"
-    echo " scripts game-mode on                  # Ruby: Enable game mode"
-    echo " scripts xcode-add-file MyFile.swift  # Ruby: Add to Xcode project"
+    echo " scripts game-mode on                  # Bun wrapper when Bun is enabled"
+    echo " scripts xcode-add-file MyFile.swift  # Ruby: Not migrated yet"
     echo " scripts upscale-image photo.jpg      # Python: Upscale image"
     echo " scripts agent-setup                   # Shell: Setup agent docs"
     echo ""
@@ -496,6 +533,13 @@ scripts() {
       return $?
     fi
   done
+
+  # Run any loaded shell function from sourced runtime wrappers.
+  if typeset -f "$script_name" >/dev/null 2>&1; then
+    _track_script_usage "$script_name"
+    "$script_name" "$@"
+    return $?
+  fi
 
   # Check if it's a raw script file in bin/
   local script_path="$ZSH_CONFIG/bin/$script_name"
