@@ -51,6 +51,8 @@ show_help() {
     echo " • Claude Code settings.json"
     echo " • Project configurations directory (if available)"
     echo " • Agents directory (if available)"
+    echo " • Hooks directory (memory system)"
+    echo " • Memory directory (LanceDB storage)"
     echo ""
     echo "Source location: $CLAUDE_SOURCE_DIR"
     echo "Target location: $CLAUDE_USER_DIR"
@@ -191,7 +193,31 @@ setup_claude_symlinks() {
     else
         log_info "No agents directory found in source"
     fi
-    
+
+    # Symlink hooks directory for memory system
+    mkdir -p "$CLAUDE_SOURCE_DIR/hooks"
+    if [ -d "$CLAUDE_SOURCE_DIR/hooks" ]; then
+        create_symlink "$CLAUDE_SOURCE_DIR/hooks" "$CLAUDE_USER_DIR/hooks" "hooks directory"
+    fi
+
+    # Symlink memory directory for LanceDB storage
+    mkdir -p "$CLAUDE_SOURCE_DIR/memory"
+    if [ -d "$CLAUDE_SOURCE_DIR/memory" ]; then
+        create_symlink "$CLAUDE_SOURCE_DIR/memory" "$CLAUDE_USER_DIR/memory" "memory directory"
+    fi
+
+    # Install hooks dependencies
+    if [ -f "$CLAUDE_SOURCE_DIR/hooks/package.json" ] && [ "$DRY_RUN" = false ]; then
+        log_info "Installing hooks dependencies..."
+        (cd "$CLAUDE_SOURCE_DIR/hooks" && npm install --silent 2>/dev/null) || log_warning "npm install failed (may need manual run)"
+    fi
+
+    # Initialize LanceDB (requires LM Studio running)
+    if [ -f "$CLAUDE_SOURCE_DIR/hooks/lib/init-db.ts" ] && [ "$DRY_RUN" = false ]; then
+        log_info "Initializing memory database..."
+        (cd "$CLAUDE_SOURCE_DIR/hooks" && npx tsx lib/init-db.ts 2>/dev/null) || log_warning "DB init skipped (LM Studio may not be running)"
+    fi
+
     log_success "Claude settings symlinks setup completed!"
     
     # Show what was linked
@@ -199,7 +225,7 @@ setup_claude_symlinks() {
         log_info "Symlinks created in: $CLAUDE_USER_DIR"
         echo ""
         echo "📁 Current Claude directory contents:"
-        ls -la "$CLAUDE_USER_DIR" | grep -E "(CLAUDE\.md|settings\.json|projects|agents)" || echo " No relevant symlinks found"
+        ls -la "$CLAUDE_USER_DIR" | grep -E "(CLAUDE\.md|settings\.json|projects|agents|hooks|memory)" || echo " No relevant symlinks found"
         echo ""
         log_info "Changes to files in $CLAUDE_SOURCE_DIR will be immediately"
         log_info "reflected in Claude Code (no restart required for most changes)"

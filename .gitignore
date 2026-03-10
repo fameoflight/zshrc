@@ -32,3 +32,5 @@ credentials/gmail-token.yaml
 /.yarn
 .yarnrc
 /node_modules
+*.map
+/Settings/Claude/hooks/node_modules

@@ -1,0 +1,14 @@
+{
+  "name": "claude-memory-hooks",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "load": "tsx load-memory.ts",
+    "save": "tsx save-memory.ts",
+    "init": "tsx lib/init-db.ts"
+  },
+  "dependencies": {
+    "@lancedb/lancedb": "^0.13.0",
+    "tsx": "^4.19.0"
+  }
+}

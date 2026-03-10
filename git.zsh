@@ -234,7 +234,7 @@ git-root() {
 }
 
 
-git-common() {
+git-branch() {
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "Error: Not inside a git repository"
     return 1
@@ -242,7 +242,7 @@ git-common() {
 
   local other_branch="$1"
   if [[ -z "$other_branch" ]]; then
-    echo "Usage: git-common <other-branch>"
+    echo "Usage: git-branch <other-branch>"
     return 1
   fi
 
