@@ -1,46 +1,47 @@
-# Minimal bash configuration for systems where default shell can't be changed
+# Minimal bash configuration for systems where zsh is not the login shell.
 
-# Basic environment setup
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_CACHE_HOME="$HOME/.cache"
-export ZSH_CONFIG="$XDG_CONFIG_HOME/zsh"
-export WORKSPACE="$HOME/workspace"
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export ZSH_CONFIG="${ZSH_CONFIG:-$XDG_CONFIG_HOME/zsh}"
 
-# Basic PATH setup
-export PATH=$HOME/bin:$PATH
-export PATH=/usr/local/sbin:$PATH
-export PATH=$HOME/.local/bin:$PATH
-export PATH=/usr/local/bin:$PATH
-
-# Yarn PATH
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-
-# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-# Add Qt to PATH if available
-if brew --prefix qt@5 >/dev/null 2>&1; then
-    export PATH="$(brew --prefix qt@5)/bin:$PATH"
+if [ -r "$ZSH_CONFIG/shell/env.shared.sh" ]; then
+  . "$ZSH_CONFIG/shell/env.shared.sh"
 fi
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
-# End of LM Studio CLI section
+if command -v brew >/dev/null 2>&1; then
+  qt_prefix="$(brew --prefix qt@5 2>/dev/null || true)"
+  [ -n "$qt_prefix" ] && prepend_path "$qt_prefix/bin"
+fi
 
-# NVM (Node Version Manager) - Bash compatible setup
+prepend_path "$HOME/.config/yarn/global/node_modules/.bin"
+prepend_path "$HOME/.yarn/bin"
+append_path "$HOME/.rvm/bin"
+append_path "$HOME/.lmstudio/bin"
+
 export NVM_DIR="$HOME/.config/nvm"
 
-# Load NVM if available
+set_default_node_path() {
+  [ -r "$NVM_DIR/alias/default" ] || return 0
+
+  default_alias="$(tr -d '\r\n' < "$NVM_DIR/alias/default")"
+  for candidate in \
+    "$NVM_DIR/versions/node/$default_alias/bin" \
+    "$NVM_DIR/versions/node/v$default_alias/bin" \
+    "$NVM_DIR"/versions/node/v"$default_alias"*/bin
+  do
+    [ -d "$candidate" ] && prepend_path "$candidate" && return 0
+  done
+}
+
 if [ -s "$NVM_DIR/nvm.sh" ]; then
-    source "$NVM_DIR/nvm.sh"
-    if [ -s "$NVM_DIR/bash_completion" ]; then
-        source "$NVM_DIR/bash_completion"
-    fi
+  . "$NVM_DIR/nvm.sh"
+  if [ -s "$NVM_DIR/bash_completion" ]; then
+    . "$NVM_DIR/bash_completion"
+  fi
 fi
 
-# Add default Node version to PATH (if it exists)
-NODE_DEFAULT_PATH="${NVM_DIR}/versions/default/bin"
-if [ -d "$NODE_DEFAULT_PATH" ]; then
-    PATH="${NODE_DEFAULT_PATH}:${PATH}"
-fi
+set_default_node_path
+export PATH
 
 
+# Added by LM Studio CLI tool (lms)
+export PATH="$PATH:/Users/hemantv/.lmstudio/bin"

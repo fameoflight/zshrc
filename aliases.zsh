@@ -7,9 +7,12 @@
 
 alias svg-util=rsvg-convert
 
-export EDITOR="vim"
+: "${EDITOR:=vim}"
+export EDITOR
 alias vi="vim"
-alias viedit=" $EDITOR $HOME/.vim/vimrc"
+viedit() {
+  ${=EDITOR} "$HOME/.vim/vimrc"
+}
 
 #alias man="unset PAGER; man"
 alias grep='grep --color=auto'
@@ -146,23 +149,19 @@ alias -s pem="openssl x509 -noout -text -in "
 alias zshrc="cd ~/zshrc"
 alias xcode="open -a Xcode"
 
-alias deploy-sf="ssh deploy@45.55.6.197"
-
 alias workspace="cd ~/workspace"
 alias trading="workspace && cd trading"
-
-alias dockerm="docker-machine"
 
 alias rscp='rsync -aP'
 alias rsmv='rsync -aP --remove-source-files'
 
-path() {
+ffind() {
   if [[ -z "$1" ]]; then
-    log_error "Usage: path <pattern>"
+    log_error "Usage: ffind <pattern>"
     log_info "Examples:"
-    log_info "  path config"
-    log_info "  path '*.py'"
-    log_info "  path test"
+    log_info "  ffind config"
+    log_info "  ffind '*.py'"
+    log_info "  ffind test"
     return 1
   fi
 
@@ -172,52 +171,26 @@ path() {
   fd --hidden --ignore-case --type f --type d "$1" .
 }
 
-fix-pep8() {
-  echo "Resetting HEAD"
-  git reset HEAD
-  ruby -le "print '-'*30"
-  echo "Running autopep8"
-  git diff --name-only --diff-filter=AM | grep .py | xargs autopep8 --select=E1,W1 --in-place
-  ruby -le "print '-'*30"
-  echo "Adding all files"
-  git add -A
-}
-
-delete-line() {
-  gsed -i "$1 d" $2
-}
-
-remove-ssh-key() {
-  delete-line $1 ~/.ssh/known_hosts
-}
-
 flush-dns-cache() {
-  sudo dscacheutil -flushcache;sudo killall -HUP mDNSResponder;
+  sudo dscacheutil -flushcache
+  sudo killall -HUP mDNSResponder
 }
 
 reload-zsh() {
-  source ~/.zshrc
+  exec zsh -l
 }
 
 latest-dir(){
-LATEST_DIR="$(ls -1t | head -1)"
-echo -e "${COLOR_GREEN}📂 Going into latest directory: ${COLOR_BOLD}${COLOR_BLUE}$LATEST_DIR${COLOR_NC}"
-cd $LATEST_DIR
-}
+  local latest_dir
+  latest_dir="$(ls -1td -- */ 2>/dev/null | head -1)"
+  if [[ -z "$latest_dir" ]]; then
+    log_warning "No subdirectories found"
+    return 1
+  fi
 
-latest-topcoder-dir() {
-  cd /Users/hemantv/Dropbox/Programming/Topcoder/Workspace
-  latest-dir
-}
-
-topcoder-start(){
-  watchman -- trigger /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-html '*.html' -- open
-  watchman -- trigger /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-py '*.py' -- subl
-}
-
-topcoder-cleanup() {
-  watchman trigger-del /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-html
-  watchman trigger-del /Users/hemantv/Dropbox/Programming/Topcoder/Workspace topcoder-py
+  latest_dir="${latest_dir%/}"
+  echo -e "${COLOR_GREEN}📂 Going into latest directory: ${COLOR_BOLD}${COLOR_BLUE}$latest_dir${COLOR_NC}"
+  cd "$latest_dir"
 }
 
 # only show hidden files
@@ -234,14 +207,6 @@ function restart-dynamo-db() {
     brew services stop dynamodb-local
     rmtrash /usr/local/var/data/dynamodb-local/*
     brew services start dynamodb-local
-}
-
-function mount-ssh() {
-  echo "Mounting $1:/home/hemantv on ~/mnt/$1"
-  mkdir -p ~/mnt/$1
-  sshfs -o transform_symlinks $1:/home/hemantv ~/mnt/$1
-  cp -R ~/zshrc/postmates/* ~/mnt/$1
-  cd ~/mnt/$1
 }
 
 function parallel-commands() {
@@ -478,5 +443,4 @@ sysmon() {
   echo -e "${COLOR_BOLD}${COLOR_BLUE}📊 Load Averages:${COLOR_NC}"
   echo -e "${COLOR_CYAN}$(uptime | sed 's/.*load averages: /  1min: /' | sed 's/ / | 5min: /' | sed 's/ / | 15min: /')${COLOR_NC}"
 }
-
 

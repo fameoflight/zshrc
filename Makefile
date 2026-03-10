@@ -30,7 +30,7 @@ USER_BIN := ${HOME}/bin
 
 # Project Paths
 ZSH := ${HOME}/zshrc
-SETTINGS := ${ZSH}/Settingstogg
+SETTINGS := ${ZSH}/Settings
 
 # User Information
 NAME := Hemant Verma
@@ -422,6 +422,7 @@ install-zsh:
 	fi
 	@echo "📝 Creating private config file..."
 	@touch private.zsh
+	@touch private.final.zsh
 
 install-bash:
 	@echo "🐚 Installing Bash configuration..."

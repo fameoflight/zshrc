@@ -3,82 +3,84 @@
 #
 # functions and key bindings
 
-# SAFE RM FUNCTION - Always uses rmtrash instead of rm
-# This function prevents permanent deletion and moves files to trash
-rm() {
-  # Check if rmtrash is available
-  if ! command -v rmtrash >/dev/null 2>&1; then
-    echo -e "${COLOR_BOLD}${COLOR_RED}⚠️  rmtrash not found! Please install with: brew install rmtrash${COLOR_NC}"
-    echo -e "${COLOR_YELLOW}Falling back to standard rm - USE WITH CAUTION!${COLOR_NC}"
-    command rm "$@"
-    return $?
-  fi
+if [[ -o interactive ]]; then
+  # SAFE RM FUNCTION - Always uses rmtrash instead of rm
+  # This function prevents permanent deletion and moves files to trash
+  rm() {
+    # Check if rmtrash is available
+    if ! command -v rmtrash >/dev/null 2>&1; then
+      echo -e "${COLOR_BOLD}${COLOR_RED}⚠️  rmtrash not found! Please install with: brew install rmtrash${COLOR_NC}"
+      echo -e "${COLOR_YELLOW}Falling back to standard rm - USE WITH CAUTION!${COLOR_NC}"
+      command rm "$@"
+      return $?
+    fi
 
-  # Parse rm arguments and convert them to rmtrash format
-  local args=()
-  local recursive=false
-  local force=false
+    # Parse rm arguments and convert them to rmtrash format
+    local args=()
+    local recursive=false
+    local force=false
 
-  while [[ $# -gt 0 ]]; do
-    case $1 in
-      -r|--recursive)
-        recursive=true
-        shift
-        ;;
-      -f|--force)
-        force=true
-        shift
-        ;;
-      -rf|-fr)
-        recursive=true
-        force=true
-        shift
-        ;;
-      -r*f|-f*r)
-        recursive=true
-        force=true
-        shift
-        ;;
-      -v|--verbose)
-        args+=(--verbose)
-        shift
-        ;;
-      --help)
-        command rm --help
-        return 0
-        ;;
-      *)
-        break
-        ;;
-    esac
-  done
+    while [[ $# -gt 0 ]]; do
+      case $1 in
+        -r|--recursive)
+          recursive=true
+          shift
+          ;;
+        -f|--force)
+          force=true
+          shift
+          ;;
+        -rf|-fr)
+          recursive=true
+          force=true
+          shift
+          ;;
+        -r*f|-f*r)
+          recursive=true
+          force=true
+          shift
+          ;;
+        -v|--verbose)
+          args+=(--verbose)
+          shift
+          ;;
+        --help)
+          command rm --help
+          return 0
+          ;;
+        *)
+          break
+          ;;
+      esac
+    done
 
-  # Build rmtrash command
-  local rmtrash_args=()
-  [[ "$recursive" == true ]] && rmtrash_args+=(--recursive)
-  [[ "$force" == true ]] && rmtrash_args+=(--force)
-  rmtrash_args+=("${args[@]}")
-  rmtrash_args+=("$@")
+    # Build rmtrash command
+    local rmtrash_args=()
+    [[ "$recursive" == true ]] && rmtrash_args+=(--recursive)
+    [[ "$force" == true ]] && rmtrash_args+=(--force)
+    rmtrash_args+=("${args[@]}")
+    rmtrash_args+=("$@")
 
-  # Validate we have files to remove
-  if [[ $# -eq 0 ]]; then
-    echo -e "${COLOR_RED}❌ No files specified for removal${COLOR_NC}"
-    return 1
-  fi
+    # Validate we have files to remove
+    if [[ $# -eq 0 ]]; then
+      echo -e "${COLOR_RED}❌ No files specified for removal${COLOR_NC}"
+      return 1
+    fi
 
-  # Log the operation for safety
-  echo -e "${COLOR_BOLD}${COLOR_YELLOW}🗑️  Moving to trash instead of permanent deletion:${COLOR_NC}"
-  echo -e "${COLOR_CYAN}Files: $@${COLOR_NC}"
+    # Log the operation for safety
+    echo -e "${COLOR_BOLD}${COLOR_YELLOW}🗑️  Moving to trash instead of permanent deletion:${COLOR_NC}"
+    echo -e "${COLOR_CYAN}Files: $@${COLOR_NC}"
 
-  # Use rmtrash with translated arguments
-  rmtrash "${rmtrash_args[@]}"
-}
+    # Use rmtrash with translated arguments
+    rmtrash "${rmtrash_args[@]}"
+  }
 
-# Key bindings
-# Ctrl+X,S adds sudo to the line
-run-with-sudo() { LBUFFER="sudo $LBUFFER" }
-zle -N run-with-sudo
-bindkey '^Xs' run-with-sudo
+  # Key bindings
+  # Ctrl+X,S adds sudo to the line
+  run-with-sudo() { LBUFFER="sudo $LBUFFER" }
+  zle -N run-with-sudo
+  bindkey '^Xs' run-with-sudo
+fi
 
 # System utilities
 # Top memory processes (macOS compatible)

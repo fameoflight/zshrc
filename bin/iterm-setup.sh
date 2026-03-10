@@ -44,7 +44,7 @@ show_help() {
     echo ""
     echo "Restores:"
     echo " • iTerm2 preferences (com.googlecode.iterm2.plist)"
-    echo " • iTerm2 private preferences (com.googlecode.iterm2.private.plist)"
+    echo " • iTerm2 private preferences, if present locally"
     echo " • Dynamic Profiles (if available)"
     echo " • Custom key mappings and themes"
     echo ""
@@ -164,10 +164,7 @@ restore_iterm_settings() {
     local files_restored=0
     
     # Main preference files
-    local pref_files=(
-        "com.googlecode.iterm2.plist"
-        "com.googlecode.iterm2.private.plist"
-    )
+    local pref_files=("com.googlecode.iterm2.plist")
     
     for file in "${pref_files[@]}"; do
         local source_path="$ITERM_BACKUP_DIR/$file"
@@ -187,6 +184,19 @@ restore_iterm_settings() {
             log_warning "Backup file not found: $file"
         fi
     done
+
+    local private_source="$ITERM_BACKUP_DIR/com.googlecode.iterm2.private.plist"
+    local private_dest="$ITERM_PREFS_PATH/com.googlecode.iterm2.private.plist"
+    if [[ -f "$private_source" ]]; then
+        log_progress "Restoring optional private preferences..."
+        if [[ "$DRY_RUN" == false ]]; then
+            cp "$private_source" "$private_dest"
+            log_success "Restored optional private preferences"
+            ((files_restored++))
+        else
+            log_info "Would restore optional private preferences to $private_dest"
+        fi
+    fi
     
     # Optional backup files
     local optional_files=(

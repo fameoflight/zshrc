@@ -34,3 +34,6 @@ credentials/gmail-token.yaml
 /node_modules
 *.map
 /Settings/Claude/hooks/node_modules
+Settings/Claude/memory/
+Settings/XCode/UserData/*.xcuserstate
+Settings/iTerm/*.private.plist

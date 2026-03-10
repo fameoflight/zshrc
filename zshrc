@@ -5,214 +5,196 @@
 #
 
 # first include of the environment
-source $HOME/.config/zsh/environment.zsh
+source "$HOME/.config/zsh/environment.zsh"
 
 # Load logging functions first so they're available everywhere
-source $HOME/.config/zsh/logging.zsh
+source "$HOME/.config/zsh/logging.zsh"
 
-typeset -ga sources
-sources+="$ZSH_CONFIG/environment.zsh"
-sources+="$ZSH_CONFIG/options.zsh"
-sources+="$ZSH_CONFIG/prompt.zsh"
-sources+="$ZSH_CONFIG/functions.zsh"
-sources+="$ZSH_CONFIG/aliases.zsh"
-sources+="$ZSH_CONFIG/android.zsh"
-sources+="$ZSH_CONFIG/mathalon.zsh"
-sources+="$ZSH_CONFIG/git.zsh"
-sources+="$ZSH_CONFIG/erlang.zsh"
-sources+="$ZSH_CONFIG/rails.zsh"
-sources+="$ZSH_CONFIG/ai-env.zsh"
-sources+="$ZSH_CONFIG/claude.zsh"
-sources+="$ZSH_CONFIG/gemini.zsh"
-sources+="$ZSH_CONFIG/ai.zsh"
-sources+="$ZSH_CONFIG/monorepo.zsh"
-sources+="$ZSH_CONFIG/bin/scripts.zsh"
+source_if_exists() {
+  [[ -r "$1" ]] && source "$1"
+}
 
-# highlights the live command line
-# Cloned From: git://github.com/nicoulaj/zsh-syntax-highlighting.git
-sources+="$ZSH_CONFIG/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+add_path_front() {
+  [[ -d "$1" ]] && path=("$1" $path)
+}
 
-# provides the package name of a non existing executable
-# (sudo apt-get install command-not-found)
-sources+="/etc/zsh_command_not_found"
+add_path_back() {
+  [[ -d "$1" ]] && path+=("$1")
+}
 
-# Check for a system specific file
-systemFile=`uname -s | tr "[:upper:]" "[:lower:]"`
-sources+="$ZSH_CONFIG/$systemFile.zsh"
+typeset -ga sources=(
+  "$ZSH_CONFIG/options.zsh"
+  "$ZSH_CONFIG/functions.zsh"
+  "$ZSH_CONFIG/android.zsh"
+  "$ZSH_CONFIG/git.zsh"
+  "$ZSH_CONFIG/erlang.zsh"
+  "$ZSH_CONFIG/rails.zsh"
+  "$ZSH_CONFIG/ai-env.zsh"
+  "$ZSH_CONFIG/claude.zsh"
+  "$ZSH_CONFIG/gemini.zsh"
+  "$ZSH_CONFIG/ai.zsh"
+  "$ZSH_CONFIG/monorepo.zsh"
+  "$ZSH_CONFIG/bin/scripts.zsh"
+  "/etc/zsh_command_not_found"
+  "$ZSH_CONFIG/$(uname -s | tr '[:upper:]' '[:lower:]').zsh"
+  "$ZSH_CONFIG/private.zsh"
+)
 
-# SAFE RM OVERRIDE - Must be loaded after functions.zsh to ensure our rm() function takes precedence
-if command -v rmtrash >/dev/null 2>&1; then
-else
-  log_warning "⚠️  rmtrash not found - install with 'brew install rmtrash' for safe file deletion"
+typeset -ga interactive_sources=(
+  "$ZSH_CONFIG/prompt.zsh"
+  "$ZSH_CONFIG/aliases.zsh"
+  "$ZSH_CONFIG/completion.zsh"
+  "$ZSH_CONFIG/fasd.zsh"
+  "$ZSH_CONFIG/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+  "$ZSH_CONFIG/private.final.zsh"
+)
+
+for file in "${sources[@]}"; do
+  source_if_exists "$file"
+done
+
+if [[ -o interactive ]]; then
+  for file in "${interactive_sources[@]}"; do
+    source_if_exists "$file"
+  done
+
+  if ! command -v rmtrash >/dev/null 2>&1; then
+    log_warning "rmtrash not found; install with 'brew install rmtrash' for safe file deletion"
+  fi
 fi
 
-# Private aliases and adoptions
-sources+="$ZSH_CONFIG/private.zsh"
+if [[ -o interactive ]]; then
+  for ssh_key in "$HOME/.ssh/id_rsa" "$HOME/.ssh/id_hemantv" "$HOME/.ssh/do_hemantv"; do
+    [[ -f "$ssh_key" ]] && ssh-add "$ssh_key" >/dev/null 2>&1
+  done
+fi
 
-# completion config needs to be after system and private config
-sources+="$ZSH_CONFIG/completion.zsh"
-
-# fasd integration and config
-sources+="$ZSH_CONFIG/fasd.zsh"
-
-# Private aliases and adoptions added at the very end (e.g. to start byuobu)
-sources+="$ZSH_CONFIG/private.final.zsh"
-
-
-
-
-# try to include all sources
-foreach file (`echo $sources`)
-    if [[ -a $file ]]; then
-        source $file
-    fi
-end
-
-# Simple SSH key loading - run silently to avoid notifications
-{
-    ssh-add ~/.ssh/id_rsa > /dev/null 2>&1
-    ssh-add ~/.ssh/id_hemantv > /dev/null 2>&1
-    ssh-add ~/.ssh/do_hemantv > /dev/null 2>&1
-} 2>/dev/null || true
-
-export PATH="$PATH:$HOME/.rvm/bin"
-
-export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+add_path_back "$HOME/.rvm/bin"
+add_path_front "$HOME/.config/yarn/global/node_modules/.bin"
+add_path_front "$HOME/.yarn/bin"
 
 # >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/Users/hemantv/mambaforge/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
+CONDA_HOME="$HOME/mambaforge"
+if [[ -x "$CONDA_HOME/bin/conda" ]]; then
+  __conda_setup="$("$CONDA_HOME/bin/conda" shell.zsh hook 2>/dev/null)"
+  if [[ $? -eq 0 ]]; then
     eval "$__conda_setup"
-else
-    if [ -f "/Users/hemantv/mambaforge/etc/profile.d/conda.sh" ]; then
-        . "/Users/hemantv/mambaforge/etc/profile.d/conda.sh"
-    else
-        export PATH="/Users/hemantv/mambaforge/bin:$PATH"
-    fi
+  else
+    source_if_exists "$CONDA_HOME/etc/profile.d/conda.sh" || add_path_front "$CONDA_HOME/bin"
+  fi
+  unset __conda_setup
 fi
-unset __conda_setup
 # <<< conda initialize <<<
 
-# export PATH=~/anaconda3/bin:$PATH
-export PATH=~/anaconda3/envs/tf/bin:$PATH
-
+add_path_front "$HOME/anaconda3/envs/tf/bin"
 
 # pnpm
-export PNPM_HOME="/Users/hemantv/Library/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
+export PNPM_HOME="$HOME/Library/pnpm"
+add_path_front "$PNPM_HOME"
 # pnpm end
 
 # Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
+add_path_back "$HOME/.lmstudio/bin"
 # End of LM Studio CLI section
 
-
-
-# NVM (Node Version Manager) - Optimized lazy loading with .nvmrc support
+# NVM (Node Version Manager) - lazy loading with .nvmrc support
 export NVM_DIR="$HOME/.config/nvm"
+typeset -gi _nvm_loaded=0 _nvm_missing_warned=0
+typeset -g _last_nvmrc_path="" _last_node_version=""
 
-# Optimized NVM lazy loading function
-function _load_nvm() {
-    # Remove all lazy loading functions
-    for cmd in nvm node npm npx yarn npxl; do
-        unset -f $cmd 2>/dev/null
-    done
+set_default_node_path() {
+  local default_alias_file="$NVM_DIR/alias/default"
+  [[ -r "$default_alias_file" ]] || return 0
 
-    # Load NVM with --no-use for better performance
-    if [[ -s "$NVM_DIR/nvm.sh" ]]; then
-        \. "$NVM_DIR/nvm.sh" --no-use
-        if [[ -s "$NVM_DIR/bash_completion" ]]; then
-            \. "$NVM_DIR/bash_completion"
-        fi
-        return 0
-    else
-        echo "NVM not found. Please install NVM first."
-        return 1
+  local default_alias
+  default_alias="$(<"$default_alias_file")"
+  default_alias="${default_alias//$'\n'/}"
+
+  local -a candidates=(
+    "$NVM_DIR/versions/node/${default_alias}/bin"
+    "$NVM_DIR/versions/node/v${default_alias}/bin"
+    ${NVM_DIR}/versions/node/v${default_alias}*/bin(N)
+  )
+  local candidate
+  for candidate in "${candidates[@]}"; do
+    [[ -d "$candidate" ]] && add_path_front "$candidate" && return 0
+  done
+}
+
+_load_nvm() {
+  (( _nvm_loaded )) && return 0
+
+  if [[ ! -s "$NVM_DIR/nvm.sh" ]]; then
+    if (( ! _nvm_missing_warned )); then
+      log_warning "NVM not found at $NVM_DIR"
+      _nvm_missing_warned=1
     fi
+    return 1
+  fi
+
+  unfunction nvm node npm npx yarn npxl 2>/dev/null
+  source "$NVM_DIR/nvm.sh" --no-use
+  source_if_exists "$NVM_DIR/bash_completion"
+  _nvm_loaded=1
 }
 
-# Lazy load NVM and handle .nvmrc
-function nvm() {
-    _load_nvm
-    command nvm "$@"
+_lazy_nvm_exec() {
+  local cmd="$1"
+  shift
+  _load_nvm || return 1
+  "$cmd" "$@"
 }
 
-# Lazy load Node.js tools
-function node() {
-    _load_nvm
-    command node "$@"
+find_nvmrc_file() {
+  local dir="$PWD"
+  while [[ "$dir" != "/" ]]; do
+    if [[ -f "$dir/.nvmrc" ]]; then
+      print -r -- "$dir/.nvmrc"
+      return 0
+    fi
+    dir="${dir:h}"
+  done
+  return 1
 }
 
-function npm() {
-    _load_nvm
-    command npm "$@"
+switch_node_version() {
+  local nvmrc_file=""
+  local target_version
+
+  nvmrc_file="$(find_nvmrc_file 2>/dev/null)" || nvmrc_file=""
+  [[ "$nvmrc_file" == "$_last_nvmrc_path" ]] && return 0
+  _last_nvmrc_path="$nvmrc_file"
+
+  [[ -n "$nvmrc_file" ]] || return 0
+
+  target_version="$(<"$nvmrc_file")"
+  target_version="${target_version//$'\n'/}"
+
+  [[ -n "$target_version" && "$target_version" != "$_last_node_version" ]] || return 0
+
+  _load_nvm >/dev/null 2>&1 || return 0
+  if nvm use "$target_version" >/dev/null 2>&1; then
+    _last_node_version="$target_version"
+    log_info "Using Node $target_version"
+  fi
 }
 
-function npx() {
-    _load_nvm
-    command npx "$@"
-}
+function nvm() { _lazy_nvm_exec nvm "$@"; }
+function node() { _lazy_nvm_exec node "$@"; }
+function npm() { _lazy_nvm_exec npm "$@"; }
+function npx() { _lazy_nvm_exec npx "$@"; }
+function yarn() { _lazy_nvm_exec yarn "$@"; }
+function npxl() { _lazy_nvm_exec npxl "$@"; }
 
-function yarn() {
-    _load_nvm
-    command yarn "$@"
-}
+set_default_node_path
 
-function npxl() {
-    _load_nvm
-    command npxl "$@"
-}
-
-# Add default Node version to PATH (if it exists) - cached for performance
-NODE_DEFAULT_PATH="${NVM_DIR}/versions/default/bin"
-if [[ -d "$NODE_DEFAULT_PATH" ]]; then
-    PATH="${NODE_DEFAULT_PATH}:${PATH}"
+if [[ -o interactive ]]; then
+  autoload -Uz add-zsh-hook
+  add-zsh-hook chpwd switch_node_version
+  switch_node_version
 fi
 
-# Lightweight .nvmrc support - only check when directory actually changes
-_last_nvmrc_dir=""
-_last_node_version=""
+add_path_front "$HOME/.antigravity/antigravity/bin"
 
-switchNode() {
-    local current_dir="$(pwd)"
-
-    # Skip if directory hasn't changed since last check
-    if [[ "$current_dir" == "$_last_nvmrc_dir" ]]; then
-        return 0
-    fi
-
-    _last_nvmrc_dir="$current_dir"
-
-    # Quick check for .nvmrc without loading NVM
-    local nvmrc_file="$current_dir/.nvmrc"
-    if [[ -f "$nvmrc_file" ]]; then
-        local target_version="$(cat "$nvmrc_file")"
-
-        # Only switch if different from last used version
-        if [[ "$target_version" != "$_last_node_version" ]]; then
-            # Load NVM if not already loaded
-            if ! command -v nvm >/dev/null 2>&1; then
-                _load_nvm >/dev/null 2>&1
-            fi
-
-            # Use nvm to switch version
-            if command -v nvm >/dev/null 2>&1; then
-                nvm use "$target_version" >/dev/null 2>&1
-                _last_node_version="$target_version"
-                echo "📦 Switched to Node $target_version"
-            fi
-        fi
-    fi
-}
-
-# Set up lightweight directory change hook for .nvmrc support
-if autoload -Uz add-zsh-hook; then
-    add-zsh-hook chpwd switchNode
-fi
-
-# Added by Antigravity
-export PATH="/Users/hemantv/.antigravity/antigravity/bin:$PATH"
+# Added by LM Studio CLI tool (lms)
+export PATH="$PATH:/Users/hemantv/.lmstudio/bin"

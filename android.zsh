@@ -1,7 +1,7 @@
 alias android-studio="open /Applications/Android\ Studio.app"
-export ANDROID_HOME=/Users/hemantv/Library/Android/sdk
-export PATH="$PATH:$ANDROID_HOME/platform-tools"
-export PATH="$PATH:$ANDROID_HOME/tools"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+[[ -d "$ANDROID_HOME/platform-tools" ]] && path+=("$ANDROID_HOME/platform-tools")
+[[ -d "$ANDROID_HOME/tools" ]] && path+=("$ANDROID_HOME/tools")
 
 export KEYSTORE=~/Dropbox/Mackup/Android/android_playstore_release.keystore
 

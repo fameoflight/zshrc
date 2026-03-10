@@ -1,8 +1,6 @@
-_byobu_sourced=1 . /usr/bin/byobu-launch
+[ -x /usr/bin/byobu-launch ] && _byobu_sourced=1 . /usr/bin/byobu-launch
+[ -f "$HOME/.bashrc" ] && . "$HOME/.bashrc"
+[ -s "$HOME/.rvm/scripts/rvm" ] && . "$HOME/.rvm/scripts/rvm"
 
-[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
-
-# Added by LM Studio CLI (lms)
+# Added by LM Studio CLI tool (lms)
 export PATH="$PATH:/Users/hemantv/.lmstudio/bin"
-# End of LM Studio CLI section
-

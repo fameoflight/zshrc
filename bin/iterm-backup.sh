@@ -34,7 +34,7 @@ show_help() {
     echo ""
     echo "What gets backed up:"
     echo " • iTerm2 preferences (com.googlecode.iterm2.plist)"
-    echo " • iTerm2 private preferences (com.googlecode.iterm2.private.plist)"
+    echo " • iTerm2 private preferences, if present locally"
     echo " • Dynamic profiles and color schemes"
     echo " • Custom key bindings and shell integrations"
     echo ""

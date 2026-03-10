@@ -12,6 +12,10 @@ if [[ -f "$ZSH_CONFIG/logging.zsh" ]]; then
     source "$ZSH_CONFIG/logging.zsh"
 fi
 
+if [[ -f "$ZSH_CONFIG/shell/env.shared.sh" ]]; then
+    source "$ZSH_CONFIG/shell/env.shared.sh"
+fi
+
 # Import utility functions
 if [[ -f "$SCRIPT_DIR/utils/brew-install-quiet.sh" ]]; then
     BREW_INSTALL_QUIET="$SCRIPT_DIR/utils/brew-install-quiet.sh"
@@ -294,8 +298,8 @@ setup_node() {
         echo "Installing latest Yarn..."
         if ! command -v yarn >/dev/null 2>&1; then
             curl -o- -L https://yarnpkg.com/install.sh | bash
-            # Add Yarn to PATH for current session
-            export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
+            prepend_path "$HOME/.config/yarn/global/node_modules/.bin"
+            prepend_path "$HOME/.yarn/bin"
         else
             # Update existing Yarn to latest
             yarn set version latest
